@@ -22,12 +22,14 @@
 
 ## 📅 最近学习
 
+- ✅ **第 2 课：逻辑回归与概率分类** — [Notebook](lessons/02_逻辑回归.ipynb) | [2026-04-08](daily/2026-04-08.md)
 - ✅ **第 1 课：线性回归与最小二乘法** — [Notebook](lessons/01_线性回归与最小二乘法.ipynb) | [Q&A](QA-notes.md)
 
 ## 🔗 快速入口
 
 - [🗺️ 学习路线](roadmap/roadmap.md)
 - [📅 每日学习记录](daily/)
+  - 🆕 **第2课：逻辑回归** (2026-04-08)
 - [📊 每周复盘](weekly/)
 - [💡 知识卡片](notes/)
 - [📜 AI 技术演进史](history/ai-evolution.md)
