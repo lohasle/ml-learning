@@ -119,12 +119,27 @@ README 应长期保持稳定结构，不要频繁改版，只更新内容。
 每次学习推进后，必须同步更新 GitHub Pages 展示内容。
 初始化 GitHub Pages 时，优先使用 `ui-ux-pro-max` 技能设计页面结构、导航、信息层级和视觉布局。
 Pages 至少应包含：
-- 首页
+- 首页（精美课程列表，每个课程带课程MD和Notebook直链）
 - 学习路线页
 - 每日学习记录页
 - 每周复盘页
-- 知识卡片索引页
+- 知识笔记页（三栏结构：左侧菜单树 | 中间MD内容渲染 | 右侧Notebook代码展示）
 - AI 技术演进历史页
+
+【知识笔记页（notes-lab.html）维护规则】
+知识笔记采用三栏布局（notes-lab.html），动态加载内容片段：
+- 左栏菜单树：按阶段/课程组织，每个菜单项通过 data-note 和 data-nb 属性关联内容
+- 中栏：渲染课程的 Markdown 内容（需同步生成 docs/note-{name}.html 和 docs/daily-{date}.html 片段）
+- 右栏：展示 Notebook 代码（需同步生成 docs/nb-{name}.html 片段，从 .ipynb 解析）
+
+新增课程时必须：
+1. 生成 docs/nb-{课程名}.html（从 ipynb 解析为 HTML 片段）
+2. 生成 docs/note-{主题}.html 或 docs/daily-{日期}.html（MD 渲染为 HTML 片段）
+3. 更新 notes-lab.html 的菜单树，添加对应的 tree-item
+4. 更新首页 index.html 的课程列表
+
+【UI 设计风格】
+配色采用 Claude 风格（温暖赤陶色 #C96442 + 奶油色 #FAF8F5），保持与现有 styles.css 一致。
 
 【Git 操作要求】
 每次写入前必须：
