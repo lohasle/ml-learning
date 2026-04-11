@@ -1,0 +1,113 @@
+<h1>第1课：线性回归与最小二乘法</h1>
+<h2>今日学习主题</h2>
+<p><strong>线性回归：从数据中找到最佳拟合直线</strong></p>
+<h2>为什么从线性回归开始？</h2>
+<p>线性回归是机器学习最基础的算法，也是最直观的。它回答一个简单问题：给定一组数据点，哪条直线能最好地描述它们的关系？理解了线性回归，就理解了"模型学习"的本质——用数据调整参数。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<ul>
+<li><strong>数学基础</strong>：最小二乘法由 Legendre（1805）和 Gauss（1809）独立提出</li>
+<li><strong>统计学习基石</strong>：所有监督学习算法的基础范式</li>
+<li><strong>现代应用</strong>：预测分析、趋势预测、特征关系建模</li>
+</ul>
+<h2>核心概念解释</h2>
+<h3>1. 什么是线性回归？</h3>
+<p>用一条直线（或超平面）来拟合数据：</p>
+<pre><code>y = kx + b
+</code></pre>
+<ul>
+<li><code>k</code>：斜率（权重/系数）</li>
+<li><code>b</code>：截距（偏置）</li>
+<li>目标：找到最优的 <code>k</code> 和 <code>b</code></li>
+</ul>
+<h3>2. 损失函数：最小二乘法</h3>
+<p>如何衡量"拟合得好不好"？用<strong>均方误差（MSE）</strong>：</p>
+<pre><code>L = (1/n) * Σ(yi - (k*xi + b))²
+</code></pre>
+<ul>
+<li><code>yi</code>：真实值</li>
+<li><code>k*xi + b</code>：预测值</li>
+<li>目标：让 L 尽可能小</li>
+</ul>
+<h3>3. 梯度下降求解</h3>
+<p>不能直接算出最优解时，用<strong>梯度下降</strong>迭代逼近：</p>
+<pre><code>k_new = k_old - α * ∂L/∂k
+b_new = b_old - α * ∂L/∂b
+</code></pre>
+<ul>
+<li><code>α</code>：学习率（步长）</li>
+<li>每一步都让损失变小</li>
+<li>直到收敛（梯度接近 0）</li>
+</ul>
+<h3>4. 正规方程（解析解）</h3>
+<p>对于线性回归，可以直接用公式求出最优解：</p>
+<pre><code>θ = (X^T X)^(-1) X^T y
+</code></pre>
+<ul>
+<li>优点：一步到位，不需要迭代</li>
+<li>缺点：矩阵求逆计算量大（特征多时慢）</li>
+</ul>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>预测函数</td>
+<td>ŷ = kx + b</td>
+<td>用直线拟合数据</td>
+</tr>
+<tr>
+<td>损失函数</td>
+<td>L = Σ(y-ŷ)²</td>
+<td>预测离真实值越远，惩罚越大</td>
+</tr>
+<tr>
+<td>梯度下降</td>
+<td>θ -= α·∂L/∂θ</td>
+<td>沿着下坡方向走</td>
+</tr>
+<tr>
+<td>学习率 α</td>
+<td>步长</td>
+<td>太大跳过最优，太小收敛慢</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<h3>用 NumPy 从零实现</h3>
+<ol>
+<li>初始化参数 k=0, b=0</li>
+<li>循环 N 次：</li>
+<li>计算预测值 ŷ = k*x + b</li>
+<li>计算损失 MSE</li>
+<li>计算梯度 ∂L/∂k, ∂L/∂b</li>
+<li>更新参数</li>
+<li>观察损失曲线是否收敛</li>
+</ol>
+<h3>用 sklearn 实现</h3>
+<pre><code class="language-python">from sklearn.linear_model import LinearRegression
+model = LinearRegression()
+model.fit(X, y)
+print(model.coef_, model.intercept_)
+</code></pre>
+<h2>常见问题</h2>
+<p><strong>Q: 为什么用平方误差而不是绝对值误差？</strong>
+A: 平方误差处处可导，方便梯度计算；同时对大误差惩罚更重，促使模型减少离群值的影响。</p>
+<p><strong>Q: 学习率怎么选？</strong>
+A: 经验值 0.001-0.1。可以先用较大值，观察损失是否震荡，震荡就调小。</p>
+<p><strong>Q: 特征需要标准化吗？</strong>
+A: 建议标准化。不同量纲的特征会让梯度下降的路径呈椭圆形，收敛慢。标准化后路径更圆，收敛快。</p>
+<h2>本课学到什么</h2>
+<ol>
+<li><strong>模型 = 参数化函数</strong>：线性回归用 y=kx+b 建模</li>
+<li><strong>学习 = 优化参数</strong>：通过最小化损失函数找到最优参数</li>
+<li><strong>梯度下降 = 通用优化器</strong>：不仅用于线性回归，几乎用于所有深度学习</li>
+<li><strong>从零实现很重要</strong>：sklearn 一行代码搞定，但自己实现才能理解本质</li>
+</ol>
+<h2>下一步</h2>
+<p>第2课将学习逻辑回归——在回归基础上增加 sigmoid 函数，从预测连续值转向预测概率。</p>

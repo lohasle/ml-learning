@@ -598,20 +598,20 @@ footer a:hover { text-decoration: underline; }
   height: calc(100vh - var(--nav-height));
   position: sticky;
   top: var(--nav-height);
-  background: #1E1E2E;
+  background: var(--bg);
 }
 .lab-notebook-main {
-  background: #1E1E2E;
+  background: var(--bg);
 }
 .lab-content-header {
   padding: 20px 28px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  background: #1E1E2E;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
 }
 .lab-content-header h2 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #CDD6F4;
+  color: var(--text);
   padding-bottom: 16px;
   margin: 0;
   border: none;
@@ -688,16 +688,17 @@ footer a:hover { text-decoration: underline; }
 }
 .nb-markdown p { margin: 4px 0; }
 .nb-code {
-  background: #1E1E2E;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 .nb-code .nb-label {
   padding: 6px 12px;
   font-size: 0.7rem;
-  color: #888;
+  color: var(--text-muted);
   font-family: monospace;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid var(--border);
 }
 .nb-code pre {
   margin: 0;
@@ -708,17 +709,17 @@ footer a:hover { text-decoration: underline; }
   font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
   font-size: 0.8rem;
   line-height: 1.6;
-  color: #CDD6F4;
+  color: var(--code-text);
 }
 .nb-output {
   padding: 8px 12px;
-  background: rgba(255,255,255,0.03);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
 }
 .nb-output pre {
   margin: 0;
   font-size: 0.78rem;
-  color: #A6E3A1;
+  color: var(--success-text);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
