@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sigmoid 函数 — ML Learning</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-brand">🧠 ML Learning</a>
+      <div class="nav-links">
+        <a href="roadmap.html">学习路线</a>
+        <a href="daily.html">每日记录</a>
+        <a href="weekly.html">每周复盘</a>
+        <a href="notes.html" class="active">知识卡片</a>
+        <a href="history.html">AI 演进史</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <a href="notes.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--primary);text-decoration:none;font-size:0.9rem;font-weight:500;margin-top:24px;">← 返回知识卡片</a>
+    <div class="note-content">
+      <h1>Sigmoid 函数知识卡片</h1>
+<h2>🎯 基础概念</h2>
+<h3>1. 定义</h3>
+<p>Sigmoid 函数，也称为 S 型函数，是一个将任意实数映射到 (0, 1) 区间的数学函数。</p>
+<h3>2. 数学表达式</h3>
+<pre><code>σ(z) = 1 / (1 + e^(-z))
+</code></pre>
+<h3>3. 别名</h3>
+<ul>
+<li>Logistic 函数</li>
+<li>S 型激活函数</li>
+<li>Softmax 函数的单变量版本</li>
+</ul>
+<h2>📊 函数特性</h2>
+<h3>1. 域与值域</h3>
+<ul>
+<li><strong>定义域</strong>：z ∈ (-∞, +∞)</li>
+<li><strong>值域</strong>：σ(z) ∈ (0, 1)</li>
+<li><strong>边界值</strong>：</li>
+<li>lim(z→-∞) σ(z) = 0</li>
+<li>lim(z→+∞) σ(z) = 1</li>
+</ul>
+<h3>2. 关键特性</h3>
+<ul>
+<li><strong>单调递增</strong>：导数始终为正</li>
+<li><strong>中心对称</strong>：σ(-z) = 1 - σ(z)</li>
+<li><strong>S型曲线</strong>：缓入-急变-缓出</li>
+<li><strong>在 z=0 处值为 0.5</strong></li>
+</ul>
+<h3>3. 导数性质</h3>
+<pre><code>σ'(z) = σ(z) · (1 - σ(z))
+</code></pre>
+<ul>
+<li>在 z=0 处导数最大：σ'(0) = 0.25</li>
+<li>随 |z| 增大，导数趋近于 0</li>
+</ul>
+<h2>🎨 函数图像</h2>
+<h3>1. 基本形状</h3>
+<pre><code>σ(z)
+1.0 |      ╭─────────────╮
+     |     /             \
+     |    /               \
+0.5 |───╯                 ╰───
+     |                        \
+     |                         \
+0.0 |                          \
+     +---------------------------&gt;
+       -3    -2    -1     0     1     2     3
+                         z
+</code></pre>
+<h3>2. 关键点</h3>
+<ul>
+<li><strong>拐点</strong>：z = 0, σ(z) = 0.5</li>
+<li><strong>最陡峭处</strong>：z = 0（导数最大）</li>
+<li><strong>饱和区</strong>：|z| &gt; 3，变化缓慢</li>
+</ul>
+<h2>🔧 应用场景</h2>
+<h3>1. 概率建模</h3>
+<ul>
+<li><strong>二分类概率</strong>：将线性组合转为概率</li>
+<li><strong>信念强度</strong>：表示事件发生的可能性</li>
+<li><strong>激活值</strong>：神经元输出的概率解释</li>
+</ul>
+<h3>2. 激活函数</h3>
+<ul>
+<li><strong>神经网络</strong>：隐藏层激活函数</li>
+<li><strong>输出层</strong>：二分类问题的概率输出</li>
+<li><strong>门控机制</strong>：神经网络中的控制信号</li>
+</ul>
+<h3>3. 时间序列分析</h3>
+<ul>
+<li><strong>增长模型</strong>：描述 S 型增长过程</li>
+<li><strong>人口模型</strong>：Verhulst 方程的基础</li>
+<li><strong>扩散过程</strong>：技术扩散的建模</li>
+</ul>
+<h2>⚡ 计算特性</h2>
+<h3>1. 数值稳定性</h3>
+<ul>
+<li><strong>大负数</strong>：e^(-z) → ∞，σ(z) ≈ 0</li>
+<li><strong>大正数</strong>：e^(-z) → 0，σ(z) ≈ 1</li>
+<li><strong>溢出问题</strong>：直接计算可能导致数值溢出</li>
+</ul>
+<h3>2. 优化计算</h3>
+<pre><code>避免数值溢出：
+if z ≥ 0:
+    σ(z) = 1 / (1 + e^(-z))
+else:
+    σ(z) = e^z / (1 + e^z)
+</code></pre>
+<h3>3. 导数计算</h3>
+<pre><code class="language-python">def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def sigmoid_derivative(z):
+    s = sigmoid(z)
+    return s * (1 - s)  # 利用函数值计算导数
+</code></pre>
+<h2>🔄 函数变种</h2>
+<h3>1. 双曲正切函数</h3>
+<pre><code>tanh(z) = (e^z - e^(-z)) / (e^z + e^(-z)) = 2σ(2z) - 1
+</code></pre>
+<ul>
+<li>值域：(-1, 1)</li>
+<li>中心：0</li>
+<li>用于零中心化的激活</li>
+</ul>
+<h3>2. Softplus 函数</h3>
+<pre><code>softplus(z) = ln(1 + e^z)
+</code></pre>
+<ul>
+<li>Sigmoid 函数的积分</li>
+<li>更平滑的 ReLU 变种</li>
+</ul>
+<h3>3. Swish 函数</h3>
+<pre><code>swish(z) = z · σ(z)
+</code></pre>
+<ul>
+<li>自门控激活函数</li>
+<li>在深度学习中表现优异</li>
+</ul>
+<h2>📐 数学性质</h2>
+<h3>1. 不动点</h3>
+<ul>
+<li>σ(z) = z 的解约为 z ≈ 0.1587</li>
+<li>在深度学习中用于初始化</li>
+</ul>
+<h3>2. 泰勒展开</h3>
+<p>在 z=0 处展开：</p>
+<pre><code>σ(z) ≈ 0.5 + 0.25z - 0.0625z² + 0.0208z³ - ...
+</code></pre>
+<h3>3. 对数导数</h3>
+<pre><code>d(ln(σ(z))) / dz = 1 - σ(z)
+d(ln(1-σ(z))) / dz = -σ(z)
+</code></pre>
+<h2>⚠️ 局限性</h2>
+<h3>1. 梯度消失</h3>
+<ul>
+<li>当 |z| 很大时，σ'(z) ≈ 0</li>
+<li>影响深度神经网络的训练</li>
+</ul>
+<h3>2. 零中心输出</h3>
+<ul>
+<li>σ(z) ∈ (0, 1)，均值不为0</li>
+<li>可能影响后续层的训练</li>
+</ul>
+<h3>3. 计算成本</h3>
+<ul>
+<li>指数计算相对复杂</li>
+<li>可能有更高效的替代函数</li>
+</ul>
+<h2>🚀 替代方案</h2>
+<h3>1. ReLU 函数</h3>
+<pre><code>ReLU(z) = max(0, z)
+</code></pre>
+<ul>
+<li>解决梯度消失问题</li>
+<li>计算简单，收敛快</li>
+</ul>
+<h3>2. Leaky ReLU</h3>
+<pre><code>LeakyReLU(z) = max(αz, z), α ≈ 0.01
+</code></pre>
+<ul>
+<li>解决 ReLU 死亡问题</li>
+<li>保持零中心特性</li>
+</ul>
+<h3>3. ELU 函数</h3>
+<pre><code>ELU(z) = { z, if z ≥ 0; α(e^z - 1), if z &lt; 0 }
+</code></pre>
+<ul>
+<li>平滑负值区域</li>
+<li>缓解梯度消失</li>
+</ul>
+<h2>📚 最佳实践</h2>
+<h3>1. 使用场景选择</h3>
+<ul>
+<li><strong>二分类输出</strong>：首选 Sigmoid</li>
+<li><strong>隐藏层</strong>：考虑 ReLU 或其变种</li>
+<li><strong>需要概率解释</strong>：必须使用 Sigmoid</li>
+</ul>
+<h3>2. 参数初始化</h3>
+<ul>
+<li>初始 z 值应在 sigmoid 的线性区域</li>
+<li>避免初始值在饱和区</li>
+</ul>
+<h3>3. 数值稳定性</h3>
+<ul>
+<li>使用对数概率空间计算</li>
+<li>避免直接计算大指数</li>
+</ul>
+<hr />
+<p><strong>学习目标</strong>：深入理解 sigmoid 函数的数学性质、应用场景和实现细节，能够在机器学习中正确选择和使用激活函数。</p>
+    </div>
+  </div>
+
+  <footer>
+    <p>ML Learning · <a href="https://github.com/lohasle/ml-learning">GitHub 仓库</a></p>
+  </footer>
+</body>
+</html>

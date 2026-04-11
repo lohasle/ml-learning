@@ -23,11 +23,12 @@
   <div class="container">
     <div class="page-header">
       <h1>📜 AI 技术演进史</h1>
-      <p>从感知机到 GPT 的关键技术节点</p>
+      <p>从感知机到 GPT 的关键技术、框架、公司与硬件</p>
     </div>
 
+    <!-- ========== 经典机器学习时代 ========== -->
     <div class="section">
-      <h2>🧮 经典机器学习时代</h2>
+      <h2>🧮 经典机器学习时代（1950s–1990s）</h2>
       <div class="timeline">
         <div class="timeline-item">
           <h4>1845</h4>
@@ -43,87 +44,243 @@
         </div>
         <div class="timeline-item">
           <h4>1970s</h4>
-          <p>逻辑回归正式提出，Joseph Berkson 等人发展用于分类问题的概率方法</p>
+          <p>逻辑回归正式提出；统计学习理论发展，偏差-方差权衡与正则化理论基础确立</p>
         </div>
         <div class="timeline-item">
-          <h4>1970s</h4>
-          <p>统计学习理论发展，偏差-方差权衡理论提出，为正则化奠定理论基础</p>
+          <h4>1984</h4>
+          <p>Breiman 等人提出 CART，奠定现代决策树基础</p>
         </div>
         <div class="timeline-item">
-          <h4>1980s</h4>
-          <p>SVM 理论基础建立，VC 维理论发展，统计学习理论框架形成</p>
+          <h4>1986</h4>
+          <p>Quinlan 引入 ID3（信息增益）；Rumelhart 等人推广反向传播算法</p>
         </div>
         <div class="timeline-item">
           <h4>1990s</h4>
           <p>SVM、随机森林、Boosting、贝叶斯方法成熟，机器学习作为独立领域确立</p>
         </div>
       </div>
+      <div class="era-card">
+        <h3>🔑 引领者与工具</h3>
+        <div class="era-meta">
+          <span class="era-tag tech">🧠 SVM (Vapnik)</span>
+          <span class="era-tag tech">🌳 CART / C4.5</span>
+          <span class="era-tag tech">🌲 随机森林 (Breiman)</span>
+          <span class="era-tag framework">📐 MATLAB</span>
+          <span class="era-tag framework">📊 R 语言</span>
+          <span class="era-tag company">🏛️ Bell Labs</span>
+          <span class="era-tag company">🏛️ AT&T Research</span>
+        </div>
+      </div>
     </div>
 
+    <!-- ========== 深度学习黎明 ========== -->
     <div class="section">
-      <h2>🧠 神经网络复兴</h2>
+      <h2>🌅 深度学习黎明（2006–2011）</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>2006</h4>
+          <p>Hinton 提出 Deep Belief Network，深度学习概念重新进入主流</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2009</h4>
+          <p>ImageNet 数据集发布（李飞飞团队），为大规模视觉识别竞赛奠定基础</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2011</h4>
+          <p>IBM Watson 在 Jeopardy! 中击败人类冠军</p>
+        </div>
+      </div>
+      <div class="era-card">
+        <h3>🔑 引领者与工具</h3>
+        <div class="era-meta">
+          <span class="era-tag tech">🧠 DBN / Autoencoder</span>
+          <span class="era-tag framework">📸 ImageNet</span>
+          <span class="era-tag company">🏢 IBM</span>
+          <span class="era-tag company">🏫 Stanford (李飞飞)</span>
+          <span class="era-tag company">🏫 Toronto (Hinton)</span>
+          <span class="era-tag hardware">🖥️ NVIDIA GPU 开始用于训练</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 神经网络复兴 ========== -->
+    <div class="section">
+      <h2>🧠 神经网络复兴（2012–2016）</h2>
       <div class="timeline">
         <div class="timeline-item">
           <h4>2012</h4>
-          <p>AlexNet 赢得 ImageNet，深度学习革命开启</p>
+          <p>AlexNet 赢得 ImageNet，深度学习革命正式开启；Word2Vec 发布</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2013</h4>
+          <p>Torch 开源；深度强化学习（DQN）在 Atari 游戏超越人类</p>
         </div>
         <div class="timeline-item">
           <h4>2014</h4>
-          <p>GAN、VGG、GoogLeNet 等关键架构涌现</p>
+          <p>GAN（生成对抗网络）提出；VGG、GoogLeNet 等关键架构涌现；Adam 优化器发布</p>
         </div>
         <div class="timeline-item">
           <h4>2015</h4>
-          <p>ResNet 解决深度网络退化问题</p>
+          <p>ResNet 解决深度网络退化问题；TensorFlow 开源；AlphaGo 击败李世石</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2015</h4>
+          <p>Keras 发布，极大降低深度学习入门门槛</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2016</h4>
+          <p>PyTorch 开源，以动态图设计赢得学术界青睐</p>
+        </div>
+      </div>
+      <div class="era-card">
+        <h3>🔑 引领者与工具</h3>
+        <div class="era-meta">
+          <span class="era-tag tech">🖼️ CNN (AlexNet/VGG/ResNet)</span>
+          <span class="era-tag tech">🎮 GAN</span>
+          <span class="era-tag tech">⚡ DQN / 强化学习</span>
+          <span class="era-tag framework">🔥 TensorFlow (Google)</span>
+          <span class="era-tag framework">🔥 PyTorch (Meta)</span>
+          <span class="era-tag framework">🧱 Keras</span>
+          <span class="era-tag company">🏢 Google DeepMind</span>
+          <span class="era-tag company">🏢 Meta AI</span>
+          <span class="era-tag company">🏢 NVIDIA</span>
+          <span class="era-tag hardware">🖥️ NVIDIA GTX / Tesla GPU</span>
+          <span class="era-tag hardware">🖥️ NVIDIA CUDA</span>
         </div>
       </div>
     </div>
 
+    <!-- ========== Transformer 革命 ========== -->
     <div class="section">
-      <h2>⚡ Attention / Transformer</h2>
+      <h2>⚡ Transformer 革命（2017–2019）</h2>
       <div class="timeline">
         <div class="timeline-item">
           <h4>2017</h4>
-          <p>"Attention Is All You Need" — Transformer 架构诞生</p>
+          <p>"Attention Is All You Need" — Transformer 架构诞生，彻底改变 NLP</p>
         </div>
         <div class="timeline-item">
           <h4>2018</h4>
-          <p>BERT（双向预训练）、GPT-1（生成式预训练）</p>
+          <p>BERT（双向预训练）、GPT-1（生成式预训练）；ELMo 引入上下文化词向量；Hugging Face Transformers 开源</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2019</h4>
+          <p>GPT-2 展示强大文本生成能力（一度因风险拒绝公开）；XLNet、RoBERTa 等 BERT 变体涌现；T5 统一文本到文本框架</p>
+        </div>
+      </div>
+      <div class="era-card">
+        <h3>🔑 引领者与工具</h3>
+        <div class="era-meta">
+          <span class="era-tag tech">⚡ Transformer</span>
+          <span class="era-tag tech">🔄 BERT</span>
+          <span class="era-tag tech">📝 GPT-1/2</span>
+          <span class="era-tag framework">🤗 Hugging Face</span>
+          <span class="era-tag framework">⚡ DeepSpeed (Microsoft)</span>
+          <span class="era-tag company">🏢 Google Brain</span>
+          <span class="era-tag company">🏢 OpenAI</span>
+          <span class="era-tag company">🏢 Microsoft</span>
+          <span class="era-tag hardware">🖥️ Google TPU v2/v3</span>
+          <span class="era-tag hardware">🖥️ NVIDIA V100</span>
         </div>
       </div>
     </div>
 
+    <!-- ========== 大模型时代 ========== -->
     <div class="section">
-      <h2>🔤 大模型时代</h2>
+      <h2>🔤 大模型时代（2020–2023）</h2>
       <div class="timeline">
         <div class="timeline-item">
           <h4>2020</h4>
-          <p>GPT-3：175B 参数，In-Context Learning</p>
+          <p>GPT-3（175B 参数）展示 In-Context Learning；DALL·E 开创文生图；ViT 将 Transformer 引入计算机视觉</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2021</h4>
+          <p>CLIP 连接文本与图像；Stable Diffusion 引领开源生图浪潮；GitHub Copilot 发布（AI 编程助手元年）</p>
         </div>
         <div class="timeline-item">
           <h4>2022</h4>
-          <p>ChatGPT 引爆 AI 应用浪潮</p>
+          <p>ChatGPT 引爆全球 AI 应用浪潮；Stable Diffusion、Midjourney 民主化图像生成；Whisper 开源语音识别；DALL·E 2 发布</p>
         </div>
         <div class="timeline-item">
-          <h4>2023-2024</h4>
-          <p>GPT-4、Claude、Gemini、Llama、RAG、Agent 生态</p>
+          <h4>2023</h4>
+          <p>GPT-4 多模态；Claude 1/2 发布；Llama 开源引发开源 LLM 浪潮；RAG 架构成熟；LangChain 生态爆发；MCP 协议提出</p>
+        </div>
+      </div>
+      <div class="era-card">
+        <h3>🔑 引领者与工具</h3>
+        <div class="era-meta">
+          <span class="era-tag tech">📝 GPT-3/4</span>
+          <span class="era-tag tech">🎨 Diffusion Models</span>
+          <span class="era-tag tech">🔍 RAG</span>
+          <span class="era-tag tech">🤖 Agent 架构</span>
+          <span class="era-tag framework">🦜 LangChain</span>
+          <span class="era-tag framework">🔗 LlamaIndex</span>
+          <span class="era-tag framework">🤗 Hugging Face Hub</span>
+          <span class="era-tag framework">🛠️ GitHub Copilot</span>
+          <span class="era-tag framework">🦙 Ollama</span>
+          <span class="era-tag company">🏢 OpenAI</span>
+          <span class="era-tag company">🏢 Anthropic</span>
+          <span class="era-tag company">🏢 Google DeepMind</span>
+          <span class="era-tag company">🏢 Meta (Llama)</span>
+          <span class="era-tag company">🏢 NVIDIA</span>
+          <span class="era-tag hardware">🖥️ NVIDIA A100</span>
+          <span class="era-tag hardware">🖥️ NVIDIA H100</span>
+          <span class="era-tag hardware">🖥️ Google TPU v4</span>
         </div>
       </div>
     </div>
 
+    <!-- ========== 多模态与 Agent ========== -->
     <div class="section">
-      <h2>🎨 多模态</h2>
+      <h2>🎨 多模态与 Agent 时代（2024–）</h2>
       <div class="timeline">
         <div class="timeline-item">
-          <h4>2023</h4>
-          <p>GPT-4V、Gemini 多模态理解</p>
-        </div>
-        <div class="timeline-item">
           <h4>2024</h4>
-          <p>Sora 视频生成、多模态 Agent</p>
+          <p>GPT-4o 端到端多模态；Claude 3.5 系列发布；Gemini 多模态理解；Sora 视频生成；MCP 协议铺开；Claude Code 引领 AI 编程 Agent 赛道</p>
         </div>
         <div class="timeline-item">
-          <h4>待更新...</h4>
-          <p>持续跟进最新进展</p>
+          <h4>2025</h4>
+          <p>DeepSeek-R1 开源推理模型；AI Agent 大规模落地；claw-code 等 Agent 框架爆发；端侧推理进入生产化（LiteRT）；多 Agent 协作标准化</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2026</h4>
+          <p>Agent 技能框架（superpowers）定义 AI 开发方法论；托管式 Agent 平台兴起；本地推理成为标配（Ollama 167K stars）；Claude Code 生态成熟</p>
+        </div>
+      </div>
+      <div class="era-card">
+        <h3>🔑 引领者与工具</h3>
+        <div class="era-meta">
+          <span class="era-tag tech">🤖 AI Agent</span>
+          <span class="era-tag tech">🎨 多模态大模型</span>
+          <span class="era-tag tech">🔌 MCP 协议</span>
+          <span class="era-tag tech">📱 端侧推理</span>
+          <span class="era-tag framework">🛠️ Claude Code</span>
+          <span class="era-tag framework">🛠️ Cursor</span>
+          <span class="era-tag framework">🦙 Ollama</span>
+          <span class="era-tag framework">🔗 MCP Servers</span>
+          <span class="era-tag framework">🧠 DeepSeek</span>
+          <span class="era-tag company">🏢 Anthropic</span>
+          <span class="era-tag company">🏢 OpenAI</span>
+          <span class="era-tag company">🏢 Google</span>
+          <span class="era-tag company">🏢 DeepSeek</span>
+          <span class="era-tag company">🏢 NVIDIA</span>
+          <span class="era-tag company">🏠 Hugging Face</span>
+          <span class="era-tag hardware">🖥️ NVIDIA B100/Blackwell</span>
+          <span class="era-tag hardware">📱 Apple Silicon (M系列)</span>
+          <span class="era-tag hardware">📱 Google Edge TPU</span>
+          <span class="era-tag hardware">🖥️ Groq LPU</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 图例 -->
+    <div class="section">
+      <div class="era-card" style="background: var(--bg-inset); border: none;">
+        <h3>🏷️ 图例说明</h3>
+        <div class="era-meta">
+          <span class="era-tag tech">🧠 技术/算法</span>
+          <span class="era-tag framework">🔧 框架/工具</span>
+          <span class="era-tag company">🏢 公司/机构</span>
+          <span class="era-tag hardware">🖥️ 硬件</span>
         </div>
       </div>
     </div>

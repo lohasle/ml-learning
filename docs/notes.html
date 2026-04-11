@@ -23,48 +23,79 @@
   <div class="container">
     <div class="page-header">
       <h1>💡 知识卡片</h1>
-      <p>按主题分类的关键概念速查索引</p>
+      <p>按主题分类的关键概念速查索引 — 点击卡片查看详情</p>
     </div>
 
+    <!-- 机器学习基础 -->
     <div class="section">
-      <h2>机器学习基础</h2>
-      <div class="cards-grid">
-        <a href="#" class="card">
-          <h3>逻辑回归</h3>
-          <p>二分类算法，sigmoid 函数，决策边界</p>
-          <div>
-            <span class="tag">分类</span>
-            <span class="tag">基础</span>
+      <h2>📐 机器学习基础</h2>
+      <div class="concept-grid">
+        <a href="notes-逻辑回归.html" class="concept-card">
+          <div class="concept-icon">📐</div>
+          <div class="concept-body">
+            <div class="concept-title">逻辑回归</div>
+            <div class="concept-desc">二分类 · sigmoid · 决策边界 · 交叉熵</div>
           </div>
         </a>
-        <a href="#" class="card">
-          <h3>Sigmoid 函数</h3>
-          <p>概率转换，激活函数，数学特性</p>
-          <div>
-            <span class="tag">数学</span>
-            <span class="tag">激活函数</span>
-          </div>
-        </a>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>经典机器学习</h2>
-      <div class="cards-grid">
-        <a href="#" class="card">
-          <h3>决策树</h3>
-          <p>树形决策，信息熵，基尼不纯度，CART 算法</p>
-          <div>
-            <span class="tag">分类</span>
-            <span class="tag">回归</span>
-            <span class="tag">可解释</span>
+        <a href="notes-sigmoid函数.html" class="concept-card">
+          <div class="concept-icon">📈</div>
+          <div class="concept-body">
+            <div class="concept-title">Sigmoid 函数</div>
+            <div class="concept-desc">概率转换 · S 型曲线 · 导数特性 · 梯度消失</div>
           </div>
         </a>
       </div>
     </div>
 
+    <!-- 经典机器学习 -->
     <div class="section">
-      <h2>学习进度</h2>
+      <h2>🌳 经典机器学习</h2>
+      <div class="concept-grid">
+        <a href="notes-决策树.html" class="concept-card">
+          <div class="concept-icon">🌳</div>
+          <div class="concept-body">
+            <div class="concept-title">决策树</div>
+            <div class="concept-desc">信息熵 · 基尼不纯度 · CART · 可解释性</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- 关联课程 -->
+    <div class="section">
+      <h2>📖 关联课程 Notebook</h2>
+      <div class="cards" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+        <a href="https://github.com/lohasle/ml-learning/blob/main/lessons/01_线性回归与最小二乘法.ipynb" class="card" target="_blank">
+          <h3>第 1 课</h3>
+          <p>线性回归与最小二乘法</p>
+          <span class="tag">Notebook</span>
+        </a>
+        <a href="https://github.com/lohasle/ml-learning/blob/main/lessons/02_逻辑回归.ipynb" class="card" target="_blank">
+          <h3>第 2 课</h3>
+          <p>逻辑回归与概率分类</p>
+          <span class="tag">Notebook</span>
+        </a>
+        <a href="https://github.com/lohasle/ml-learning/blob/main/lessons/03_模型评估与交叉验证.ipynb" class="card" target="_blank">
+          <h3>第 3 课</h3>
+          <p>模型评估与交叉验证</p>
+          <span class="tag">Notebook</span>
+        </a>
+        <a href="https://github.com/lohasle/ml-learning/blob/main/lessons/04_过拟合与正则化.ipynb" class="card" target="_blank">
+          <h3>第 4 课</h3>
+          <p>过拟合与正则化</p>
+          <span class="tag">Notebook</span>
+        </a>
+        <a href="https://github.com/lohasle/ml-learning/blob/main/lessons/05_决策树基础.ipynb" class="card" target="_blank">
+          <h3>第 5 课</h3>
+          <p>决策树基础</p>
+          <span class="tag">Notebook</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 学习进度 -->
+    <div class="section">
+      <h2>📊 覆盖进度</h2>
       <div class="progress-overview">
         <p>已创建 <strong>3</strong> 个知识卡片，覆盖机器学习基础与经典算法</p>
         <div class="progress-bar">
