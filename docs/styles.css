@@ -592,25 +592,33 @@ footer a:hover { text-decoration: underline; }
   font-size: 0.9rem;
 }
 
-/* Center content */
+/* Center content — now shows Notebook */
 .lab-content {
   overflow-y: auto;
   height: calc(100vh - var(--nav-height));
   position: sticky;
   top: var(--nav-height);
+  background: #1E1E2E;
+}
+.lab-notebook-main {
+  background: #1E1E2E;
 }
 .lab-content-header {
   padding: 20px 28px 0;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: #1E1E2E;
 }
 .lab-content-header h2 {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: var(--text);
+  color: #CDD6F4;
   padding-bottom: 16px;
   margin: 0;
   border: none;
+}
+.nb-container-main {
+  padding: 20px 28px 48px;
+  overflow-y: auto;
 }
 .lab-content .note-content {
   border: none;
@@ -621,14 +629,17 @@ footer a:hover { text-decoration: underline; }
   padding: 24px 28px 48px;
 }
 
-/* Right notebook panel */
+/* Right panel — knowledge points */
 .lab-notebook {
-  background: var(--bg-inset);
+  background: var(--bg-elevated);
   border-left: 1px solid var(--border);
   overflow-y: auto;
   height: calc(100vh - var(--nav-height));
   position: sticky;
   top: var(--nav-height);
+}
+.lab-knowledge-panel {
+  background: var(--bg);
 }
 .lab-nb-header {
   padding: 20px 20px 12px;
@@ -643,6 +654,17 @@ footer a:hover { text-decoration: underline; }
   font-weight: 700;
   color: var(--text);
 }
+.note-panel-content {
+  padding: 16px 20px;
+}
+.note-panel-content h1 { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.note-panel-content h2 { font-size: 1rem; font-weight: 600; color: var(--primary); margin: 16px 0 8px; padding-left: 0; border: none; }
+.note-panel-content h3 { font-size: 0.92rem; font-weight: 600; color: var(--text); margin: 12px 0 6px; }
+.note-panel-content p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.6; }
+.note-panel-content ul, .note-panel-content ol { padding-left: 18px; color: var(--text-secondary); font-size: 0.85rem; margin: 6px 0; }
+.note-panel-content li { margin: 4px 0; }
+.note-panel-content code { background: var(--code-bg); color: var(--code-text); padding: 1px 5px; border-radius: 3px; font-size: 0.82em; }
+.note-panel-content strong { color: var(--primary-hover); }
 .nb-container {
   padding: 16px 20px;
 }
