@@ -181,3 +181,42 @@ Pages 至少应包含：
 - 兼顾原理与工程
 - 每次内容适合半小时学习
 - 始终服务于"系统掌握 AI 演进关键项目"的长期目标
+
+---
+
+## 质量护栏（不可违反）
+
+### 每次任务必须使用 ml-daily Skill
+
+每次定时任务触发时，**必须读取并遵循** `skills/ml-daily/SKILL.md` 中定义的完整流程：
+
+```
+Phase 1: 健康检查 → Phase 2: 补齐缺口（如需）→ Phase 3: 今日课程 → Phase 4: 级联同步 → Phase 5: 最终验证
+```
+
+### validate.py 是硬门槛
+
+- Phase 5 未通过 → **不允许 git push**
+- 必须在输出中包含 validate 结果（通过/未通过 + 错误列表）
+- 最多重试修复 2 次，仍不通过则中止并报告错误
+
+### 内容质量底线
+
+- Notebook：≥ 5 个 cell，其中代码 cell ≥ 3（有实际逻辑，非空壳）
+- Daily MD：> 1000 bytes，含公式直觉表格
+- 知识笔记：> 500 bytes，含公式表格和关联概念
+- **不允许生成空壳文件占位**
+
+### 级联同步不可遗漏
+
+每次新增课程，必须同时更新：
+1. README.md（课程表格）
+2. docs/index.html（首页课程列表）
+3. docs/notes-lab.html（菜单树 tree-item）
+4. docs/daily.html（时间线条目）
+5. 生成对应的 HTML 片段（nb-*.html, daily-*.html）
+
+### 报告格式固定
+
+每次任务结尾必须输出标准报告（新增/修复文件、validate 结果、git 状态）
+不可省略报告直接结束。
