@@ -1,0 +1,135 @@
+<div class="nb-cell nb-markdown"><h1>📖 第一课：线性回归与最小二乘法</h1>
+<p><strong>目标</strong>：理解机器学习的本质——优化；掌握最小二乘法作为线性回归的核心</p>
+<hr />
+<h2>1. 什么是线性回归？</h2>
+<p>线性回归 = 找一条直线 <code>y = kx + b</code>，使得所有数据点到这条直线的距离平方和最小。</p>
+<ul>
+<li><strong>输入</strong>：特征 x（面积）</li>
+<li><strong>输出</strong>：连续值 y（价格）</li>
+<li><strong>本质</strong>：回归任务（预测连续值）</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>2. 房价预测示例</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+
+# 数据：有噪声的房价数据
+X = np.array([40, 60, 80, 100])        # 面积（㎡）
+y = np.array([120, 183, 238, 302])     # 价格（万），加入了随机噪声
+
+print("原始数据：")
+for xi, yi in zip(X, y):
+    print(f"  面积 {xi}㎡ → 价格 {yi}万")</code></pre>
+  
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 可视化原始数据点
+plt.scatter(X, y, color='blue', s=100, label='真实数据', zorder=5)
+plt.xlabel('面积 (㎡)')
+plt.ylabel('价格 (万)')
+plt.title('房价数据（带噪声）')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>3. 用 sklearn 做线性回归</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>from sklearn.linear_model import LinearRegression
+
+# sklearn 需要二维数组
+X_2d = X.reshape(-1, 1)  # shape: (4, 1)
+
+# 创建模型并训练
+model = LinearRegression()
+model.fit(X_2d, y)
+
+# 查看结果
+k = model.coef_[0]      # 斜率
+b = model.intercept_    # 截距
+
+print(f"拟合结果：y = {k:.4f}x + {b:.4f}")
+print(f"真实规律：y ≈ 3x（系数应为3左右）")</code></pre>
+  
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 用模型预测
+X_pred = np.array([50, 70, 90]).reshape(-1, 1)
+y_pred = model.predict(X_pred)
+
+print("预测结果：")
+for xi, yi in zip(X_pred.flatten(), y_pred):
+    print(f"  面积 {xi}㎡ → 价格 {yi:.1f}万")</code></pre>
+  
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 可视化拟合结果
+plt.scatter(X, y, color='blue', s=100, label='真实数据', zorder=5)
+
+X_line = np.linspace(30, 110, 100).reshape(-1, 1)
+y_line = model.predict(X_line)
+plt.plot(X_line, y_line, color='red', linewidth=2, label=f'拟合直线: y={k:.2f}x+{b:.2f}')
+
+plt.xlabel('面积 (㎡)')
+plt.ylabel('价格 (万)')
+plt.title('线性回归拟合结果')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>4. 手动实现最小二乘法（不依赖 sklearn）</h2>
+<p>最小二乘法的解析解：</p>
+<p>$k = \frac{\sum(x_i - \bar{x})(y_i - \bar{y})}{\sum(x_i - \bar{x})^2}$，$b = \bar{y} - k\bar{x}$</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 手动实现最小二乘法
+x_mean = np.mean(X)
+y_mean = np.mean(y)
+
+# 计算 k
+numerator = np.sum((X - x_mean) * (y - y_mean))   # 分子
+denominator = np.sum((X - x_mean) ** 2)            # 分母
+k_manual = numerator / denominator
+
+# 计算 b
+b_manual = y_mean - k_manual * x_mean
+
+print(f"手动计算结果：y = {k_manual:.4f}x + {b_manual:.4f}")
+print(f"sklearn结果：  y = {k:.4f}x + {b:.4f}")
+print(f"两者一致：{np.isclose(k_manual, k) and np.isclose(b_manual, b)}")</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>5. 误差分析</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 计算预测误差
+y_pred_train = model.predict(X_2d)
+errors = y - y_pred_train
+
+print("各数据点的误差：")
+for i, (xi, yi, ypi, ei) in enumerate(zip(X, y, y_pred_train, errors)):
+    print(f"  点{i+1}: 真实={yi:6.1f}, 预测={ypi:6.1f}, 误差={ei:+6.1f}")
+
+sse = np.sum(errors ** 2)  # Sum of Squared Errors
+print(f"\n误差平方和 (SSE): {sse:.2f}")</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>📝 课后思考</h2>
+<ol>
+<li>如果噪声很大（比如±50万的随机波动），拟合效果会差多少？</li>
+<li>如果特征不止一个（面积+地段+楼层），直线会变成什么？</li>
+<li>当数据不是线性分布时，线性回归还适用吗？</li>
+</ol>
+<hr />
+<p><strong>下一步</strong>：梯度下降——当解析解算不出来时（高维、复杂模型），如何通过迭代找到最优参数。</p></div>

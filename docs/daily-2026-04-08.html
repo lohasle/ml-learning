@@ -1,0 +1,107 @@
+<h1>2026年4月8日 - 第2课：逻辑回归</h1>
+<h2>今日学习主题</h2>
+<p><strong>逻辑回归：从连续预测到概率分类</strong></p>
+<h2>为什么今天学这个？</h2>
+<p>逻辑回归是机器学习的第二个核心算法，也是分类任务的基石。昨天学习了线性回归预测连续值，今天学习如何用它来做分类问题。这是从"回归"到"分类"的重要转变，也是理解后续所有分类算法的基础。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<ul>
+<li><strong>经典算法阶段</strong>：逻辑回归（19世纪中叶概念，现代应用在1950s-1960s）</li>
+<li><strong>承前启后</strong>：在线性回归基础上发展，为神经网络和深度学习奠定基础</li>
+<li><strong>现代应用</strong>：至今仍然是医疗诊断、信用评估、垃圾邮件检测等场景的基准算法</li>
+</ul>
+<h2>核心概念解释</h2>
+<h3>1. 分类 vs 回归的区别</h3>
+<ul>
+<li><strong>回归</strong>：预测连续值（房价、温度、股价）</li>
+<li><strong>分类</strong>：预测离散标签（是/否、猫/狗、A/B/C）</li>
+</ul>
+<h3>2. 逻辑回归的核心思想</h3>
+<p>在线性回归基础上增加 <strong>sigmoid 函数</strong>，将连续值转换为 [0,1] 区间的概率：</p>
+<pre><code>z = kx + b  （线性部分）
+p = 1/(1+e^(-z))  （sigmoid激活）
+</code></pre>
+<h3>3. 决策边界</h3>
+<p>设定阈值（通常是0.5）：
+- p ≥ 0.5 → 正类（1）
+- p &lt; 0.5 → 负类（0）</p>
+<h2>直觉理解 / 类比理解</h2>
+<h3>风险评估师</h3>
+<p>想象你是银行风控员：
+- <strong>线性回归</strong>：直接预测"用户会欠款多少元"（具体数字）
+- <strong>逻辑回归</strong>：预测"用户会欠款的概率"（0-1之间的概率）
+- <strong>最终决策</strong>：概率 ≥ 50% → 拒绝贷款</p>
+<h3>温度计类比</h3>
+<ul>
+<li>线性回归：精确到"36.5°C"</li>
+<li>逻辑回归：告诉你"发烧的概率是75%"</li>
+</ul>
+<h2>关键机制或关键公式</h2>
+<h3>1. Sigmoid 函数</h3>
+<pre><code>σ(z) = 1/(1+e^(-z))
+</code></pre>
+<ul>
+<li>输入：任意实数 z</li>
+<li>输出：0到1之间的概率值</li>
+<li>特点：S形曲线，中心在(0,0.5)</li>
+</ul>
+<h3>2. 损失函数：交叉熵</h3>
+<pre><code>L = -[y·log(p) + (1-y)·log(1-p)]
+</code></pre>
+<ul>
+<li>y：真实标签（0或1）</li>
+<li>p：预测概率</li>
+<li>特点：对错误预测惩罚更大</li>
+</ul>
+<h3>3. 梯度下降更新</h3>
+<pre><code>k = k - α·∂L/∂k
+b = b - α·∂L/∂b
+</code></pre>
+<h2>最小示例</h2>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+# 线性部分
+z = 2*x + 1
+
+# 激活函数
+p = sigmoid(z)
+
+# 预测
+prediction = 1 if p &gt;= 0.5 else 0
+
+# 可视化
+plt.figure(figsize=(12, 4))
+plt.subplot(1, 2, 1)
+plt.plot(z, p)
+plt.title('Sigmoid Function')
+
+plt.subplot(1, 2, 2)
+plt.scatter(x, y, c=prediction, cmap='RdYlBu')
+plt.title('Classification Results')
+</code></pre>
+<h2>关键项目、关键论文或关键系统案例</h2>
+<h3>关键项目</h3>
+<ul>
+<li><strong>scikit-learn</strong>：<code>LogisticRegression</code> 是最常用的分类器之一</li>
+<li><strong>医疗诊断系统</strong>：疾病预测、风险评估</li>
+<li><strong>信用评分系统</strong>：贷款审批、欺诈检测</li>
+</ul>
+<h3>经典论文</h3>
+<ul>
+<li>"Logistic Regression: A Self-Learning Approach" (Cramer, 2004)</li>
+<li>基础工作可追溯到 Pierre François Verhulst 的种群增长研究（1845）</li>
+</ul>
+<h2>今天学完后我应该记住什么</h2>
+<ol>
+<li><strong>核心概念</strong>：逻辑回归是分类任务的线性方法</li>
+<li><strong>数学基础</strong>：sigmoid 函数将线性结果转为概率</li>
+<li><strong>损失函数</strong>：交叉熵比均方误差更适合分类</li>
+<li><strong>应用场景</strong>：二分类问题（是/否、真/假、成功/失败）</li>
+<li><strong>决策边界</strong>：线性分割，计算概率后分类</li>
+</ol>
+<h2>下一步会学什么</h2>
+<p><strong>第3课：模型评估与交叉验证</strong>
+学习如何量化分类模型的好坏，包括准确率、精确率、召回率、F1分数等指标，以及如何使用交叉验证选择最佳模型。</p>

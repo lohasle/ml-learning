@@ -1,0 +1,359 @@
+<div class="nb-cell nb-markdown"><h1>第2课：逻辑回归 - 从连续预测到概率分类</h1>
+<h2>📚 学习目标</h2>
+<ul>
+<li>理解分类任务的核心概念</li>
+<li>掌握逻辑回归的数学原理</li>
+<li>实现二分类问题的逻辑回归模型</li>
+<li>学会评估分类模型性能</li>
+</ul>
+<h2>🎯 应用场景</h2>
+<ul>
+<li>邮件分类（垃圾/正常）</li>
+<li>信用评估（好坏客户）</li>
+<li>疾病诊断（患病/健康）</li>
+<li>图像识别（猫/狗）</li>
+</ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 导入必要的库
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
+import warnings
+warnings.filterwarnings('ignore')
+
+# 设置可视化风格
+plt.style.use('seaborn-v0_8')
+sns.set_palette("husl")</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><h2>1. 理解分类问题</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 生成示例数据：二分类问题
+np.random.seed(42)
+
+# 类别1 (红色点)
+X1 = np.random.normal(2, 0.8, 50)
+y1 = np.ones(50)
+
+# 类别0 (蓝色点)
+X0 = np.random.normal(-2, 0.8, 50)
+y0 = np.zeros(50)
+
+# 合并数据
+X = np.concatenate([X1, X0]).reshape(-1, 1)
+y = np.concatenate([y1, y0])
+
+# 可视化数据
+plt.figure(figsize=(10, 6))
+plt.scatter(X, y, c=y, cmap='RdYlBu', alpha=0.7, s=100)
+plt.xlabel('特征值')
+plt.ylabel('类别标签')
+plt.title('二分类问题示例')
+plt.grid(True, alpha=0.3)
+plt.show()</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><h2>2. 线性回归 vs 逻辑回归</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 对比线性回归和逻辑回归
+x_range = np.linspace(-5, 5, 100).reshape(-1, 1)
+
+# 训练线性回归
+linear_reg = LinearRegression()
+linear_reg.fit(X, y)
+linear_pred = linear_reg.predict(x_range)
+
+# 训练逻辑回归
+log_reg = LogisticRegression()
+log_reg.fit(X, y)
+log_pred = log_reg.predict_proba(x_range)[:, 1]  # 获取正类概率
+
+# 可视化对比
+plt.figure(figsize=(15, 5))
+
+# 子图1：线性回归
+plt.subplot(1, 3, 1)
+plt.scatter(X, y, c=y, cmap='RdYlBu', alpha=0.7, s=100)
+plt.plot(x_range, linear_pred, 'g-', linewidth=2, label='线性回归')
+plt.axhline(y=0.5, color='red', linestyle='--', alpha=0.7, label='决策阈值')
+plt.xlabel('特征值')
+plt.ylabel('预测值')
+plt.title('线性回归（不适合分类）')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 子图2：逻辑回归
+plt.subplot(1, 3, 2)
+plt.scatter(X, y, c=y, cmap='RdYlBu', alpha=0.7, s=100)
+plt.plot(x_range, log_pred, 'b-', linewidth=2, label='逻辑回归概率')
+plt.axhline(y=0.5, color='red', linestyle='--', alpha=0.7, label='决策阈值')
+plt.axvline(x=-linear_reg.intercept_/linear_reg.coef_[0], color='gray', linestyle=':', alpha=0.7, label='线性回归边界')
+plt.xlabel('特征值')
+plt.ylabel('概率')
+plt.title('逻辑回归（适合分类）')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 子图3：决策边界
+plt.subplot(1, 3, 3)
+plt.scatter(X, y, c=y, cmap='RdYlBu', alpha=0.7, s=100)
+decision_boundary = -log_reg.intercept_/log_reg.coef_[0]
+plt.axvline(x=decision_boundary, color='green', linewidth=3, label=f'决策边界: {decision_boundary:.2f}')
+plt.fill_betweenx([-0.5, 1.5], -5, decision_boundary, alpha=0.2, color='blue', label='类别0')
+plt.fill_betweenx([-0.5, 1.5], decision_boundary, 5, alpha=0.2, color='red', label='类别1')
+plt.xlabel('特征值')
+plt.ylabel('类别')
+plt.title('决策边界')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><h2>3. Sigmoid 函数详解</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 可视化 Sigmoid 函数
+z = np.linspace(-6, 6, 200)
+sigmoid = 1 / (1 + np.exp(-z))
+
+plt.figure(figsize=(12, 6))
+
+# 主图：Sigmoid 函数
+plt.subplot(2, 2, 1)
+plt.plot(z, sigmoid, 'b-', linewidth=3, label='σ(z) = 1/(1+e^(-z))')
+plt.axhline(y=0.5, color='red', linestyle='--', alpha=0.7, label='决策阈值')
+plt.axvline(x=0, color='gray', linestyle=':', alpha=0.7, label='z=0')
+plt.xlabel('z (线性组合)')
+plt.ylabel('概率')
+plt.title('Sigmoid 函数')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 特性1：概率范围
+plt.subplot(2, 2, 2)
+plt.plot(z, sigmoid, 'b-', linewidth=2)
+plt.axhline(y=0, color='red', linestyle='--', alpha=0.7)
+plt.axhline(y=1, color='red', linestyle='--', alpha=0.7)
+plt.fill_between(z, 0, sigmoid, alpha=0.2, color='green', label='概率区域')
+plt.xlabel('z')
+plt.ylabel('概率')
+plt.title('概率范围: [0, 1]')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 特性2：对称性
+plt.subplot(2, 2, 3)
+plt.plot(z, sigmoid, 'b-', linewidth=2)
+plt.axhline(y=0.5, color='red', linestyle='--', alpha=0.7)
+plt.scatter([0], [0.5], color='red', s=100, zorder=5)
+plt.xlabel('z')
+plt.ylabel('概率')
+plt.title('对称性：σ(-z) = 1-σ(z)')
+plt.grid(True, alpha=0.3)
+
+# 特性3：梯度
+gradient = sigmoid * (1 - sigmoid)
+plt.subplot(2, 2, 4)
+plt.plot(z, gradient, 'g-', linewidth=2, label='梯度 = σ(z)(1-σ(z))')
+plt.axhline(y=0, color='red', linestyle='--', alpha=0.7)
+plt.xlabel('z')
+plt.ylabel('梯度')
+plt.title('梯度变化（中间大，两端小）')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><h2>4. 逻辑回归的数学原理</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 演示逻辑回归的数学计算过程
+print("=== 逻辑回归数学计算演示 ===")
+
+# 假设参数
+k = 1.5  # 斜率
+b = -0.5  # 截距
+
+# 选择几个测试点
+test_points = [-2, -1, 0, 1, 2]
+print(f"参数: k = {k}, b = {b}")
+print("\n计算过程:")
+print("x\t z=kx+b\t σ(z)\t 预测类别")
+print("-" * 40)
+
+predictions = []
+for x in test_points:
+    # 线性组合
+    z = k * x + b
+    
+    # Sigmoid激活
+    prob = 1 / (1 + np.exp(-z))
+    
+    # 决策
+    pred = 1 if prob &gt;= 0.5 else 0
+    predictions.append(pred)
+    
+    print(f"{x}\t {z:.2f}\t {prob:.3f}\t {pred}")
+
+# 决策边界
+boundary_x = -b / k
+print(f"\n决策边界: x = {boundary_x:.2f}")
+print(f"当 x ≥ {boundary_x:.2f} 时，预测为类别1")
+print(f"当 x &lt; {boundary_x:.2f} 时，预测为类别0")</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><h2>5. 实战：逻辑回归模型训练与评估</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 1. 准备训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42, stratify=y
+)
+
+print(f"训练集大小: {len(X_train)} 样本")
+print(f"测试集大小: {len(X_test)} 样本")
+print(f"训练集正例比例: {np.mean(y_train):.2%}")
+print(f"测试集正例比例: {np.mean(y_test):.2%}")
+
+# 2. 训练逻辑回归模型
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+print(f"\n模型参数:")
+print(f"斜率 (coefficient): {model.coef_[0]:.3f}")
+print(f"截距 (intercept): {model.intercept_[0]:.3f}")
+
+# 3. 预测
+y_pred = model.predict(X_test)
+y_pred_proba = model.predict_proba(X_test)[:, 1]
+
+# 4. 评估
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\n模型评估:")
+print(f"准确率: {accuracy:.2%}")
+
+# 5. 混淆矩阵
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=['预测0', '预测1'], 
+            yticklabels=['实际0', '实际1'])
+plt.title('混淆矩阵')
+plt.ylabel('真实标签')
+plt.xlabel('预测标签')
+plt.show()</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><h2>6. 概率解释与决策调整</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 探索不同决策阈值的影响
+thresholds = [0.1, 0.3, 0.5, 0.7, 0.9]
+test_point = 0.5  # 测试点
+
+# 计算该点的概率
+z = model.coef_[0] * test_point + model.intercept_[0]
+prob = 1 / (1 + np.exp(-z))
+
+print(f"测试点 x = {test_point}")
+print(f"线性组合 z = {z:.3f}")
+print(f"预测概率 p = {prob:.3f}\n")
+print("不同阈值下的预测结果:")
+print("阈值\t 预测类别\t 置信度")
+print("-" * 30)
+
+for threshold in thresholds:
+    pred = 1 if prob &gt;= threshold else 0
+    confidence = prob if pred == 1 else 1 - prob
+    print(f"{threshold}\t {pred}\t {confidence:.3f}")
+
+# 可视化决策区域
+x_test = np.linspace(-5, 5, 200).reshape(-1, 1)
+proba = model.predict_proba(x_test)[:, 1]
+
+plt.figure(figsize=(12, 8))
+plt.subplot(2, 2, 1)
+plt.scatter(X_test, y_test, c=y_test, cmap='RdYlBu', alpha=0.7, s=100, label='真实值')
+plt.plot(x_test, proba, 'b-', linewidth=2, label='预测概率')
+plt.axhline(y=0.5, color='red', linestyle='--', label='默认阈值')
+plt.scatter([test_point], [prob], color='black', s=150, zorder=5, label=f'测试点({test_point}, {prob:.2f})')
+plt.xlabel('特征值')
+plt.ylabel('概率/类别')
+plt.title('默认阈值 (0.5)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 其他阈值可视化
+for i, threshold in enumerate([0.3, 0.7], 2):
+    plt.subplot(2, 2, i)
+    plt.scatter(X_test, y_test, c=y_test, cmap='RdYlBu', alpha=0.7, s=100)
+    plt.plot(x_test, proba, 'b-', linewidth=2)
+    plt.axhline(y=threshold, color='red', linestyle='--', label=f'阈值={threshold}')
+    plt.scatter([test_point], [prob], color='black', s=150, zorder=5)
+    plt.xlabel('特征值')
+plt.ylabel('概率/类别')
+plt.title(f'阈值 = {threshold}')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()</code></pre>
+  
+</div>
+<div class="nb-cell nb-markdown"><h2>7. 总结与关键知识点</h2></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 总结关键概念
+print("""=== 逻辑回归关键知识点总结 ===
+
+🎯 1. 核心概念
+   • 逻辑回归用于二分类问题
+   • 输出类别概率而非具体数值
+   • 决策阈值通常为0.5，但可调整
+
+📐 2. 数学原理
+   • 线性组合：z = kx + b
+   • Sigmoid激活：p = σ(z) = 1/(1+e^(-z))
+   • 损失函数：交叉熵（Cross-Entropy）
+
+🔧 3. 实现要点
+   • 使用 scikit-learn 的 LogisticRegression
+   • 注意决策阈值的调整
+   • 概率解释比硬分类更重要
+
+📊 4. 评估指标
+   • 准确率（Accuracy）：整体预测正确率
+   • 混淆矩阵：详细分析各类别预测情况
+   • ROC曲线：评估不同阈值下的性能
+
+🚀 5. 应用场景
+   • 信用评分
+   • 医疗诊断
+   • 垃圾邮件检测
+   • 风险评估
+
+⚠️ 6. 局限性
+   • 只能处理线性可分问题
+   • 对特征缩放敏感
+   • 多类别问题需扩展（One-vs-Rest）
+""")
+
+# 提示下一步学习内容
+print("\n📚 下次预告：模型评估与交叉验证")
+print("我们将学习：")
+print("• 准确率、精确率、召回率、F1分数")
+print("• 混淆矩阵的深入解读")
+print("• 交叉验证和交叉验证")
+print("• 如何选择最佳模型")</code></pre>
+  
+</div>

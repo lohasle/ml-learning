@@ -1,0 +1,171 @@
+<h1>逻辑回归知识卡片</h1>
+<h2>🎯 核心概念</h2>
+<h3>1. 基础定义</h3>
+<ul>
+<li><strong>类型</strong>：分类算法</li>
+<li><strong>适用场景</strong>：二分类问题（是/否、真/假、成功/失败）</li>
+<li><strong>输出</strong>：概率值 [0, 1]</li>
+</ul>
+<h3>2. 与线性回归的区别</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>线性回归</th>
+<th>逻辑回归</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输出类型</td>
+<td>连续值</td>
+<td>概率值</td>
+</tr>
+<tr>
+<td>问题类型</td>
+<td>回归</td>
+<td>分类</td>
+</tr>
+<tr>
+<td>激活函数</td>
+<td>无</td>
+<td>sigmoid</td>
+</tr>
+<tr>
+<td>损失函数</td>
+<td>均方误差</td>
+<td>交叉熵</td>
+</tr>
+</tbody>
+</table>
+<h2>📐 数学原理</h2>
+<h3>1. Sigmoid 函数</h3>
+<pre><code>σ(z) = 1 / (1 + e^(-z))
+</code></pre>
+<ul>
+<li><strong>输入</strong>：任意实数 z</li>
+<li><strong>输出</strong>：(0, 1) 区间的概率</li>
+<li><strong>特性</strong>：S型曲线，中心对称</li>
+</ul>
+<h3>2. 线性组合</h3>
+<pre><code>z = k₁x₁ + k₂x₂ + ... + kₙxₙ + b
+</code></pre>
+<ul>
+<li>kᵢ：特征权重</li>
+<li>xᵢ：特征值</li>
+<li>b：截距项</li>
+</ul>
+<h3>3. 概率计算</h3>
+<pre><code>p = σ(z) = 1 / (1 + e^(-(k₁x₁ + k₂x₂ + ... + b)))
+</code></pre>
+<h3>4. 决策规则</h3>
+<pre><code>预测类别 = 1, 如果 p ≥ threshold
+预测类别 = 0, 如果 p &lt; threshold
+</code></pre>
+<ul>
+<li>默认 threshold = 0.5</li>
+<li>决策边界：z = 0</li>
+</ul>
+<h2>🔧 实现要点</h2>
+<h3>1. scikit-learn 实现</h3>
+<pre><code class="language-python">from sklearn.linear_model import LogisticRegression
+
+# 创建模型
+model = LogisticRegression()
+
+# 训练
+model.fit(X_train, y_train)
+
+# 预测
+predictions = model.predict(X_test)
+probabilities = model.predict_proba(X_test)[:, 1]
+</code></pre>
+<h3>2. 关键参数</h3>
+<ul>
+<li><code>C</code>：正则化强度（越小正则化越强）</li>
+<li><code>class_weight</code>：类别权重（处理不平衡数据）</li>
+<li><code>solver</code>：优化算法（liblinear, lbfgs等）</li>
+<li><code>max_iter</code>：最大迭代次数</li>
+</ul>
+<h3>3. 决策边界</h3>
+<ul>
+<li>线性边界：z = 0</li>
+<li>公式：k₁x₁ + k₂x₂ + ... + b = 0</li>
+<li>可视化：分类区域的分界线</li>
+</ul>
+<h2>📊 评估指标</h2>
+<h3>1. 基础指标</h3>
+<ul>
+<li><strong>准确率</strong>：正确预测的比例</li>
+<li><strong>精确率</strong>：预测为正例中真正为正例的比例</li>
+<li><strong>召回率</strong>：真正为正例中被预测出来的比例</li>
+<li><strong>F1分数</strong>：精确率和召回率的调和平均</li>
+</ul>
+<h3>2. 混淆矩阵</h3>
+<pre><code>           预测
+实际   负例  正例
+      ┌──────┬──────┐
+负例  │ TN   │ FP   │
+      ├──────┼──────┤
+正例  │ FN   │ TP   │
+      └──────┴──────┘
+</code></pre>
+<h2>🎨 应用场景</h2>
+<h3>1. 商业应用</h3>
+<ul>
+<li><strong>信用评估</strong>：判断客户违约风险</li>
+<li><strong>营销预测</strong>：客户购买意愿分析</li>
+<li><strong>欺诈检测</strong>：异常交易识别</li>
+</ul>
+<h3>2. 医疗诊断</h3>
+<ul>
+<li><strong>疾病预测</strong>：患病风险评估</li>
+<li><strong>诊断辅助</strong>：症状分析</li>
+<li><strong>预后判断</strong>：治疗效果预测</li>
+</ul>
+<h3>3. 自然语言处理</h3>
+<ul>
+<li><strong>情感分析</strong>：正面/负面情感分类</li>
+<li><strong>垃圾邮件检测</strong>：正常/垃圾邮件分类</li>
+<li><strong>文本分类</strong>：主题分类</li>
+</ul>
+<h2>⚠️ 局限性</h2>
+<h3>1. 技术局限</h3>
+<ul>
+<li>只能处理线性可分问题</li>
+<li>对特征缩放敏感</li>
+<li>多类别需要扩展（One-vs-Rest）</li>
+</ul>
+<h3>2. 数据要求</h3>
+<ul>
+<li>需要足够的训练样本</li>
+<li>特征之间不应高度相关</li>
+<li>类别不平衡需要特殊处理</li>
+</ul>
+<h3>3. 应用限制</h3>
+<ul>
+<li>无法处理非线性关系</li>
+<li>对异常值较敏感</li>
+<li>解释性相对有限</li>
+</ul>
+<h2>🚀 进阶方向</h2>
+<h3>1. 多分类扩展</h3>
+<ul>
+<li>One-vs-Rest (OvR)</li>
+<li>One-vs-One (OvO)</li>
+<li>Softmax 回归</li>
+</ul>
+<h3>2. 正则化方法</h3>
+<ul>
+<li>L1 正则化：特征选择</li>
+<li>L2 正则化：防止过拟合</li>
+<li>ElasticNet：L1+L2组合</li>
+</ul>
+<h3>3. 非线性扩展</h3>
+<ul>
+<li>核方法</li>
+<li>多项式特征</li>
+<li>神经网络</li>
+</ul>
+<hr />
+<p><strong>学习目标</strong>：掌握逻辑回归的基本原理、实现方法和应用场景，能够独立应用于二分类问题。</p>

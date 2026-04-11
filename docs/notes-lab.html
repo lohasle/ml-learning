@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知识笔记 — ML Learning</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-brand">🧠 ML Learning</a>
+      <div class="nav-links">
+        <a href="roadmap.html">学习路线</a>
+        <a href="daily.html">每日记录</a>
+        <a href="weekly.html">每周复盘</a>
+        <a href="notes-lab.html" class="active">知识笔记</a>
+        <a href="history.html">AI 演进史</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="lab-layout">
+    <!-- 左栏：菜单树 -->
+    <aside class="lab-sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>📚 知识笔记</h3>
+      </div>
+      <nav class="sidebar-tree">
+        <div class="tree-section">
+          <div class="tree-section-title" onclick="toggleTree(this)">
+            <span class="tree-arrow">▼</span> 阶段 1：基础入门
+          </div>
+          <div class="tree-items">
+            <a href="#" class="tree-item active" data-note="note-逻辑回归" data-nb="nb-01_线性回归与最小二乘法" data-title="第 1 课：线性回归与最小二乘法">
+              <span class="tree-icon">📖</span> 1. 线性回归
+            </a>
+            <a href="#" class="tree-item" data-note="note-逻辑回归" data-nb="nb-02_逻辑回归" data-title="第 2 课：逻辑回归">
+              <span class="tree-icon">📖</span> 2. 逻辑回归
+            </a>
+            <a href="#" class="tree-item" data-note="note-逻辑回归" data-nb="nb-03_模型评估与交叉验证" data-title="第 3 课：模型评估">
+              <span class="tree-icon">📖</span> 3. 模型评估
+            </a>
+            <a href="#" class="tree-item" data-note="note-逻辑回归" data-nb="nb-04_过拟合与正则化" data-title="第 4 课：过拟合与正则化">
+              <span class="tree-icon">📖</span> 4. 正则化
+            </a>
+          </div>
+        </div>
+        <div class="tree-section">
+          <div class="tree-section-title" onclick="toggleTree(this)">
+            <span class="tree-arrow">▼</span> 阶段 2：经典 ML
+          </div>
+          <div class="tree-items">
+            <a href="#" class="tree-item" data-note="note-决策树" data-nb="nb-05_决策树基础" data-title="第 5 课：决策树基础">
+              <span class="tree-icon">📖</span> 5. 决策树
+            </a>
+          </div>
+        </div>
+        <div class="tree-section">
+          <div class="tree-section-title" onclick="toggleTree(this)">
+            <span class="tree-arrow">▼</span> 概念笔记
+          </div>
+          <div class="tree-items">
+            <a href="#" class="tree-item" data-note="note-逻辑回归" data-nb="" data-title="逻辑回归 — 知识笔记">
+              <span class="tree-icon">💡</span> 逻辑回归
+            </a>
+            <a href="#" class="tree-item" data-note="note-sigmoid函数" data-nb="" data-title="Sigmoid 函数 — 知识笔记">
+              <span class="tree-icon">💡</span> Sigmoid 函数
+            </a>
+            <a href="#" class="tree-item" data-note="note-决策树" data-nb="" data-title="决策树 — 知识笔记">
+              <span class="tree-icon">💡</span> 决策树
+            </a>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 中栏：课程内容 -->
+    <main class="lab-content" id="content-panel">
+      <div class="lab-content-header">
+        <h2 id="content-title">第 1 课：线性回归与最小二乘法</h2>
+      </div>
+      <div class="note-content" id="note-rendered">
+        <p style="color:var(--text-muted);text-align:center;padding:48px 0;">选择左侧课程或笔记开始阅读</p>
+      </div>
+    </main>
+
+    <!-- 右栏：Notebook 代码 -->
+    <aside class="lab-notebook" id="notebook-panel">
+      <div class="lab-nb-header">
+        <h3>📓 Notebook</h3>
+        <span class="tag" id="nb-lesson-tag">选择课程加载</span>
+      </div>
+      <div class="nb-container" id="nb-rendered">
+        <p style="color:var(--text-muted);text-align:center;padding:48px 0;font-size:0.9rem;">选择带 Notebook 的课程后，代码将在此展示</p>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+  // 预加载的内容缓存
+  const cache = {};
+
+  function fetchFragment(url) {
+    if (cache[url]) return Promise.resolve(cache[url]);
+    return fetch(url).then(r => r.ok ? r.text() : '<p style="color:#999;">内容加载失败</p>').then(t => { cache[url] = t; return t; });
+  }
+
+  // 为所有 tree-item 绑定点击
+  document.querySelectorAll('.tree-item').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      // 高亮当前
+      document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+      this.classList.add('active');
+
+      const note = this.dataset.note;
+      const nb = this.dataset.nb;
+      const title = this.dataset.title;
+
+      document.getElementById('content-title').textContent = title;
+
+      // 加载课程内容（中栏）
+      if (note) {
+        fetchFragment(note + '.html').then(html => {
+          document.getElementById('note-rendered').innerHTML = html;
+        });
+      }
+
+      // 加载 notebook（右栏）
+      const nbContainer = document.getElementById('nb-rendered');
+      const nbTag = document.getElementById('nb-lesson-tag');
+      if (nb) {
+        nbTag.textContent = '加载中...';
+        fetchFragment(nb + '.html').then(html => {
+          nbContainer.innerHTML = html || '<p style="color:#999;">无 Notebook 内容</p>';
+          nbTag.textContent = title.replace('第 ', '').replace('课：', ' · ');
+        });
+      } else {
+        nbContainer.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:48px 0;font-size:0.9rem;">此笔记无关联 Notebook</p>';
+        nbTag.textContent = '概念笔记';
+      }
+    });
+  });
+
+  function toggleTree(el) {
+    const items = el.nextElementSibling;
+    const arrow = el.querySelector('.tree-arrow');
+    if (items.style.display === 'none') {
+      items.style.display = 'block';
+      arrow.textContent = '▼';
+    } else {
+      items.style.display = 'none';
+      arrow.textContent = '▶';
+    }
+  }
+
+  // 自动点击第一个
+  document.querySelector('.tree-item.active')?.click();
+  </script>
+</body>
+</html>

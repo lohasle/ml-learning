@@ -1,0 +1,131 @@
+<h1>2026年4月9日 - 第3课：模型评估与交叉验证</h1>
+<h2>今日学习主题</h2>
+<p><strong>量化模型质量：从准确率到稳健验证</strong></p>
+<h2>为什么今天学这个？</h2>
+<p>昨天学习了逻辑回归如何进行分类，但有一个关键问题：如何知道我们的模型好不好？今天学习如何量化评估分类模型的质量，这是所有机器学习项目的核心技能。没有评估，就没有真正的机器学习。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<ul>
+<li><strong>评估范式形成</strong>：1960s-1970s，随着统计学习理论发展</li>
+<li><strong>技术演进</strong>：从简单准确率到多维度指标，再到交叉验证</li>
+<li><strong>现代实践</strong>：成为ML工程化、AutoML、模型选择的基础</li>
+</ul>
+<h2>核心概念解释</h2>
+<h3>1. 为什么需要评估</h3>
+<ul>
+<li><strong>避免过拟合</strong>：模型可能记住了训练数据但泛化能力差</li>
+<li><strong>模型选择</strong>：在多个候选模型中选择最佳者</li>
+<li><strong>性能保证</strong>：确保模型在实际应用中表现良好</li>
+</ul>
+<h3>2. 训练/验证/测试三分法</h3>
+<pre><code>训练集 → 训练模型
+验证集 → 调参、选择模型
+测试集 → 最终评估
+</code></pre>
+<h3>3. 核心评估指标</h3>
+<h4>混淆矩阵基础</h4>
+<pre><code>          预测
+实际    正类    负类
+正类    TP      FN
+负类    FP      TN
+</code></pre>
+<h4>四大核心指标</h4>
+<ol>
+<li><strong>准确率 (Accuracy)</strong> = (TP+TN)/(TP+FP+TN+FN)</li>
+<li><strong>精确率 (Precision)</strong> = TP/(TP+FP)  -&gt; 预测为正的中有多少是真正</li>
+<li><strong>召回率 (Recall)</strong> = TP/(TP+FN)     -&gt; 真正的有多少被找出来</li>
+<li><strong>F1分数</strong> = 2×(Precision×Recall)/(Precision+Recall)</li>
+</ol>
+<h2>直觉理解 / 类比理解</h2>
+<h3>医生诊断类比</h3>
+<ul>
+<li><strong>准确率</strong>：所有诊断中有多少是对的</li>
+<li><strong>精确率</strong>：诊断为"生病"的患者中有多少真的生病</li>
+<li><strong>召回率</strong>：真正生病的患者中有多少被诊断出来</li>
+</ul>
+<h3>招聘面试类比</h3>
+<ul>
+<li><strong>精确率</strong>：面试通过的人中有多少是真合适的</li>
+<li><strong>召回率</strong>：所有合适的人中有多少来面试了</li>
+</ul>
+<h2>关键机制或关键公式</h2>
+<h3>1. 交叉验证</h3>
+<pre><code class="language-python"># K折交叉验证
+from sklearn.model_selection import cross_val_score
+scores = cross_val_score(model, X, y, cv=5)
+print(f&quot;平均准确率: {scores.mean():.3f} ± {scores.std():.3f}&quot;)
+</code></pre>
+<h3>2. ROC曲线与AUC</h3>
+<pre><code class="language-python">from sklearn.metrics import roc_auc_score, roc_curve
+
+fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
+auc_score = roc_auc_score(y_true, y_pred_proba)
+
+# 绘制ROC曲线
+plt.plot(fpr, tpr, label=f'AUC = {auc_score:.3f}')
+plt.plot([0,1], [0,1], '--', label='Random')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+</code></pre>
+<h3>3. 学习曲线诊断</h3>
+<pre><code class="language-python">from sklearn.model_selection import learning_curve
+
+train_sizes, train_scores, val_scores = learning_curve(
+    model, X, y, cv=5, train_sizes=np.linspace(0.1, 1.0, 10)
+)
+</code></pre>
+<h2>最小示例</h2>
+<pre><code class="language-python">import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import classification_report, confusion_matrix
+
+# 生成示例数据
+np.random.seed(42)
+X = np.random.randn(100, 2)
+y = (X[:, 0] + X[:, 1] &gt; 0).astype(int)
+
+# 分割数据
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 训练模型
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# 基本评估
+y_pred = model.predict(X_test)
+print(&quot;分类报告：&quot;)
+print(classification_report(y_test, y_pred))
+
+# 交叉验证
+cv_scores = cross_val_score(model, X, y, cv=5)
+print(f&quot;交叉验证准确率: {cv_scores.mean():.3f} ± {cv_scores.std():.3f}&quot;)
+
+# 混淆矩阵
+cm = confusion_matrix(y_test, y_pred)
+print(&quot;混淆矩阵：&quot;)
+print(cm)
+</code></pre>
+<h2>关键项目、关键论文或关键系统案例</h2>
+<h3>关键项目</h3>
+<ul>
+<li><strong>scikit-learn</strong>：<code>metrics</code> 模块提供完整的评估体系</li>
+<li><strong>MLflow</strong>：实验跟踪与模型评估结合</li>
+<li><strong>Hugging Face Evaluate</strong>：专门针对NLP模型的评估库</li>
+</ul>
+<h3>经典论文</h3>
+<ul>
+<li>"Estimation of the Error Rate of a Classification Rule" (Dudoit et al., 2002)</li>
+<li>"An Introduction to Variable and Feature Selection" (Guyon &amp; Elisseeff, 2003)</li>
+</ul>
+<h2>今天学完后我应该记住什么</h2>
+<ol>
+<li><strong>评估框架</strong>：训练/验证/测试三分法是评估基础</li>
+<li><strong>指标选择</strong>：准确率不够用，要根据具体问题选择精确率、召回率等</li>
+<li><strong>交叉验证</strong>：5折或10折交叉验证比单一分割更稳健</li>
+<li><strong>过拟合检测</strong>：通过训练集和验证集性能差距判断</li>
+<li><strong>ROC-AUC</strong>：衡量分类器整体性能的重要指标</li>
+</ol>
+<h2>下一步会学什么</h2>
+<p><strong>第4课：过拟合与正则化</strong>
+学习如何处理模型过拟合问题，包括L1/L2正则化、Dropout等技术，以及如何平衡偏差与方差。</p>
