@@ -1,0 +1,69 @@
+<h1>2026年4月12日 - 第6课：随机森林与集成方法</h1>
+
+<h2>今日学习主题</h2>
+<strong>从一棵树到一片森林——集成学习如何让弱学习器变成强学习器</strong>
+
+<h2>为什么学这个？</h2>
+<p>上一课我们学了决策树——直观、可解释，但容易过拟合。今天学随机森林，就是决策树的「升级版」：<strong>用一群决策树投票，比单棵树更准、更稳</strong>。</p>
+
+<p>集成学习是现代 ML 最成功的思想之一，Kaggle 比赛中大部分冠军方案都用到了集成方法。理解 Bagging 和 Boosting，是进入高级 ML 的关键门槛。</p>
+
+<h2>核心概念解释</h2>
+
+<h3>1. 集成学习（Ensemble Learning）</h3>
+<ul><li><strong>直觉</strong>：三个臭皮匠顶个诸葛亮</li><li><strong>数学基础</strong>：大数定律。假设每个弱分类器正确率 $p > 0.5$，$N$ 个独立分类器投票，整体正确率随 $N$ 增大趋近 1</li><li><strong>关键前提</strong>：个体学习器的错误要尽量「不相关」——差异性越大，集成效果越好</li></ul>
+
+<h3>2. Bagging（Bootstrap Aggregating）</h3>
+<ul><li><strong>流程</strong>：从训练集有放回抽样 → 生成多个子数据集 → 分别训练模型 → 投票/平均</li><li><strong>为什么有效</strong>：每棵树看到不同数据子集，错误不相关，投票抵消个体错误</li><li><strong>降低什么</strong>：主要降低<strong>方差</strong>（variance）</li><li><strong>代表算法</strong>：BaggingClassifier、随机森林</li></ul>
+
+<h3>3. 随机森林（Random Forest）</h3>
+<ul><li>在 Bagging 基础上加一层随机性：每次分裂只从<strong>随机子集的特征</strong>中选择</li><li>默认每次分裂考虑 $\sqrt{d}$ 个特征（$d$ 是总特征数）</li><li><strong>为什么需要特征随机</strong>？如果某个特征特别强，所有树都优先用它 → 树之间高度相关 → 集成效果打折</li><li><strong>附加好处</strong>：自动提供特征重要性排序</li></ul>
+
+<h3>4. Boosting（提升方法）</h3>
+<ul><li><strong>核心思想</strong>：串行训练，每一棵新树重点关注前面所有树犯错的样本</li><li><strong>AdaBoost</strong>：提高被错分样本的权重，下一棵树更关注这些「难题」</li><li><strong>GBDT</strong>：每棵新树拟合前面所有树的残差（预测误差）</li><li><strong>降低什么</strong>：主要降低<strong>偏差</strong>（bias）</li><li><strong>代表算法</strong>：AdaBoost、GBDT、XGBoost、LightGBM</li></ul>
+
+<h2>关键公式直觉</h2>
+
+<table>
+<tr><td>概念</td><td>公式/机制</td><td>直觉解释</td></tr>
+<tr><td>Bootstrap</td><td>有放回抽样 $N$ 次</td><td>每棵树看到的训练集有差异，约 63% 的不同样本</td></tr>
+<tr><td>投票集成</td><td>$\hat{y} = \text{majority}(h_1(x), ..., h_N(x))$</td><td>多数人说了算</td></tr>
+<tr><td>特征随机</td><td>每次分裂只看 $\sqrt{d}$ 个特征</td><td>别让所有树都盯着同一个强特征</td></tr>
+<tr><td>AdaBoost 样本权重</td><td>错分样本权重加大</td><td>难题重点攻克</td></tr>
+<tr><td>GBDT 残差拟合</td><td>$F_{m}(x) = F_{m-1}(x) + h_m(x)$</td><td>每棵新树补上前面没做好的部分</td></tr>
+</table>
+
+<h2>动手实践要点</h2>
+<ul><li>Notebook 中手动实现了 SimpleBagging，帮助理解 Bootstrap 抽样过程</li><li>重点跑「多数投票的威力」那段代码，直观感受集成的数学基础</li><li>对比单棵树、Bagging、随机森林的决策边界可视化——差异非常明显</li><li>Boosting 的迭代曲线图：注意观察测试准确率在某个点后开始下降（过拟合信号）</li></ul>
+
+<h2>Bagging vs Boosting 选择指南</h2>
+
+<table>
+<tr><td>场景</td><td>推荐</td><td>原因</td></tr>
+<tr><td>数据有噪声</td><td>Bagging / 随机森林</td><td>对噪声不敏感</td></tr>
+<tr><td>需要最高精度</td><td>Boosting (XGBoost)</td><td>偏差和方差都能降</td></tr>
+<tr><td>数据量很大</td><td>随机森林</td><td>可并行训练，速度快</td></tr>
+<tr><td>快速出基线</td><td>随机森林</td><td>调参简单，默认参数就不错</td></tr>
+<tr><td>比赛冲分</td><td>Boosting + Bagging 混合</td><td>互补效果最好</td></tr>
+</table>
+
+<h2>常见问题</h2>
+
+<strong>Q: 随机森林不容易过拟合，是真的吗？</strong>
+<p>A: 增加树的数量不会过拟合（因为只是投票），但单棵树深度太深仍可能过拟合。关键参数：`max_depth`、`min_samples_leaf`。</p>
+
+<strong>Q: XGBoost 为什么比 sklearn 的 GBDT 强？</strong>
+<p>A: XGBoost 加了正则化（防止过拟合）、列采样（类似随机森林的特征随机）、并行化、处理缺失值等工程优化，是 GBDT 的工业级实现。</p>
+
+<strong>Q: 集成学习能用在深度学习吗？</strong>
+<p>A: 可以！Dropout 本质上就是一种集成（训练时随机丢弃神经元 = 训练多个子网络），推理时取平均。</p>
+
+<h2>本课总结</h2>
+<p>1. 集成学习的核心：组合多个弱学习器 → 强学习器，数学基础是大数定律</p>
+<p>2. Bagging 通过并行训练 + 投票降低<strong>方差</strong>，代表是随机森林</p>
+<p>3. Boosting 通过串行训练 + 关注错误降低<strong>偏差</strong>，代表是 GBDT、XGBoost</p>
+<p>4. 随机森林在 Bagging 基础上加特征随机，进一步增加树之间的差异性</p>
+<p>5. 特征重要性是随机森林的附加红利，能帮助理解数据</p>
+
+<h2>下一步</h2>
+<p>下一课：SVM（支持向量机）——找到使分类间隔最大的超平面，理解核方法如何处理非线性问题。</p>

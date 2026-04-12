@@ -1,0 +1,298 @@
+<div class="nb-cell nb-markdown"><h1>📖 第六课：随机森林与集成方法</h1>
+<p><strong>目标</strong>：理解集成学习的核心思想，掌握 Bagging 与随机森林，了解 Boosting 的基本概念</p>
+<p>---</p>
+<h2>📚 学习目标</h2>
+<ul><li>理解「三个臭皮匠顶个诸葛亮」——集成学习的直觉</li>
+<li>掌握 Bagging（Bootstrap Aggregating）的工作原理</li>
+<li>理解随机森林如何通过随机性降低过拟合</li>
+<li>了解 Boosting（AdaBoost、GBDT）的核心思想</li>
+<li>对比 Bagging 与 Boosting 的适用场景</li></ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification, make_moons
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import (
+    BaggingClassifier, RandomForestClassifier,
+    AdaBoostClassifier, GradientBoostingClassifier
+)
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score
+import warnings
+warnings.filterwarnings('ignore')
+
+np.random.seed(42)
+print("库导入成功！")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><p>---</p>
+<h2>1. 集成学习的核心直觉</h2>
+<p>假设你有一个复杂的问题要决策：</p>
+<ul><li><strong>方案 A</strong>：找一位专家拍板 → 单模型（容易犯错）</li>
+<li><strong>方案 B</strong>：找 100 个普通人投票 → 集成（多数人正确的概率更高）</li>
+<p>这就是集成学习（Ensemble Learning）的精髓：<strong>组合多个弱学习器，得到一个强学习器</strong>。</p>
+<p>数学基础——<strong>大数定律</strong>：</p>
+<li>假设每个弱学习器正确率为 $p > 0.5$</li>
+<li>$N$ 个独立学习器投票，整体正确率随 $N$ 增大趋近于 1</li></ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 直觉演示：多数投票的威力
+from scipy.stats import binom
+
+# 单个分类器准确率 = 0.6（比随机好一点）
+p_individual = 0.6
+n_voters = [1, 3, 5, 11, 21, 51, 101]
+
+print("多数投票的威力（单分类器准确率 = 60%）")
+print("=" * 50)
+for n in n_voters:
+    # 多数投票成功的概率 = P(超过半数正确)
+    majority = n // 2 + 1
+    prob = 1 - binom.cdf(majority - 1, n, p_individual)
+    print(f"  {n:3d} 个分类器投票 → 准确率: {prob:.4f} ({prob*100:.1f}%)")
+
+print("\n💡 51 个只有 60% 准确率的分类器投票 → 准确率超过 94%！")
+print("   前提：分类器的错误要尽量「不相关」")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><p>---</p>
+<h2>2. Bagging：Bootstrap Aggregating</h2>
+<p><strong>核心流程</strong>： 1. 从训练集中<strong>有放回抽样</strong>（Bootstrap），生成 $N$ 个子数据集 2. 每个子数据集训练一个独立的模型（通常是决策树） 3. 分类：多数投票；回归：取平均</p>
+<p><strong>为什么有效？</strong></p>
+<ul><li>每棵树看到不同的数据子集 → 错误不相关</li>
+<li>投票/平均 → 抵消个体错误 → 降低<strong>方差</strong></li></ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 手动实现 Bagging
+class SimpleBagging:
+    """手动实现 Bagging 分类器"""
+    def __init__(self, n_estimators=10, max_depth=5):
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.trees = []
+    
+    def fit(self, X, y):
+        n_samples = len(X)
+        self.trees = []
+        for i in range(self.n_estimators):
+            # Bootstrap: 有放回抽样
+            indices = np.random.choice(n_samples, size=n_samples, replace=True)
+            X_boot = X[indices]
+            y_boot = y[indices]
+            
+            tree = DecisionTreeClassifier(max_depth=self.max_depth, random_state=i)
+            tree.fit(X_boot, y_boot)
+            self.trees.append(tree)
+        return self
+    
+    def predict(self, X):
+        # 收集所有树的预测
+        predictions = np.array([tree.predict(X) for tree in self.trees])
+        # 多数投票
+        from scipy import stats
+        majority_votes, _ = stats.mode(predictions, axis=0, keepdims=False)
+        return majority_votes
+
+# 生成数据
+X, y = make_moons(n_samples=300, noise=0.25, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 对比：单棵决策树 vs 手动 Bagging
+single_tree = DecisionTreeClassifier(max_depth=5, random_state=42)
+single_tree.fit(X_train, y_train)
+
+bagging = SimpleBagging(n_estimators=20, max_depth=5)
+bagging.fit(X_train, y_train)
+
+print(f"单棵决策树: {accuracy_score(y_test, single_tree.predict(X_test)):.3f}")
+print(f"手动 Bagging (20棵): {accuracy_score(y_test, bagging.predict(X_test)):.3f}")
+print("\n💡 Bagging 通过投票降低了方差，通常比单棵树更稳定")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><p>---</p>
+<h2>3. 随机森林：Bagging + 特征随机</h2>
+<p>随机森林在 Bagging 基础上增加了一层随机性：</p>
+<ul><li>Bagging：每棵树用<strong>不同的数据子集</strong></li>
+<li>随机森林：每棵树用不同的数据子集 <strong>+ 每次分裂只考虑随机子集的特征</strong></li>
+<p><strong>为什么需要特征随机？</strong></p>
+<li>如果有一个特征特别强，所有树都会优先用它 → 树之间高度相关</li>
+<li>限制特征选择 → 树的差异更大 → 集成效果更好</li></ul>
+<p>默认：每次分裂考虑 $\sqrt{d}$ 个特征（$d$ 是总特征数）</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 可视化：单棵树 vs Bagging vs 随机森林的决策边界
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+# 决策边界绘制
+x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
+y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.02),
+                     np.arange(y_min, y_max, 0.02))
+
+models = [
+    (DecisionTreeClassifier(max_depth=None, random_state=42), "单棵决策树（无限制）"),
+    (BaggingClassifier(DecisionTreeClassifier(), n_estimators=20, random_state=42), "Bagging (20棵)"),
+    (RandomForestClassifier(n_estimators=20, random_state=42), "随机森林 (20棵)")
+]
+
+for ax, (model, title) in zip(axes, models):
+    model.fit(X_train, y_train)
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    
+    ax.contourf(xx, yy, Z, alpha=0.3, cmap='viridis')
+    ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap='viridis',
+              edgecolors='black', s=30, alpha=0.7)
+    
+    train_acc = accuracy_score(y_train, model.predict(X_train))
+    test_acc = accuracy_score(y_test, model.predict(X_test))
+    ax.set_title(f'{title}\n训练: {train_acc:.3f}, 测试: {test_acc:.3f}')
+    ax.set_xlabel('特征 1')
+    ax.set_ylabel('特征 2')
+
+plt.suptitle('决策边界对比', fontsize=14)
+plt.tight_layout()
+plt.show()
+
+print("💡 单棵树过拟合训练数据（边界复杂）")
+print("💡 Bagging 和随机森林的边界更平滑、更泛化")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 随机森林核心参数探索
+X_big, y_big = make_classification(n_samples=500, n_features=10, n_informative=5,
+                                   n_redundant=2, random_state=42)
+X_tr, X_te, y_tr, y_te = train_test_split(X_big, y_big, test_size=0.3, random_state=42)
+
+# 1. 树的数量对性能的影响
+n_trees_range = [1, 3, 5, 10, 20, 50, 100, 200]
+test_accs = []
+train_accs = []
+
+for n in n_trees_range:
+    rf = RandomForestClassifier(n_estimators=n, random_state=42)
+    rf.fit(X_tr, y_tr)
+    train_accs.append(accuracy_score(y_tr, rf.predict(X_tr)))
+    test_accs.append(accuracy_score(y_te, rf.predict(X_te)))
+
+plt.figure(figsize=(10, 5))
+plt.plot(n_trees_range, train_accs, 'b-o', label='训练准确率')
+plt.plot(n_trees_range, test_accs, 'r-s', label='测试准确率')
+plt.xlabel('树的数量')
+plt.ylabel('准确率')
+plt.title('随机森林：树的数量 vs 准确率')
+plt.xscale('log')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+
+print(f"💡 树的数量增加到一定程度后，性能趋于稳定")
+print(f"   通常 100~500 棵树就足够了")
+print(f"   更多树不会过拟合，但计算成本增加")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><p>---</p>
+<h2>4. 特征重要性</h2>
+<p>随机森林的一大优势：<strong>自动评估特征重要性</strong></p>
+<p>原理：一个特征在所有树中被用于分裂时，平均带来了多少不纯度的下降。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 特征重要性分析
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_tr, y_tr)
+
+feature_names = [f'特征{i+1}' for i in range(X_big.shape[1])]
+importances = rf.feature_importances_
+sorted_idx = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(10, 5))
+colors = ['#C96442' if i &lt; 5 else '#FAF8F5' for i in range(len(sorted_idx))]
+plt.bar(range(len(importances)), importances[sorted_idx],
+        color=['#C96442' if importances[sorted_idx[i]] &gt; 0.05 else '#999' for i in range(len(sorted_idx))])
+plt.xticks(range(len(importances)), [feature_names[i] for i in sorted_idx])
+plt.title('随机森林特征重要性')
+plt.ylabel('重要性得分')
+plt.tight_layout()
+plt.show()
+
+print("💡 5 个 informative 特征 + 2 个 redundant 特征的重要性最高")
+print(f"\n测试准确率: {accuracy_score(y_te, rf.predict(X_te)):.3f}")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><p>---</p>
+<h2>5. Boosting：从错误中学习</h2>
+<p>与 Bagging 的「并行独立训练」不同，Boosting 是<strong>串行训练</strong>：</p>
+<p>1. 训练第 1 棵树 → 记录预测错误 2. 训练第 2 棵树 → <strong>重点关注第 1 棵树的错误样本</strong> 3. 训练第 3 棵树 → 关注前面所有树的错误样本 4. ... 如此迭代</p>
+<p>两种主要范式：</p>
+<ul><li><strong>AdaBoost</strong>：调整样本权重，错分的样本权重加大</li>
+<li><strong>GBDT</strong>：每棵新树拟合前面所有树的<strong>残差</strong>（预测误差）</li></ul>
+<p>| 对比 | Bagging | Boosting | |------|---------|----------| | 训练方式 | 并行 | 串行 | | 核心目标 | 降低方差 | 降低偏差 | | 过拟合风险 | 低 | 较高（需控制） | | 代表算法 | 随机森林 | AdaBoost、GBDT、XGBoost |</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 对比 Bagging vs Boosting 在同一数据集上的表现
+models = {
+    '单棵决策树': DecisionTreeClassifier(max_depth=3, random_state=42),
+    'Bagging': BaggingClassifier(DecisionTreeClassifier(max_depth=3),
+                                 n_estimators=50, random_state=42),
+    '随机森林': RandomForestClassifier(n_estimators=50, max_depth=3, random_state=42),
+    'AdaBoost': AdaBoostClassifier(DecisionTreeClassifier(max_depth=2),
+                                   n_estimators=50, random_state=42),
+    'GBDT': GradientBoostingClassifier(n_estimators=50, max_depth=3, random_state=42)
+}
+
+print("5种模型交叉验证对比 (5-fold):")
+print("=" * 55)
+for name, model in models.items():
+    scores = cross_val_score(model, X_big, y_big, cv=5, scoring='accuracy')
+    print(f"  {name:10s}: {scores.mean():.3f} ± {scores.std():.3f}")
+
+print("\n💡 通常 Boosting 精度更高，但更容易过拟合")
+print("💡 随机森林更稳健、更易调参、训练更快")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># Boosting 迭代过程的可视化
+n_estimators_range = [1, 5, 10, 20, 50, 100, 200]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+# AdaBoost
+ada_train, ada_test = [], []
+for n in n_estimators_range:
+    ada = AdaBoostClassifier(DecisionTreeClassifier(max_depth=2),
+                             n_estimators=n, random_state=42)
+    ada.fit(X_tr, y_tr)
+    ada_train.append(accuracy_score(y_tr, ada.predict(X_tr)))
+    ada_test.append(accuracy_score(y_te, ada.predict(X_te)))
+
+ax1.plot(n_estimators_range, ada_train, 'b-o', label='训练', markersize=4)
+ax1.plot(n_estimators_range, ada_test, 'r-s', label='测试', markersize=4)
+ax1.set_title('AdaBoost: 迭代次数 vs 准确率')
+ax1.set_xlabel('迭代次数')
+ax1.set_ylabel('准确率')
+ax1.legend()
+ax1.grid(True, alpha=0.3)
+
+# GBDT
+gb_train, gb_test = [], []
+for n in n_estimators_range:
+    gb = GradientBoostingClassifier(n_estimators=n, max_depth=3, random_state=42)
+    gb.fit(X_tr, y_tr)
+    gb_train.append(accuracy_score(y_tr, gb.predict(X_tr)))
+    gb_test.append(accuracy_score(y_te, gb.predict(X_te)))
+
+ax2.plot(n_estimators_range, gb_train, 'b-o', label='训练', markersize=4)
+ax2.plot(n_estimators_range, gb_test, 'r-s', label='测试', markersize=4)
+ax2.set_title('GBDT: 迭代次数 vs 准确率')
+ax2.set_xlabel('迭代次数')
+ax2.set_ylabel('准确率')
+ax2.legend()
+ax2.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print("💡 Boosting 初期快速提升，后期训练准确率接近 1.0")
+print("💡 但测试准确率可能在某个点后开始下降 → 过拟合")
+print("   → 需要控制迭代次数（n_estimators）和学习率（learning_rate）")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><p>---</p>
+<h2>📝 课后思考</h2>
+<p>1. 为什么随机森林不容易过拟合？核心原因是什么？ 2. 什么场景下 Boosting 比 Bagging 更合适？反过来呢？ 3. XGBoost、LightGBM 是 GBDT 的改进版本，你觉得它们可能改进了什么？</p>
+<p>---</p>
+<p><strong>下一步</strong>：SVM（支持向量机）——找到最优分类超平面，理解核方法的魅力。</p></div>

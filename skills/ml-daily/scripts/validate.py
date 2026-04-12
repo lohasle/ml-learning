@@ -114,7 +114,10 @@ for df in daily_files:
 
 # 知识笔记 HTML 片段
 for nf in sorted(glob.glob(os.path.join(NOTES, '*.md'))):
-    name = os.path.basename(nf).replace('.md', '')
+    basename = os.path.basename(nf)
+    if basename == 'README.md':
+        continue  # README 不是知识笔记，跳过
+    name = basename.replace('.md', '')
     html_path = os.path.join(DOCS, f'note-{name}.html')
     if not os.path.exists(html_path):
         results["warnings"].append(f"缺少笔记 HTML 片段: note-{name}.html")
@@ -153,7 +156,7 @@ else:
 if os.path.exists(README):
     with open(README) as f:
         readme_content = f.read()
-    readme_lesson_links = readme_content.count('lessons/')
+    readme_lesson_links = len(re.findall(r'lessons/\d+_', readme_content))
     if readme_lesson_links != len(notebooks):
         results["warnings"].append(
             f"README 课程引用 ({readme_lesson_links}) 与 notebook 数 ({len(notebooks)}) 不一致"

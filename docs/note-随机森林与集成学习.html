@@ -1,0 +1,37 @@
+<h1>随机森林与集成学习</h1>
+
+<h2>🎯 核心概念</h2>
+
+<h3>1. 基础定义</h3>
+<ul><li><strong>类型</strong>：集成学习方法（可用于分类和回归）</li><li><strong>适用场景</strong>：几乎所有结构化数据的分类/回归任务，尤其适合快速基线模型</li><li><strong>一句话定义</strong>：组合多个决策树（或其他弱学习器），通过投票或平均得到更稳定、更准确的预测</li></ul>
+
+<h3>2. 集成学习两大流派</h3>
+<ul><li><strong>Bagging</strong>（并行训练）：随机森林</li></ul>
+<p>  - 每个学习器独立训练，看到不同的数据子集</p>
+<p>  - 最终通过投票/平均降低方差</p>
+<ul><li><strong>Boosting</strong>（串行训练）：AdaBoost、GBDT、XGBoost</li></ul>
+<p>  - 每个学习器重点修正前一个学习器的错误</p>
+<p>  - 通过迭代降低偏差</p>
+
+<h3>3. 随机森林的双重随机性</h3>
+<ul><li><strong>数据随机</strong>：Bootstrap 有放回抽样，每棵树看到约 63% 的不同样本</li><li><strong>特征随机</strong>：每次分裂只从 $\sqrt{d}$ 个随机特征中选择（$d$ 为总特征数）</li><li>两种随机性共同确保树之间的差异性最大化</li></ul>
+
+<h3>4. 数学原理</h3>
+<ul><li>单棵树误差较大、方差高</li><li>$N$ 棵独立树投票，方差降为原来的约 $1/N$</li><li>前提：树之间的相关性越低，效果越好</li></ul>
+
+<h2>📊 关键公式</h2>
+
+<table>
+<tr><td>公式</td><td>含义</td><td>直觉</td></tr>
+<tr><td>Bootstrap 抽样</td><td>有放回地从 $n$ 个样本中抽 $n$ 个</td><td>每棵树看到 ~63% 的独特样本</td></tr>
+<tr><td>投票：$\hat{y} = \text{mode}(h_1, ..., h_N)$</td><td>多数投票</td><td>少数服从多数</td></tr>
+<tr><td>特征子集：$m = \sqrt{d}$</td><td>每次分裂考虑的特征数</td><td>避免所有树选中同一强特征</td></tr>
+<tr><td>OOB 误差</td><td>未被抽中的 ~37% 样本做验证</td><td>免费的验证集</td></tr>
+</table>
+
+<h2>🔗 关联概念</h2>
+<ul><li>前置知识：决策树（第 5 课）、过拟合与正则化（第 4 课）</li><li>后续应用：XGBoost/LightGBM（现代 Boosting）、深度学习中的 Dropout</li><li>同类对比：Bagging vs Boosting vs Stacking</li></ul>
+
+<h2>💡 记忆技巧</h2>
+<strong>随机森林 = 一群决策树各看不同的数据 + 各看不同的特征 + 最后投票</strong>
+<p>就像一个委员会：每个人拿到不同的资料，从不同角度分析，最后举手表决。</p>
