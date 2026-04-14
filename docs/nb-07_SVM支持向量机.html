@@ -1,0 +1,346 @@
+<div class="nb-cell nb-markdown"><h1>📖 第七课：SVM 支持向量机</h1>
+<p><strong>目标</strong>：理解 SVM 的核心思想——「找最宽的那条路」，掌握最大间隔分类器与核技巧</p>
+<hr />
+<h2>📚 学习目标</h2>
+<ul>
+<li>理解 SVM 的核心直觉：在两类之间找一条「最宽的路」</li>
+<li>掌握最大间隔（Maximum Margin）与支持向量的概念</li>
+<li>理解软间隔与 C 参数如何平衡分类严格程度</li>
+<li>理解核技巧（Kernel Trick）如何让 SVM 处理非线性问题</li>
+<li>对比线性核、多项式核、RBF 核的适用场景</li>
+</ul></div>
+<div class="nb-cell nb-code"><pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs, make_moons, make_circles
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import StandardScaler
+import warnings
+warnings.filterwarnings('ignore')
+
+np.random.seed(42)
+print("库导入成功！")</code></pre></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>1. SVM 的核心直觉</h2>
+<p>想象你站在两个阵营之间，要把它们分开。</p>
+<p><strong>逻辑回归</strong>的做法：找一条线，让两边的点尽量分对。
+<strong>SVM 的做法</strong>：找一条线，让这条线离两边最近的点都尽量远。</p>
+<p>用一个生活类比：
+- 逻辑回归像是一个<strong>裁判</strong>，画一条线把两队分开就行
+- SVM 像是一个<strong>城市规划师</strong>，在两栋建筑之间修一条最宽的马路</p>
+<p>离决策边界最近的那些点叫做<strong>支持向量（Support Vectors）</strong>——它们「撑」起了整个模型。
+删掉一个普通的点，模型不变；删掉一个支持向量，决策边界会改变。</p></div>
+<div class="nb-cell nb-code"><pre><code># 生成线性可分数据，直观展示最大间隔
+X, y = make_blobs(n_samples=50, centers=2, random_state=6, cluster_std=0.6)
+y = np.where(y == 0, -1, 1)  # SVM 习惯用 -1/+1 标签
+
+# 训练线性 SVM
+svm_linear = SVC(kernel='linear', C=1e5)  # C 很大 → 硬间隔
+svm_linear.fit(X, y)
+
+# 可视化
+plt.figure(figsize=(10, 6))
+
+# 画数据点
+plt.scatter(X[y == -1, 0], X[y == -1, 1], c='#C96442', s=80, edgecolors='k', label='类别 -1')
+plt.scatter(X[y == 1, 0], X[y == 1, 1], c='#4A90D9', s=80, edgecolors='k', label='类别 +1')
+
+# 画决策边界和间隔
+ax = plt.gca()
+xlim = ax.get_xlim()
+ylim = ax.get_ylim()
+
+# 创建网格
+xx = np.linspace(xlim[0], xlim[1], 30)
+yy = np.linspace(ylim[0], ylim[1], 30)
+YY, XX = np.meshgrid(yy, xx)
+xy = np.vstack([XX.ravel(), YY.ravel()]).T
+Z = svm_linear.decision_function(xy).reshape(XX.shape)
+
+# 决策边界和间隔边界
+ax.contour(XX, YY, Z, colors='k', levels=[-1, 0, 1], alpha=0.5,
+           linestyles=['--', '-', '--'])
+
+# 标记支持向量
+ax.scatter(svm_linear.support_vectors_[:, 0], svm_linear.support_vectors_[:, 1],
+           s=200, linewidth=2, facecolors='none', edgecolors='red', label='支持向量')
+
+plt.title('SVM 最大间隔分类器：实线=决策边界，虚线=间隔边界', fontsize=14)
+plt.xlabel('特征 1')
+plt.ylabel('特征 2')
+plt.legend()
+plt.tight_layout()
+plt.savefig('svm_max_margin.png', dpi=100, bbox_inches='tight')
+plt.show()
+
+print(f"支持向量数量: {len(svm_linear.support_vectors_)}")
+print(f"总样本数量: {len(X)}")
+print(f"只有 {len(svm_linear.support_vectors_)/len(X)*100:.1f}% 的点决定了决策边界！")</code></pre></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>2. 最大间隔的数学本质</h2>
+<p>SVM 的优化目标：</p>
+<p>$$\min_{w,b} \frac{1}{2}|w|^2$$</p>
+<p>约束条件：$y_i(w \cdot x_i + b) \geq 1$</p>
+<p><strong>直觉解释</strong>：
+- $|w|^2$ 越小 → 间隔越大（间隔 = $\frac{2}{|w|}$）
+- 约束要求所有点都在间隔边界正确的一侧
+- 只有少数点刚好在边界上（距离 = 1），它们就是支持向量</p>
+<p><strong>关键洞察</strong>：SVM 的决策函数只依赖支持向量，不依赖所有训练数据。
+这就是 SVM 在高维数据上依然高效的原因——模型只「记住」了少数关键点。</p></div>
+<div class="nb-cell nb-code"><pre><code># 软间隔 vs 硬间隔：C 参数的影响
+# 生成有少量噪声重叠的数据
+X_soft, y_soft = make_blobs(n_samples=100, centers=2, random_state=42, cluster_std=1.5)
+y_soft = np.where(y_soft == 0, -1, 1)
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+C_values = [0.01, 1.0, 100.0]
+
+for ax, C_val in zip(axes, C_values):
+    svm = SVC(kernel='linear', C=C_val)
+    svm.fit(X_soft, y_soft)
+    
+    # 画数据点
+    ax.scatter(X_soft[y_soft == -1, 0], X_soft[y_soft == -1, 1], 
+               c='#C96442', s=40, edgecolors='k', alpha=0.7)
+    ax.scatter(X_soft[y_soft == 1, 0], X_soft[y_soft == 1, 1], 
+               c='#4A90D9', s=40, edgecolors='k', alpha=0.7)
+    
+    # 决策边界
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    xx = np.linspace(xlim[0], xlim[1], 30)
+    yy = np.linspace(ylim[0], ylim[1], 30)
+    YY, XX = np.meshgrid(yy, xx)
+    xy = np.vstack([XX.ravel(), YY.ravel()]).T
+    Z = svm.decision_function(xy).reshape(XX.shape)
+    ax.contour(XX, YY, Z, colors='k', levels=[-1, 0, 1], alpha=0.5,
+               linestyles=['--', '-', '--'])
+    
+    # 标记支持向量
+    ax.scatter(svm.support_vectors_[:, 0], svm.support_vectors_[:, 1],
+               s=120, linewidth=1.5, facecolors='none', edgecolors='red')
+    
+    train_acc = accuracy_score(y_soft, svm.predict(X_soft))
+    n_sv = len(svm.support_vectors_)
+    ax.set_title(f'C={C_val} | 训练准确率={train_acc:.2f} | 支持向量={n_sv}', fontsize=11)
+
+plt.suptitle('C 参数对 SVM 的影响：小 C → 更宽间隔（容忍误分类） | 大 C → 更窄间隔（严格分类）', fontsize=13)
+plt.tight_layout()
+plt.savefig('svm_c_parameter.png', dpi=100, bbox_inches='tight')
+plt.show()</code></pre></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>3. 核技巧：让 SVM 处理非线性问题</h2>
+<p>线性 SVM 只能画直线。但如果数据是月牙形、圆环形呢？</p>
+<p><strong>核技巧的核心思想</strong>：
+- 不改变原始数据，而是把数据「隐式地」映射到更高维的空间
+- 在高维空间中，数据变成了线性可分的
+- 而且我们不需要真的计算高维映射——只需用核函数计算「内积」</p>
+<p><strong>常用核函数</strong>：
+| 核函数 | 公式 | 适用场景 |
+|--------|------|----------|
+| 线性核 | $K(x,z) = x \cdot z$ | 高维稀疏数据（文本） |
+| 多项式核 | $K(x,z) = (x \cdot z + c)^d$ | 特征有交互关系 |
+| RBF 核（高斯核） | $K(x,z) = e^{-\gamma|x-z|^2}$ | 通用、默认选择 |</p>
+<p>类比理解：
+- 线性核 = 用直尺画线
+- 多项式核 = 用曲线板画弯线
+- RBF 核 = 每个支持向量周围画一个「影响圆」，重叠区域决定分类</p></div>
+<div class="nb-cell nb-code"><pre><code># 不同核函数对比：非线性数据
+# 月牙形数据（经典非线性测试集）
+X_moon, y_moon = make_moons(n_samples=200, noise=0.15, random_state=42)
+
+# 标准化（SVM 对特征尺度敏感！）
+scaler = StandardScaler()
+X_moon_scaled = scaler.fit_transform(X_moon)
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+kernels = [('linear', {}), ('poly', {'degree': 3}), ('rbf', {'gamma': 1})]
+
+for ax, (kernel, params) in zip(axes, kernels):
+    svm = SVC(kernel=kernel, C=1.0, **params)
+    svm.fit(X_moon_scaled, y_moon)
+    
+    # 可视化决策边界
+    h = 0.02
+    x_min, x_max = X_moon_scaled[:, 0].min() - 0.5, X_moon_scaled[:, 0].max() + 0.5
+    y_min, y_max = X_moon_scaled[:, 1].min() - 0.5, X_moon_scaled[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = svm.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    
+    ax.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.Paired)
+    ax.scatter(X_moon_scaled[y_moon == 0, 0], X_moon_scaled[y_moon == 0, 1], 
+               c='#C96442', s=30, edgecolors='k', label='类别 0')
+    ax.scatter(X_moon_scaled[y_moon == 1, 0], X_moon_scaled[y_moon == 1, 1], 
+               c='#4A90D9', s=30, edgecolors='k', label='类别 1')
+    
+    acc = accuracy_score(y_moon, svm.predict(X_moon_scaled))
+    ax.set_title(f'{kernel} 核 | 准确率={acc:.3f}', fontsize=13)
+    ax.legend(fontsize=9)
+
+plt.suptitle('不同核函数在月牙形数据上的表现', fontsize=14)
+plt.tight_layout()
+plt.savefig('svm_kernels.png', dpi=100, bbox_inches='tight')
+plt.show()</code></pre></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>4. RBF 核的 gamma 参数</h2>
+<p>RBF 核有两个关键参数：
+- <strong>C</strong>：控制分类错误的惩罚力度（全局正则化）
+- <strong>gamma</strong>：控制每个支持向量的「影响范围」</p>
+<table>
+<thead>
+<tr>
+<th>gamma</th>
+<th>效果</th>
+<th>风险</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>小</td>
+<td>每个点影响范围大 → 决策边界更平滑</td>
+<td>欠拟合</td>
+</tr>
+<tr>
+<td>大</td>
+<td>每个点影响范围小 → 决策边界更弯曲</td>
+<td>过拟合</td>
+</tr>
+</tbody>
+</table>
+<p>调参建议：用 <code>GridSearchCV</code> 搜索 C 和 gamma 的组合。</p></div>
+<div class="nb-cell nb-code"><pre><code># gamma 参数对 RBF 核的影响
+X_circ, y_circ = make_circles(n_samples=200, noise=0.1, factor=0.5, random_state=42)
+X_circ_scaled = StandardScaler().fit_transform(X_circ)
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+gamma_values = [0.1, 1.0, 10.0]
+
+for ax, gamma_val in zip(axes, gamma_values):
+    svm = SVC(kernel='rbf', C=1.0, gamma=gamma_val)
+    svm.fit(X_circ_scaled, y_circ)
+    
+    h = 0.02
+    x_min, x_max = X_circ_scaled[:, 0].min() - 0.5, X_circ_scaled[:, 0].max() + 0.5
+    y_min, y_max = X_circ_scaled[:, 1].min() - 0.5, X_circ_scaled[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = svm.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    
+    ax.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.Paired)
+    ax.scatter(X_circ_scaled[y_circ == 0, 0], X_circ_scaled[y_circ == 1, 1], 
+               c='#C96442', s=30, edgecolors='k')
+    ax.scatter(X_circ_scaled[y_circ == 1, 0], X_circ_scaled[y_circ == 0, 1], 
+               c='#4A90D9', s=30, edgecolors='k')
+    
+    acc = accuracy_score(y_circ, svm.predict(X_circ_scaled))
+    n_sv = len(svm.support_vectors_)
+    ax.set_title(f'gamma={gamma_val} | 准确率={acc:.3f} | 支持向量={n_sv}', fontsize=11)
+
+plt.suptitle('gamma 参数对决策边界的影响', fontsize=14)
+plt.tight_layout()
+plt.savefig('svm_gamma.png', dpi=100, bbox_inches='tight')
+plt.show()</code></pre></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>5. 实战：SVM vs 随机森林对比</h2>
+<p>用一个月牙形数据集，对比 SVM 和上一课学的随机森林：
+- 哪个分类效果更好？
+- 决策边界的形状有什么不同？</p></div>
+<div class="nb-cell nb-code"><pre><code># SVM vs 随机森林对比
+from sklearn.ensemble import RandomForestClassifier
+
+X_cmp, y_cmp = make_moons(n_samples=300, noise=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X_cmp, y_cmp, test_size=0.3, random_state=42)
+
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)
+X_test_s = scaler.transform(X_test)
+
+# SVM
+svm_rbf = SVC(kernel='rbf', C=1.0, gamma=1.0)
+svm_rbf.fit(X_train_s, y_train)
+
+# 随机森林
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_train, y_train)  # 随机森林不需要标准化
+
+# 可视化对比
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+models = [
+    (svm_rbf, X_train_s, 'SVM (RBF)', axes[0]),
+    (rf, X_train, '随机森林', axes[1])
+]
+
+for model, X_vis, name, ax in models:
+    h = 0.02
+    x_min, x_max = X_vis[:, 0].min() - 0.5, X_vis[:, 0].max() + 0.5
+    y_min, y_max = X_vis[:, 1].min() - 0.5, X_vis[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    
+    ax.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.Paired)
+    ax.scatter(X_vis[y_train == 0, 0], X_vis[y_train == 0, 1], 
+               c='#C96442', s=30, edgecolors='k')
+    ax.scatter(X_vis[y_train == 1, 0], X_vis[y_train == 1, 1], 
+               c='#4A90D9', s=30, edgecolors='k')
+    ax.set_title(name, fontsize=13)
+
+plt.suptitle('SVM vs 随机森林：决策边界对比', fontsize=14)
+plt.tight_layout()
+plt.savefig('svm_vs_rf.png', dpi=100, bbox_inches='tight')
+plt.show()
+
+# 测试集准确率
+svm_acc = accuracy_score(y_test, svm_rbf.predict(X_test_s))
+rf_acc = accuracy_score(y_test, rf.predict(X_test))
+
+print(f"SVM (RBF) 测试准确率: {svm_acc:.3f}")
+print(f"随机森林 测试准确率: {rf_acc:.3f}")
+print(f"\n交叉验证（5折）:")
+
+svm_cv = cross_val_score(SVC(kernel='rbf', C=1.0, gamma=1.0), scaler.transform(X_cmp), y_cmp, cv=5)
+rf_cv = cross_val_score(RandomForestClassifier(n_estimators=100, random_state=42), X_cmp, y_cmp, cv=5)
+print(f"  SVM: {svm_cv.mean():.3f} ± {svm_cv.std():.3f}")
+print(f"  随机森林: {rf_cv.mean():.3f} ± {rf_cv.std():.3f}")</code></pre></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>🎯 总结</h2>
+<table>
+<thead>
+<tr>
+<th>要点</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>核心思想</td>
+<td>在两类之间找最宽的路（最大间隔）</td>
+</tr>
+<tr>
+<td>支持向量</td>
+<td>决定决策边界的少数关键点</td>
+</tr>
+<tr>
+<td>软间隔 &amp; C</td>
+<td>C 大→严格分类，C 小→容忍错误、更宽间隔</td>
+</tr>
+<tr>
+<td>核技巧</td>
+<td>不显式映射到高维，用核函数计算内积</td>
+</tr>
+<tr>
+<td>RBF 核</td>
+<td>最常用的核，gamma 控制每个点的影响范围</td>
+</tr>
+<tr>
+<td>特征缩放</td>
+<td>SVM 对特征尺度敏感，必须标准化</td>
+</tr>
+</tbody>
+</table>
+<h2>🤔 课后思考</h2>
+<ol>
+<li><strong>为什么 SVM 在高维数据上不容易过拟合？</strong>（提示：决策边界只由少数支持向量决定）</li>
+<li><strong>什么情况下你会选 SVM 而不是随机森林？</strong>（提示：数据量不大、特征维度高、需要精确决策边界）</li>
+<li><strong>RBF 核的 gamma 太大会怎样？</strong>（提示：回忆第 4 课的过拟合）</li>
+</ol></div>

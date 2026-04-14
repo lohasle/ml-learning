@@ -1,0 +1,106 @@
+<h1>2026年4月14日 - 第7课：SVM 支持向量机</h1>
+<h2>今日学习主题</h2>
+<p><strong>掌握支持向量机的核心思想——「在两类之间找最宽的那条路」，理解最大间隔、支持向量、核技巧</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课我们学了随机森林与集成方法——通过组合多个「弱学习器」来提升性能。SVM 走的是完全不同的路线：它不组队，而是靠<strong>几何直觉</strong>——找一条离两边都最远的决策边界。</p>
+<p>SVM 是机器学习历史上最重要的算法之一，在深度学习崛起之前，它几乎垄断了中小规模数据集的分类任务。即使在今天，SVM 在文本分类、生物信息学、图像识别等场景中仍然是强有力的基线模型。</p>
+<p><strong>在 AI 演进史中的位置</strong>：SVM（1995年 Vapnik 提出）是连接经典统计学习理论与现代机器学习的桥梁。它引入的<strong>核技巧</strong>思想，后来深刻影响了核方法、高斯过程，甚至深度学习中的核回归视角。</p>
+<h2>核心概念解释</h2>
+<h3>1. 最大间隔分类器</h3>
+<ul>
+<li><strong>直觉</strong>：两个阵营之间修一条最宽的马路，马路中线就是决策边界</li>
+<li><strong>数学</strong>：最小化 $\frac{1}{2}|w|^2$，使得 $y_i(w \cdot x_i + b) \geq 1$</li>
+<li><strong>关键</strong>：间隔宽度 = $\frac{2}{|w|}$，$|w|$ 越小间隔越宽</li>
+</ul>
+<h3>2. 支持向量</h3>
+<ul>
+<li><strong>直觉</strong>：离马路最近的那些点——它们「撑」起了整个决策边界</li>
+<li><strong>关键洞察</strong>：删掉一个普通点，模型不变；删掉一个支持向量，边界会移动</li>
+<li><strong>代码直觉</strong>：<code>svm.support_vectors_</code> 返回的就是这些关键点</li>
+</ul>
+<h3>3. 软间隔与 C 参数</h3>
+<ul>
+<li><strong>直觉</strong>：允许少量点「犯规」（落在马路里），但犯规要付出代价</li>
+<li><strong>C 参数</strong>：</li>
+<li>C 大 → 严格，不轻易容忍误分类 → 间隔窄 → 可能过拟合</li>
+<li>C 小 → 宽容，允许更多误分类 → 间隔宽 → 可能欠拟合</li>
+<li><strong>与第 4 课（过拟合与正则化）的联系</strong>：C 本质上就是正则化参数</li>
+</ul>
+<h3>4. 核技巧</h3>
+<ul>
+<li><strong>直觉</strong>：数据在低维线性不可分？把它「弹」到高维，就能分了</li>
+<li><strong>魔法</strong>：不需要真的计算高维映射，只需用核函数计算「内积」</li>
+<li><strong>类比</strong>：你不需要知道 3D 空间的坐标，只需知道点之间的「相似度」</li>
+</ul>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>优化目标</td>
+<td>$\min \frac{1}{2}|w|^2$</td>
+<td>让马路尽量宽</td>
+</tr>
+<tr>
+<td>间隔宽度</td>
+<td>$\frac{2}{|w|}$</td>
+<td>w 越短，路越宽</td>
+</tr>
+<tr>
+<td>软间隔损失</td>
+<td>$C \sum \xi_i + \frac{1}{2}|w|^2$</td>
+<td>间隔宽度 vs 分类错误的平衡</td>
+</tr>
+<tr>
+<td>RBF 核</td>
+<td>$K(x,z) = e^{-\gamma|x-z|^2}$</td>
+<td>两点越近，相似度越高</td>
+</tr>
+<tr>
+<td>决策函数</td>
+<td>$f(x) = \sum_{i} \alpha_i y_i K(x_i, x) + b$</td>
+<td>只依赖支持向量的加权投票</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li><strong>Notebook 第 1 节</strong>：观察最大间隔的视觉效果，看支持向量如何「撑起」边界</li>
+<li><strong>Notebook 第 2 节</strong>：对比 C=0.01 / C=1 / C=100 的差异，注意支持向量数量的变化</li>
+<li><strong>Notebook 第 3-4 节</strong>：在月牙形和圆环形数据上，看不同核函数的表现差异</li>
+<li><strong>Notebook 第 5 节</strong>：SVM vs 随机森林的直接对比——决策边界的形状大不相同</li>
+<li><strong>⚠️ 重要提醒</strong>：SVM 对特征尺度非常敏感，<strong>必须标准化</strong>！</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: SVM 和逻辑回归有什么区别？</strong>
+A: 核心区别在于优化目标。逻辑回归最小化分类误差（所有点都参与），SVM 最大化间隔（只关注边界附近的点）。SVM 通常在中小数据集上效果更好，逻辑回归在大数据集上更稳定。</p>
+<p><strong>Q: 什么时候用线性核，什么时候用 RBF 核？</strong>
+A: 经验法则——如果特征数远大于样本数（如文本分类），线性核就够用且更快；如果样本数大于特征数，优先试 RBF 核。</p>
+<p><strong>Q: gamma 和 C 怎么调？</strong>
+A: 推荐用 <code>GridSearchCV</code> 搜索 <code>C=[0.1, 1, 10, 100]</code> × <code>gamma=[0.01, 0.1, 1, 10]</code> 的组合。实践中这两个参数有交互效应，需要一起调。</p>
+<p><strong>Q: SVM 能做回归吗？</strong>
+A: 能！<code>SVR</code>（Support Vector Regression）用类似的思路，找一条让误差在 ε 范围内的最「平」的线。</p>
+<h2>本课总结</h2>
+<ol>
+<li><strong>SVM 的核心是最大间隔</strong>——不是「分对就行」，而是「分得最稳」</li>
+<li><strong>支持向量是模型的关键</strong>——只有少数点决定了决策边界</li>
+<li><strong>核技巧是 SVM 的魔法</strong>——隐式映射到高维，让非线性变线性</li>
+<li><strong>C 和 gamma 是两个关键旋钮</strong>——控制分类严格程度和每个点的影响范围</li>
+<li><strong>SVM 对特征缩放敏感</strong>——用之前必须标准化</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课我们将学习 <strong>KNN 与朴素贝叶斯</strong>——两个经典的「简单但有效」的算法。KNN 是最直观的分类方法（找最近的邻居投票），朴素贝叶斯则在文本分类中大放异彩。它们和 SVM 一起，构成了经典分类算法的核心工具箱。</p>
+<h2>关键历史节点</h2>
+<ul>
+<li><strong>1963年</strong>：Vapnik 和 Chervonenkis 提出 VC 维理论（SVM 的理论基础）</li>
+<li><strong>1992年</strong>：Boser, Guyon, Vapnik 引入核技巧到 SVM</li>
+<li><strong>1995年</strong>：Cortes 和 Vapnik 发表软间隔 SVM 论文</li>
+<li><strong>1998-2012年</strong>：SVM 在文本分类、生物信息学等领域占据主导地位</li>
+<li><strong>2012年后</strong>：深度学习崛起，但 SVM 在中小数据集上仍然是强基线</li>
+</ul>
