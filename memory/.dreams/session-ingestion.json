@@ -1,0 +1,52 @@
+{
+  "version": 3,
+  "files": {
+    "ml-learning-coach:sessions/5aef1ec9-bef4-4de3-89ee-fd212b51c0ff.jsonl.deleted.2026-04-14T04-10-01.781Z": {
+      "mtimeMs": 1776052922050,
+      "size": 3519,
+      "contentHash": "01669bea54a0f5e3841ba6f6370310eae68a37e7b6b5f62ad9d7734cae13af85",
+      "lineCount": 1,
+      "lastContentLine": 1
+    },
+    "ml-learning-coach:sessions/6f84f072-3209-4508-8200-829f58a97b3a.jsonl": {
+      "mtimeMs": 1776225637776,
+      "size": 10018,
+      "contentHash": "c0f1f2f153deafede05645eae04c7473431ea9067522a84616d31bb3e90d068e",
+      "lineCount": 1,
+      "lastContentLine": 1
+    },
+    "ml-learning-coach:sessions/bacd79ca-ad72-41b5-9d2d-d77a8304c1b2.jsonl.deleted.2026-04-15T04-05-38.623Z": {
+      "mtimeMs": 1776139794426,
+      "size": 159359,
+      "contentHash": "34eac6e26a40f60c5bf3982352e90ef0c44bb2ee64de4df2c31152462cc433a8",
+      "lineCount": 16,
+      "lastContentLine": 16
+    }
+  },
+  "seenMessages": {
+    "ml-learning-coach:5aef1ec9-bef4-4de3-89ee-fd212b51c0ff": [
+      "2814b53ae58c07859fa1f9858cc6e2bf4b363db6"
+    ],
+    "ml-learning-coach:6f84f072-3209-4508-8200-829f58a97b3a": [
+      "fc48bedbe0f0d65932ed21cd19540670c5915882"
+    ],
+    "ml-learning-coach:bacd79ca-ad72-41b5-9d2d-d77a8304c1b2": [
+      "9380f454dfe78885ee67bf777ee757e36dd23be2",
+      "2d68789b10ace93911a08126a84633de63247da0",
+      "14457c3c763c4b5f59a624b0e32fd5d2716ca918",
+      "54eb8e98324b811d25d5229ace5cae46e3c14156",
+      "02ec05f709fba6511ff85a8a23fc7881d30e8a06",
+      "abeeff0ff93d676fe86db31c601ce6f01d9e071c",
+      "2d8ad4e2b8cd608f24e1f44810f50d4cc1f02062",
+      "f7d66ada56e19a87c44f6c721e52c820eecff5f5",
+      "aa0ae7c84fef0aa6d4ec61beee189be6e1f4cb07",
+      "468031ae6cb0dd2b9ab8dc7ab2dfe85c0e54c3b7",
+      "29c5eb12c611682fb469a927f0465b1245948282",
+      "19d7f3ff5622aa77ed72ed62ba073cce7b9cd21a",
+      "4ec7a50512ffebcb4bc1a7460faa4334c3b6992b",
+      "f0f79320d5320c3ebe2ef3e5a9e31a18c4f87e36",
+      "85cfc77b0cc48fdb53dc69cda302373fc400e0b2",
+      "2958af31249b63a6bdc9813e179c4006017e0be5"
+    ]
+  }
+}

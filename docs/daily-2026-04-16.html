@@ -1,0 +1,101 @@
+<h1>📅 2026-04-16 | 第八课：KNN 与朴素贝叶斯</h1>
+<h2>今日主题</h2>
+<p>KNN（K-最近邻）与朴素贝叶斯——两种经典分类器的原理与实战对比</p>
+<h2>为什么今天学这个</h2>
+<p>上一课学完了 SVM，至此我们已经掌握了阶段 2 中的「间隔类」分类器。接下来进入阶段 2 的另一组方法：<strong>基于实例的分类（KNN）</strong>和<strong>基于概率的分类（朴素贝叶斯）</strong>。它们代表了截然不同的分类哲学，也为后续无监督学习（聚类）做铺垫。</p>
+<h2>在 AI 演进中的位置</h2>
+<pre><code>1951：Fix &amp; Hodges 提出 KNN（最近邻规则的雏形）
+1960s：朴素贝叶斯用于文本分类
+     → 两条路径：实例推理 vs 概率推理
+2000s：朴素贝叶斯成为垃圾邮件过滤标配
+2010s：KNN 在推荐系统中广泛应用
+</code></pre>
+<h2>核心概念</h2>
+<h3>KNN：物以类聚</h3>
+<ul>
+<li><strong>直觉</strong>：新样本看邻居，少数服从多数</li>
+<li><strong>懒惰学习</strong>：没有训练过程，预测时才计算</li>
+<li><strong>K 值</strong>：K=1 过拟合，K=N 欠拟合，经验值 √n</li>
+<li><strong>距离度量</strong>：欧氏距离、曼哈顿距离</li>
+</ul>
+<h3>朴素贝叶斯：用概率分类</h3>
+<ul>
+<li><strong>贝叶斯定理</strong>：P(类别|特征) = P(特征|类别) × P(类别) / P(特征)</li>
+<li><strong>「朴素」</strong>：假设所有特征条件独立</li>
+<li><strong>为什么有效</strong>：分类只看排序，不看绝对概率</li>
+</ul>
+<h2>关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>d(x,y) = √Σ(xi-yi)²</td>
+<td>欧氏距离</td>
+</tr>
+<tr>
+<td>P(C|X) ∝ P(X|C)·P(C)</td>
+<td>贝叶斯定理</td>
+</tr>
+<tr>
+<td>P(X|C) = Π P(xi|C)</td>
+<td>条件独立假设</td>
+</tr>
+</tbody>
+</table>
+<h2>对比总结</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>KNN</th>
+<th>朴素贝叶斯</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>训练</td>
+<td>无（懒惰学习）</td>
+<td>快（算概率）</td>
+</tr>
+<tr>
+<td>预测</td>
+<td>慢（算距离）</td>
+<td>快（查表）</td>
+</tr>
+<tr>
+<td>核心</td>
+<td>距离度量</td>
+<td>概率假设</td>
+</tr>
+<tr>
+<td>典型应用</td>
+<td>推荐系统</td>
+<td>垃圾邮件检测</td>
+</tr>
+</tbody>
+</table>
+<h2>最小实践</h2>
+<pre><code class="language-python">from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+
+knn = KNeighborsClassifier(n_neighbors=5)
+gnb = GaussianNB()
+# 两者都 fit(X, y) → predict(X)
+</code></pre>
+<h2>关键项目案例</h2>
+<p>朴素贝叶斯在 2000 年代是垃圾邮件过滤的核心算法，Paul Graham 的《A Plan for Spam》(2002) 让贝叶斯邮件过滤广为人知。</p>
+<h2>今天学完应该记住什么</h2>
+<ol>
+<li>KNN 是懒惰学习，没有训练过程</li>
+<li>K 值选择直接影响模型复杂度</li>
+<li>朴素贝叶斯的「朴素」= 特征独立假设</li>
+<li>朴素假设虽然不成立，但排序对了就行</li>
+<li>朴素贝叶斯预测快，适合高维数据；KNN 预测慢，适合低维数据</li>
+</ol>
+<h2>下一步</h2>
+<p>第九课：聚类与 KMeans——无监督学习的开端</p>

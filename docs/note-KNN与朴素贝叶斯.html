@@ -1,0 +1,44 @@
+<h1>KNN 与朴素贝叶斯</h1>
+<h2>概述</h2>
+<p>KNN 和朴素贝叶斯是两种经典的分类算法，分别代表「基于实例」和「基于概率」的分类哲学。</p>
+<h2>KNN 核心机制</h2>
+<ul>
+<li><strong>距离度量</strong>：d(x,y) = √Σ(xi-yi)²</li>
+<li><strong>K 值选择</strong>：经验值 √n，用交叉验证确定最佳 K</li>
+<li><strong>加权投票</strong>：近邻权重更大可提升效果</li>
+</ul>
+<h2>朴素贝叶斯核心机制</h2>
+<ul>
+<li><strong>贝叶斯定理</strong>：P(C|X) ∝ P(X|C)·P(C)</li>
+<li><strong>条件独立假设</strong>：P(X|C) = Π P(xi|C)</li>
+<li><strong>三种变体</strong>：GaussianNB（连续）、MultinomialNB（计数）、BernoulliNB（二值）</li>
+</ul>
+<h2>关联概念</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>关联</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>距离度量</td>
+<td>→ 下一课 KMeans 也依赖距离</td>
+</tr>
+<tr>
+<td>贝叶斯定理</td>
+<td>→ 后续贝叶斯网络、概率图模型</td>
+</tr>
+<tr>
+<td>懒惰学习</td>
+<td>vs 急切学习（SVM、决策树等）</td>
+</tr>
+</tbody>
+</table>
+<h2>相关历史</h2>
+<ul>
+<li>1951：KNN 雏形（Fix &amp; Hodges）</li>
+<li>1960s：朴素贝叶斯用于文本分类</li>
+<li>2002：Paul Graham「A Plan for Spam」推广贝叶斯邮件过滤</li>
+</ul>
