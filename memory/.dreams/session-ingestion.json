@@ -1,14 +1,7 @@
 {
   "version": 3,
   "files": {
-    "ml-learning-coach:sessions/5aef1ec9-bef4-4de3-89ee-fd212b51c0ff.jsonl.deleted.2026-04-14T04-10-01.781Z": {
-      "mtimeMs": 1776052922050,
-      "size": 3519,
-      "contentHash": "01669bea54a0f5e3841ba6f6370310eae68a37e7b6b5f62ad9d7734cae13af85",
-      "lineCount": 1,
-      "lastContentLine": 1
-    },
-    "ml-learning-coach:sessions/6f84f072-3209-4508-8200-829f58a97b3a.jsonl": {
+    "ml-learning-coach:sessions/6f84f072-3209-4508-8200-829f58a97b3a.jsonl.deleted.2026-04-16T04-02-25.987Z": {
       "mtimeMs": 1776225637776,
       "size": 10018,
       "contentHash": "c0f1f2f153deafede05645eae04c7473431ea9067522a84616d31bb3e90d068e",
@@ -21,6 +14,13 @@
       "contentHash": "34eac6e26a40f60c5bf3982352e90ef0c44bb2ee64de4df2c31152462cc433a8",
       "lineCount": 16,
       "lastContentLine": 16
+    },
+    "ml-learning-coach:sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl": {
+      "mtimeMs": 1776287143217,
+      "size": 90354,
+      "contentHash": "ac79c7d1f0398fe89ed8b1382c0388e273d130e0fbe649b50774f4c3a9ba5cef",
+      "lineCount": 11,
+      "lastContentLine": 11
     }
   },
   "seenMessages": {
@@ -47,6 +47,19 @@
       "f0f79320d5320c3ebe2ef3e5a9e31a18c4f87e36",
       "85cfc77b0cc48fdb53dc69cda302373fc400e0b2",
       "2958af31249b63a6bdc9813e179c4006017e0be5"
+    ],
+    "ml-learning-coach:ce745831-de32-44e9-a1a0-51b1d25ac67d": [
+      "84bddf55ac839c7591bf28b96d510684ec41a821",
+      "a92f36b7c3c0a2dbca70788677deba28c72ffa62",
+      "fff726412491976d7b8b4580963df943b7b6bded",
+      "4bb4b2114f5b2974d6be4c77bce04c2194d94160",
+      "8a410a93160e69840506bfe83a02ea7473323d1b",
+      "558613cc4aca88b8bc70309210990ebd5f3e5561",
+      "20b1dcef5f7f43ab1b0a7bd6938de00a3a76c2e9",
+      "bd1ec741bacd37648a4a47436613bd637572305b",
+      "67fef1ad55566116b1e3e7e3ec50f597c087336b",
+      "3d221648972c38f9087985482442f00ec1db942e",
+      "ab9dd86a5d5e36c6d553aa911fe8a392578465bc"
     ]
   }
 }

@@ -1,0 +1,11 @@
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L5] User: [cron:64dbc085 AI机器学习每日学习] 执行今日 ML 系统学习任务。 先阅读 skills/ml-daily/SKILL.md，严格按其中的 5 个 Phase 执行。 关键提醒： 1. Phase 2 补齐缺口不可跳过 2. Phase 4 级联同步必须更新 README.md、index.html、notes-lab.html 3. Phase 5 validate 通过后才能 push 4. git push 失败重试 3 次，仍失败则保留本地变更并报告 5. 新课程 Notebook 必须 ≥ 5
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L22] Assistant: Next lesson is **08_KNN与朴素贝叶斯**. Let me check what the index.html warning is about and then create the new lesson.
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L28] Assistant: Now I'll create Lesson 08. Let me build the notebook, daily MD, notes, HTML fragments, and update all cascade files.
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L34] Assistant: Now generate the HTML fragments and update cascade files. Let me do the notebook-to-HTML and daily-to-HTML conversion:
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L38] Assistant: Now update the cascade files. Let me update index.html (convert lesson 08 from upcoming to active):
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L40] Assistant: Now update notes-lab.html menu tree:
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L46] Assistant: Now update daily.html timeline:
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L52] Assistant: Now update README.md:
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L56] Assistant: Now Phase 5: run validate again:
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L58] Assistant: 验证通过。Git 提交并推送：
+[ml-learning-coach/sessions/ce745831-de32-44e9-a1a0-51b1d25ac67d.jsonl#L60] Assistant: 全部完成 ✅ --- ## 📖 今日学习简报：第八课 KNN 与朴素贝叶斯 ### 为什么今天学这个 上一课 SVM 结束了「间隔类分类器」，今天进入两条截然不同的分类哲学路线：**基于实例的推理**（KNN）和**基于概率的推理**（朴素贝叶斯）。 ### 核心要点 **KNN**：物以类聚。新样本看 K 个邻居，少数服从多数。没有训练过程（懒惰学习），但预测时要算所有距离，所以慢。 **朴素贝叶斯**：用贝叶斯定理算「给特征条件下最可能是哪类」。「朴素」= 假设特征间相互独立——几乎永远不成立，但分类只

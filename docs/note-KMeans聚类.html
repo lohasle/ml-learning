@@ -1,0 +1,56 @@
+<h1>KMeans 聚类</h1>
+<h2>概述</h2>
+<p>无监督学习中最经典的聚类算法。不需要标签，通过迭代「分配→更新」自动将数据分成 K 组。</p>
+<h2>核心机制</h2>
+<h3>算法步骤</h3>
+<ol>
+<li>随机选 K 个初始中心点</li>
+<li>将每个样本分配到最近的中心</li>
+<li>重新计算每个簇的中心（取均值）</li>
+<li>重复直到收敛</li>
+</ol>
+<h3>关键公式</h3>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>d(x,c) = ‖x-c‖₂</td>
+<td>样本到中心距离</td>
+</tr>
+<tr>
+<td>Inertia = ΣΣ‖x-cᵢ‖²</td>
+<td>簇内平方和（优化目标）</td>
+</tr>
+<tr>
+<td>cᵢ = mean(x∈簇i)</td>
+<td>中心更新规则</td>
+</tr>
+</tbody>
+</table>
+<h3>评估方法</h3>
+<ul>
+<li><strong>肘部法则</strong>：Inertia vs K 曲线的拐点</li>
+<li><strong>轮廓系数</strong>：[-1, 1]，越大越好</li>
+</ul>
+<h2>局限性</h2>
+<ul>
+<li>只能发现球形簇</li>
+<li>需要预设 K</li>
+<li>对初始化敏感（k-means++ 缓解）</li>
+</ul>
+<h2>关联概念</h2>
+<ul>
+<li>[[KNN]]：KNN 找最近邻，KMeans 找最近中心</li>
+<li>[[PCA]]：常先降维再聚类</li>
+<li>[[DBSCAN]]：能处理非球形簇的替代方案</li>
+</ul>
+<h2>历史节点</h2>
+<ul>
+<li>1957：Lloyd 提出（贝尔实验室）</li>
+<li>至今仍是数据探索首选基线</li>
+</ul>

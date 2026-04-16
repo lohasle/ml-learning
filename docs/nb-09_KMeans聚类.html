@@ -1,0 +1,168 @@
+<div class="nb-cell nb-markdown"><h1>第9课：KMeans 聚类</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解无监督学习的核心思想：没有标签，怎么学？</li>
+<li>掌握 KMeans 算法的原理与迭代过程</li>
+<li>从零实现 KMeans，理解每一步在做什么</li>
+<li>学会评估聚类效果（轮廓系数、肘部法则）</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<p>前面8课学的全是<strong>监督学习</strong>——每个样本都有标签，模型学的是「输入→标签」的映射。</p>
+<p>今天进入<strong>无监督学习</strong>的第一个算法：<strong>KMeans 聚类</strong>。</p>
+<p><strong>直觉</strong>：给你一堆点，不知道它们属于什么类，但你能看出它们「扎堆」。KMeans 就是把这个「扎堆」过程自动化。</p>
+<p><strong>三步迭代</strong>：
+1. 随机放 K 个「中心点」
+2. 每个样本归到最近的中心点（分配）
+3. 重新计算每组的中心（更新）
+4. 重复 2-3 直到中心不再移动</p>
+<p><strong>在 AI 演进中的位置</strong>：
+- 1957：Lloyd 提出 KMeans（贝尔实验室，脉冲编码优化）
+- 1982：Forgy 独立发表，成为标准参考文献
+- 至今仍是数据探索、客户分群、图像分割的首选基线方法</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.cluster import KMeans as SklearnKMeans
+from sklearn.metrics import silhouette_score
+
+np.random.seed(42)
+plt.rcParams['font.size'] = 12
+plt.rcParams['figure.figsize'] = (10, 6)
+
+# 生成模拟数据：3 个簇
+X, y_true = make_blobs(n_samples=300, centers=3, cluster_std=1.0, random_state=42)
+print(f'数据形状: {X.shape}')
+print(f'真实标签（聚类时我们假装不知道）: {np.unique(y_true)}')
+
+plt.scatter(X[:, 0], X[:, 1], s=20, alpha=0.6)
+plt.title('原始数据（无标签）')
+plt.xlabel('特征 1')
+plt.ylabel('特征 2')
+plt.show()</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 从零实现 KMeans
+def kmeans(X, k, max_iters=100, tol=1e-4):
+    """
+    KMeans 聚类从零实现
+    
+    参数:
+        X: 数据矩阵 (n_samples, n_features)
+        k: 簇的数量
+        max_iters: 最大迭代次数
+        tol: 中心点移动容忍度
+    
+    返回:
+        centroids: 最终中心点
+        labels: 每个样本的簇标签
+        history: 每次迭代的中心点（用于可视化）
+    """
+    n_samples = X.shape[0]
+    
+    # 第1步：随机选择 k 个样本作为初始中心点
+    indices = np.random.choice(n_samples, k, replace=False)
+    centroids = X[indices].copy()
+    history = [centroids.copy()]
+    
+    for iteration in range(max_iters):
+        # 第2步：分配——每个样本归到最近的中心
+        # 计算所有样本到所有中心的距离 (n_samples, k)
+        distances = np.array([np.linalg.norm(X - c, axis=1) for c in centroids]).T
+        labels = np.argmin(distances, axis=1)
+        
+        # 第3步：更新——重新计算每个簇的中心
+        new_centroids = np.array([X[labels == i].mean(axis=0) for i in range(k)])
+        history.append(new_centroids.copy())
+        
+        # 检查收敛
+        shift = np.linalg.norm(new_centroids - centroids)
+        if shift &lt; tol:
+            print(f'在第 {iteration + 1} 次迭代后收敛，中心移动距离: {shift:.6f}')
+            break
+        centroids = new_centroids
+    
+    return centroids, labels, history
+
+# 运行
+centroids, labels, history = kmeans(X, k=3)
+print(f'最终中心点:\n{centroids}')
+print(f'各簇样本数: {[np.sum(labels == i) for i in range(3)]}')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 可视化迭代过程
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+steps = [0, len(history)//2, len(history)-1]
+colors = ['#C96442', '#4A90D9', '#6BAF5D']
+
+for idx, step in enumerate(steps):
+    ax = axes[idx]
+    step_centroids = history[step]
+    
+    # 分配标签（用该步的中心点计算）
+    dists = np.array([np.linalg.norm(X - c, axis=1) for c in step_centroids]).T
+    step_labels = np.argmin(dists, axis=1)
+    
+    for i in range(3):
+        mask = step_labels == i
+        ax.scatter(X[mask, 0], X[mask, 1], c=colors[i], s=20, alpha=0.5, label=f'簇 {i}')
+    ax.scatter(step_centroids[:, 0], step_centroids[:, 1], c='black', marker='X', s=200, zorder=5)
+    ax.set_title(f'迭代第 {step} 步')
+    ax.legend()
+
+plt.suptitle('KMeans 迭代过程', fontsize=14, fontweight='bold')
+plt.tight_layout()
+plt.show()</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 与 sklearn 对比
+sk_kmeans = SklearnKMeans(n_clusters=3, random_state=42, n_init=10)
+sk_labels = sk_kmeans.fit_predict(X)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+# 自己的实现
+for i in range(3):
+    mask = labels == i
+    ax1.scatter(X[mask, 0], X[mask, 1], c=colors[i], s=20, alpha=0.6)
+ax1.scatter(centroids[:, 0], centroids[:, 1], c='black', marker='X', s=200)
+ax1.set_title('我的 KMeans 实现')
+
+# sklearn
+for i in range(3):
+    mask = sk_labels == i
+    ax2.scatter(X[mask, 0], X[mask, 1], c=colors[i], s=20, alpha=0.6)
+ax2.scatter(sk_kmeans.cluster_centers_[:, 0], sk_kmeans.cluster_centers_[:, 1], c='black', marker='X', s=200)
+ax2.set_title('sklearn KMeans')
+
+plt.tight_layout()
+plt.show()
+
+# 轮廓系数
+my_sil = silhouette_score(X, labels)
+sk_sil = silhouette_score(X, sk_labels)
+print(f'轮廓系数（我的实现）: {my_sil:.4f}')
+print(f'轮廓系数（sklearn）  : {sk_sil:.4f}')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 肘部法则：如何选择 K？
+inertias = []
+K_range = range(2, 8)
+for k in K_range:
+    km = SklearnKMeans(n_clusters=k, random_state=42, n_init=10)
+    km.fit(X)
+    inertias.append(km.inertia_)  # 簇内平方和
+
+plt.plot(K_range, inertias, 'o-', color='#C96442', linewidth=2, markersize=8)
+plt.xlabel('K（簇数量）')
+plt.ylabel('簇内平方和 (Inertia)')
+plt.title('肘部法则：选择最优 K')
+plt.axvline(x=3, color='gray', linestyle='--', alpha=0.7, label='K=3 (肘部)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+print('肘部法则：选择 Inertia 下降变缓的拐点，这里 K=3 是明显的肘部')</code></pre></div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<ul>
+<li><strong>KMeans 是最经典的无监督学习方法</strong>：不需要标签，靠数据自身的结构来分组</li>
+<li><strong>核心思想</strong>：交替执行「分配」和「更新」两步，直到中心点稳定</li>
+<li><strong>K 的选择</strong>：肘部法则（看 Inertia 拐点）和轮廓系数（衡量簇间分离度）</li>
+<li><strong>局限</strong>：只能发现球形簇、对初始化敏感、需要预设 K</li>
+</ul>
+<h2>课后思考</h2>
+<ol>
+<li>如果数据不是球形分布（比如环形），KMeans 还能用吗？你会怎么解决？</li>
+<li>KMeans 的初始中心点选择对结果有多大影响？k-means++ 是怎么改进的？</li>
+<li>聚类和分类的本质区别是什么？什么时候该用哪个？</li>
+</ol></div>
