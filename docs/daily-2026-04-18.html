@@ -1,0 +1,90 @@
+<h1>📅 2026-04-18 | 第十课：PCA 降维</h1>
+<h2>今日学习主题</h2>
+<p><strong>PCA 降维——无监督学习的另一面，从「最佳视角看数据」到数学实现</strong></p>
+<h2>为什么今天学这个？</h2>
+<p>上一课 KMeans 是无监督学习中的「聚类」——把数据分组。今天学无监督学习的另一大分支：<strong>降维</strong>。</p>
+<p>KMeans 回答「数据能分几组？」，PCA 回答「数据的本质维度是什么？」。这两个问题往往一起用：先用 PCA 降维可视化，再用 KMeans 分组。</p>
+<h2>在 AI 演进中的位置</h2>
+<pre><code>1901：Pearson 提出「最佳拟合线」概念（PCA 思想起源）
+1933：Hotelling 正式定义主成分分析
+2000s：成为数据分析标配（基因芯片、图像压缩、金融风控）
+2010s：深度学习中的自编码器 ≈ 非线性 PCA
+2020s：t-SNE / UMAP 成为高维可视化的新宠，但 PCA 仍是第一步
+</code></pre>
+<h2>核心概念</h2>
+<h3>1. 为什么降维？</h3>
+<ul>
+<li><strong>维度灾难</strong>：特征太多 → 样本稀疏 → 模型难学</li>
+<li><strong>可视化</strong>：人只能看 2D/3D</li>
+<li><strong>去噪</strong>：小方差维度往往是噪声</li>
+<li><strong>加速</strong>：特征少了，训练更快</li>
+</ul>
+<h3>2. PCA 直觉</h3>
+<p>想象拍一张 3D 物体的照片。你选一个角度，能最好地保留物体形状信息。PCA 就是自动找到这个「最佳角度」的算法。</p>
+<p>数学上：<strong>找方差最大的方向作为新坐标轴</strong>。因为方差大 = 信息多。</p>
+<h3>3. 四步走</h3>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>公式</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>中心化</td>
+<td>X' = X - μ</td>
+<td>减去均值</td>
+</tr>
+<tr>
+<td>协方差矩阵</td>
+<td>C = X'ᵀX'/(n-1)</td>
+<td>描述特征间相关性</td>
+</tr>
+<tr>
+<td>特征分解</td>
+<td>C·v = λ·v</td>
+<td>λ=方差，v=方向</td>
+</tr>
+<tr>
+<td>投影</td>
+<td>Z = X'·Vₖ</td>
+<td>取前 k 个主成分</td>
+</tr>
+</tbody>
+</table>
+<h3>4. 三个典型应用</h3>
+<p><strong>可视化</strong>：鸢尾花 4D → 2D，三类花自然分开
+<strong>压缩</strong>：手写数字 64D → ~20D，保留 90%+ 信息
+<strong>去噪</strong>：加噪声 → PCA 重建 → 噪声被滤掉</p>
+<h2>关键公式</h2>
+<p><strong>协方差矩阵</strong>：
+$$C = \frac{1}{n-1} X^T X$$</p>
+<p><strong>投影</strong>（取前 k 个主成分）：
+$$Z = X \cdot V_k$$</p>
+<p><strong>方差解释比例</strong>：
+$$r_i = \frac{\lambda_i}{\sum \lambda_j}$$</p>
+<h2>实践建议</h2>
+<ol>
+<li><strong>PCA 前要标准化</strong>（特别是特征量纲不同时）</li>
+<li><strong>先看累积方差曲线</strong>，决定保留几个主成分</li>
+<li><strong>PCA 不是万能的</strong>：只能捕捉线性关系，非线性用 t-SNE/UMAP</li>
+<li><strong>去噪很好用</strong>：只保留大特征值对应的主成分</li>
+</ol>
+<h2>关键论文与项目</h2>
+<ul>
+<li>Pearson (1901): "On Lines and Planes of Closest Fit to Systems of Points in Space"</li>
+<li>Hotelling (1933): "Analysis of a Complex of Statistical Variables into Principal Components"</li>
+<li>深度学习延续：Hinton &amp; Salakhutdinov (2006) 用自编码器做非线性降维，引爆深度学习复兴</li>
+</ul>
+<h2>今天学完后你应该记住什么</h2>
+<ol>
+<li>PCA = 找方差最大的方向做投影</li>
+<li>协方差矩阵 → 特征分解 → 取前 k 个 → 投影</li>
+<li>三大用途：可视化、压缩、去噪</li>
+<li>PCA 只处理线性关系，非线性需要 t-SNE/UMAP</li>
+<li>降维是无监督学习中和聚类并列的两大方向</li>
+</ol>
+<h2>下一步</h2>
+<p><strong>模型评估与调参实战</strong>——用 GridSearchCV、学习曲线、验证曲线系统化调参，为进入深度学习做最后准备。</p>

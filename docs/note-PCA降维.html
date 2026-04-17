@@ -1,0 +1,55 @@
+<h1>PCA 降维</h1>
+<h2>概述</h2>
+<p>PCA（Principal Component Analysis，主成分分析）是最经典的降维方法，通过线性变换将高维数据投影到方差最大的方向上。</p>
+<h2>核心机制</h2>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>操作</th>
+<th>数学表达</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. 中心化</td>
+<td>减均值</td>
+<td>X' = X - μ</td>
+</tr>
+<tr>
+<td>2. 协方差矩阵</td>
+<td>特征间相关性</td>
+<td>C = X'ᵀX'/(n-1)</td>
+</tr>
+<tr>
+<td>3. 特征分解</td>
+<td>求特征值和特征向量</td>
+<td>C·v = λ·v</td>
+</tr>
+<tr>
+<td>4. 投影</td>
+<td>取前 k 个主成分</td>
+<td>Z = X'·Vₖ</td>
+</tr>
+</tbody>
+</table>
+<h2>关键概念</h2>
+<ul>
+<li><strong>主成分</strong>：按方差从大到小排列的新坐标轴，彼此正交</li>
+<li><strong>explained_variance_ratio</strong>：每个主成分保留的方差占比</li>
+<li><strong>累积方差</strong>：前 k 个主成分总共保留了多少信息</li>
+</ul>
+<h2>关联概念</h2>
+<ul>
+<li>[[KMeans]]：聚类 + 降维是无监督学习的两大分支</li>
+<li>[[SVM]]：PCA 降维后可以提高 SVM 的分类效果</li>
+<li>[[过拟合与正则化]]：降维本身是一种防止过拟合的手段</li>
+<li>自编码器：深度学习中的非线性 PCA</li>
+</ul>
+<h2>实践要点</h2>
+<ol>
+<li>降维前必须标准化（StandardScaler）</li>
+<li>先画累积方差曲线再选 k</li>
+<li>只能处理线性关系，非线性用 t-SNE/UMAP</li>
+<li>常用于：可视化（2D/3D）、压缩（减少特征）、去噪（丢弃小方差）</li>
+</ol>
