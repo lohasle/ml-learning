@@ -1,0 +1,163 @@
+<div class="nb-cell nb-markdown"><h1>第 11 课：神经网络基础与反向传播</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解感知机 → 多层神经网络的结构演化</li>
+<li>掌握前向传播的计算流程</li>
+<li>从零实现反向传播算法（梯度下降训练）</li>
+<li>直觉理解「为什么反向传播能工作」</li>
+</ul>
+<hr />
+<h3>在学习路线中的位置</h3>
+<p>前 10 课我们覆盖了经典 ML 的核心方法（回归、分类、聚类、降维）。
+从这节课开始，我们进入<strong>深度学习</strong>阶段。</p>
+<p>神经网络是深度学习的基础建筑块。理解了这一课，后续的 CNN、RNN、Transformer 都只是「神经网络的巧妙组合方式」。</p></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<h3>1. 感知机（Perceptron）</h3>
+<p>最简单的神经网络：输入 → 加权求和 → 激活函数 → 输出。</p>
+<p>可以理解为：一条「得分线」把空间切成两半，得分 &gt; 阈值的归为一类。</p>
+<h3>2. 多层网络（MLP）</h3>
+<p>单层感知机只能处理线性可分问题（如 AND/OR）。
+加上隐藏层后，网络可以学习<strong>非线性决策边界</strong>。</p>
+<p>直觉：每一层隐藏层相当于对数据做一次「空间变换」，把弯曲的边界拉直。</p>
+<h3>3. 反向传播（Backpropagation）</h3>
+<p>训练神经网络的核心算法。思路极其简单：
+1. 前向传播算出预测值和损失
+2. 算出损失对每个参数的梯度（链式法则）
+3. 沿梯度反方向更新参数</p>
+<p><strong>类比</strong>：你在山顶蒙着眼下山。每一步用脚探一探四周，哪个方向最陡就往反方向走一步。</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [None]</div><pre><code>import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(42)</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [None]</div><pre><code># 激活函数及其导数
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def sigmoid_deriv(z):
+    s = sigmoid(z)
+    return s * (1 - s)
+
+# 生成非线性可分数据（同心圆）
+def make_circles(n=300, noise=0.1):
+    n_half = n // 2
+    # 内圆
+    theta = np.random.uniform(0, 2*np.pi, n_half)
+    r = np.random.normal(0.5, noise, n_half)
+    X_inner = np.column_stack([r * np.cos(theta), r * np.sin(theta)])
+    # 外圆
+    r2 = np.random.normal(1.5, noise, n_half)
+    X_outer = np.column_stack([r2 * np.cos(theta), r2 * np.sin(theta)])
+    X = np.vstack([X_inner, X_outer])
+    y = np.concatenate([np.zeros(n_half), np.ones(n_half)])
+    return X, y
+
+X, y = make_circles(400, noise=0.15)
+plt.scatter(X[:,0], X[:,1], c=y, cmap='bwr', alpha=0.6, edgecolors='k', linewidth=0.5)
+plt.title('非线性可分数据：同心圆')
+plt.xlabel('x1'); plt.ylabel('x2')
+plt.show()</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [None]</div><pre><code>class NeuralNetwork:
+    """一个简单的 2 层神经网络（1 个隐藏层），从零实现反向传播"""
+    
+    def __init__(self, input_size, hidden_size, output_size, lr=0.1):
+        # Xavier 初始化
+        self.W1 = np.random.randn(input_size, hidden_size) * np.sqrt(2.0 / input_size)
+        self.b1 = np.zeros((1, hidden_size))
+        self.W2 = np.random.randn(hidden_size, output_size) * np.sqrt(2.0 / hidden_size)
+        self.b2 = np.zeros((1, output_size))
+        self.lr = lr
+        self.losses = []
+    
+    def forward(self, X):
+        """前向传播"""
+        self.z1 = X @ self.W1 + self.b1          # 隐藏层线性变换
+        self.a1 = sigmoid(self.z1)                # 隐藏层激活
+        self.z2 = self.a1 @ self.W2 + self.b2     # 输出层线性变换
+        self.a2 = sigmoid(self.z2)                # 输出层激活（预测值）
+        return self.a2
+    
+    def backward(self, X, y):
+        """反向传播：用链式法则计算梯度并更新参数"""
+        m = X.shape[0]
+        
+        # 输出层梯度
+        dz2 = self.a2 - y.reshape(-1, 1)          # dL/dz2 = a2 - y（交叉熵+sigmoid 简化结果）
+        dW2 = (self.a1.T @ dz2) / m               # dL/dW2
+        db2 = np.sum(dz2, axis=0, keepdims=True) / m
+        
+        # 隐藏层梯度（链式法则）
+        dz1 = (dz2 @ self.W2.T) * sigmoid_deriv(self.z1)  # dL/dz1
+        dW1 = (X.T @ dz1) / m
+        db1 = np.sum(dz1, axis=0, keepdims=True) / m
+        
+        # 梯度下降更新
+        self.W2 -= self.lr * dW2
+        self.b2 -= self.lr * db2
+        self.W1 -= self.lr * dW1
+        self.b1 -= self.lr * db1
+    
+    def train(self, X, y, epochs=1000):
+        for i in range(epochs):
+            self.forward(X)
+            # 二元交叉熵损失
+            loss = -np.mean(y * np.log(self.a2.flatten() + 1e-8) + 
+                           (1 - y) * np.log(1 - self.a2.flatten() + 1e-8))
+            self.losses.append(loss)
+            self.backward(X, y)
+        return self.losses
+    
+    def predict(self, X):
+        return (self.forward(X) &gt; 0.5).astype(int).flatten()
+
+# 训练网络
+nn = NeuralNetwork(input_size=2, hidden_size=8, output_size=1, lr=1.0)
+losses = nn.train(X, y, epochs=2000)
+print(f'最终损失: {losses[-1]:.4f}')
+print(f'准确率: {np.mean(nn.predict(X) == y):.2%}')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [None]</div><pre><code># 可视化：损失曲线 + 决策边界
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# 损失曲线
+axes[0].plot(losses, color='#C96442', linewidth=1.5)
+axes[0].set_title('训练损失曲线')
+axes[0].set_xlabel('Epoch')
+axes[0].set_ylabel('Loss (BCE)')
+axes[0].grid(True, alpha=0.3)
+
+# 决策边界
+h = 0.05
+x_min, x_max = X[:,0].min()-0.5, X[:,0].max()+0.5
+y_min, y_max = X[:,1].min()-0.5, X[:,1].max()+0.5
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+Z = nn.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+axes[1].contourf(xx, yy, Z, cmap='bwr', alpha=0.3)
+axes[1].scatter(X[:,0], X[:,1], c=y, cmap='bwr', alpha=0.6, edgecolors='k', linewidth=0.5)
+axes[1].set_title('神经网络决策边界')
+plt.tight_layout()
+plt.show()</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [None]</div><pre><code># 用 sklearn 的 MLPClassifier 做对比
+from sklearn.neural_network import MLPClassifier
+
+mlp = MLPClassifier(hidden_layer_sizes=(8,), activation='logistic', 
+                    solver='sgd', learning_rate_init=1.0, max_iter=2000, random_state=42)
+mlp.fit(X, y)
+print(f'sklearn MLP 准确率: {mlp.score(X, y):.2%}')
+print(f'\n对比结果:')
+print(f'  手写网络准确率: {np.mean(nn.predict(X) == y):.2%}')
+print(f'  sklearn MLP准确率: {mlp.score(X, y):.2%}')
+print(f'\n两者结果接近，验证了手写反向传播的正确性。')</code></pre></div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<ul>
+<li><strong>神经网络 = 线性变换 + 非线性激活函数的堆叠</strong>，本质是通过多层空间变换拟合复杂函数</li>
+<li><strong>反向传播 = 链式法则的自动化应用</strong>，逐层计算梯度，让每个参数都知道「自己该往哪调」</li>
+<li><strong>隐藏层是关键</strong>：没有隐藏层只能学线性边界，有了隐藏层就能学任意形状的边界</li>
+<li>初始化（Xavier）和学习率对训练效果影响巨大，后续课程会深入讨论</li>
+</ul>
+<h2>课后思考</h2>
+<ol>
+<li>如果把隐藏层节点数从 8 增加到 64，决策边界会更精确还是会过拟合？</li>
+<li>为什么 sigmoid 适合做激活函数？换成 ReLU 会怎样？（下一课预告）</li>
+<li>反向传播中，如果学习率设得太大会发生什么？</li>
+</ol>
+<hr />
+<p><em>下一课：优化器与正则化——SGD 的进化（Adam、学习率调度）与防止过拟合的关键技术</em></p></div>

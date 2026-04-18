@@ -1,0 +1,53 @@
+<h1>神经网络基础与反向传播</h1>
+<h2>一句话概括</h2>
+<p>神经网络通过多层线性变换 + 非线性激活来逼近复杂函数，反向传播用链式法则高效计算梯度来训练网络。</p>
+<h2>核心概念</h2>
+<h3>感知机 → 多层网络</h3>
+<ul>
+<li>单层感知机 = 线性分类器，只能处理线性可分问题</li>
+<li>多层网络（MLP）通过隐藏层引入非线性，可逼近任意函数</li>
+<li>万能近似定理：单隐藏层网络可逼近任意连续函数</li>
+</ul>
+<h3>前向传播</h3>
+<p>数据从输入层 → 隐藏层 → 输出层，逐层计算：<code>a = σ(Wx + b)</code></p>
+<h3>反向传播</h3>
+<p>损失对参数的梯度通过链式法则从输出层反向传递到输入层：
+- 输出层梯度：<code>∂L/∂z = ŷ - y</code>（sigmoid + 交叉熵的简化）
+- 隐藏层梯度：<code>∂L/∂z₁ = (∂L/∂z₂ · W₂ᵀ) · σ'(z₁)</code></p>
+<h3>激活函数</h3>
+<p>引入非线性，使多层网络有意义。Sigmoid 输出 0~1，适合二分类。</p>
+<h2>关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>公式</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前向传播</td>
+<td><code>z = Wx + b, a = σ(z)</code></td>
+<td>计算预测</td>
+</tr>
+<tr>
+<td>交叉熵</td>
+<td><code>L = -Σ[y·log(ŷ)+(1-y)·log(1-ŷ)]</code></td>
+<td>衡量预测质量</td>
+</tr>
+<tr>
+<td>梯度更新</td>
+<td><code>W ← W - η·∂L/∂W</code></td>
+<td>优化参数</td>
+</tr>
+</tbody>
+</table>
+<h2>关联概念</h2>
+<ul>
+<li>前置：线性回归（第1课）、逻辑回归（第2课）、梯度下降概念</li>
+<li>后续：优化器进阶（Adam）、CNN、RNN、Transformer</li>
+<li>相关论文：Rumelhart et al. "Learning representations by back-propagating errors" (1986)</li>
+</ul>
+<h2>历史注记</h2>
+<p>反向传播算法最早由 Rumelhart、Hinton、Williams 在 1986 年推广，是深度学习复兴的基石。有趣的是，链式法则本身在微积分中已有 300 年历史，但把它应用到多层网络参数优化这个想法，开启了一个时代。</p>
