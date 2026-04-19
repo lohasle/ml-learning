@@ -1,0 +1,82 @@
+<h1>优化器与正则化</h1>
+<h2>关联课程</h2>
+<ul>
+<li><a href="../daily/2026-04-20.md">第12课：优化器与正则化</a></li>
+<li><a href="../lessons/12_优化器与正则化.ipynb">Notebook</a></li>
+</ul>
+<h2>核心概念</h2>
+<h3>优化器</h3>
+<p>优化器决定了「拿到梯度后怎么更新参数」：</p>
+<table>
+<thead>
+<tr>
+<th>优化器</th>
+<th>核心机制</th>
+<th>优势</th>
+<th>劣势</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SGD</td>
+<td>θ ← θ - η·∇L</td>
+<td>简单，理论清晰</td>
+<td>收敛慢，需调 lr</td>
+</tr>
+<tr>
+<td>Momentum</td>
+<td>累积历史梯度方向</td>
+<td>加速收敛，冲出局部极小</td>
+<td>需调 β</td>
+</tr>
+<tr>
+<td>Adam</td>
+<td>一阶矩 + 二阶矩自适应</td>
+<td>快速稳定，少调参</td>
+<td>可能过拟合</td>
+</tr>
+</tbody>
+</table>
+<h3>正则化</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>机制</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L2 正则化</td>
+<td>损失函数加 λ·Σw²</td>
+<td>不让权重太大</td>
+</tr>
+<tr>
+<td>Dropout</td>
+<td>训练时随机丢弃神经元</td>
+<td>强迫冗余表示</td>
+</tr>
+<tr>
+<td>BatchNorm</td>
+<td>归一化每层输出</td>
+<td>稳定训练 + 轻微正则化</td>
+</tr>
+<tr>
+<td>早停 (Early Stopping)</td>
+<td>验证 loss 不降就停止</td>
+<td>不给模型过拟合的机会</td>
+</tr>
+</tbody>
+</table>
+<h2>关键公式</h2>
+<ul>
+<li><strong>Momentum</strong>: v_t = β·v_{t-1} + (1-β)·∇L; θ = θ - η·v_t</li>
+<li><strong>Adam</strong>: m_t = β₁·m_{t-1} + (1-β₁)·∇L; v_t = β₂·v_{t-1} + (1-β₂)·(∇L)²; θ = θ - η·m̂_t/(√v̂_t + ε)</li>
+<li><strong>L2</strong>: L_total = L_loss + (λ/2)·Σ(w_i²)</li>
+</ul>
+<h2>关联概念</h2>
+<ul>
+<li><a href="神经网络基础与反向传播.md">神经网络基础与反向传播</a> — 优化器作用于反向传播计算的梯度</li>
+<li><a href="过拟合与正则化.md">过拟合与正则化</a> — 经典 ML 中的正则化思想，本课是其神经网络版本</li>
+</ul>

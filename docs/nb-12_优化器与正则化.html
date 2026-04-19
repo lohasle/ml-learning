@@ -1,0 +1,272 @@
+<div class="nb-cell nb-markdown"><h1>第12课：优化器与正则化</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 SGD、Momentum、Adam 等主流优化器的工作原理与差异</li>
+<li>掌握 Dropout、BatchNorm、L2 正则化等防止过拟合的技巧</li>
+<li>通过实验直观感受不同优化器和正则化方法的效果</li>
+</ul>
+<h2>在学习路线中的位置</h2>
+<p>上一课我们搭建了神经网络的骨架（前向传播 + 反向传播）。但「怎么更新参数」和「怎么防止过拟合」是两个关键工程问题——这正是本课要解决的。</p>
+<p>优化器决定了参数更新的方向和速度；正则化决定了模型会不会「记住噪音」。两者配合，才能训练出泛化能力强的模型。</p></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<h3>优化器：参数更新的策略</h3>
+<p>想象你从山顶下山：
+- <strong>SGD</strong>：每一步只看脚下坡度，直线走，容易在窄谷里来回震荡
+- <strong>Momentum</strong>：像带惯性的球，记住之前的方向，冲出局部凹陷
+- <strong>Adam</strong>：自适应步长，平坦处走大步，陡峭处走小步，实践中最常用</p>
+<h3>正则化：防止模型「死记硬背」</h3>
+<ul>
+<li><strong>L2 正则化（权重衰减）</strong>：给大权重加罚，让模型偏好简单解</li>
+<li><strong>Dropout</strong>：训练时随机「关掉」一部分神经元，强迫网络不依赖某个节点</li>
+<li><strong>Batch Normalization</strong>：把每层的输出归一化，加速训练且有一定正则化效果</li>
+</ul></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+
+# 生成非线性分类数据
+np.random.seed(42)
+X, y = make_moons(n_samples=500, noise=0.25, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+plt.figure(figsize=(6, 4))
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap='bwr', alpha=0.6, edgecolors='k')
+plt.title('Moon Dataset (Training Data)')
+plt.xlabel('x1')
+plt.ylabel('x2')
+plt.show()
+print(f'Train: {X_train.shape[0]} samples, Test: {X_test.shape[0]} samples')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 从零实现：带 Momentum 和 Adam 的简单 2 层网络
+
+class SimpleNN:
+    """2层全连接网络，支持 SGD / Momentum / Adam"""
+    
+    def __init__(self, input_dim=2, hidden_dim=32, output_dim=1, lr=0.01, optimizer='sgd', l2_reg=0.0, dropout_rate=0.0):
+        # Xavier 初始化
+        self.W1 = np.random.randn(input_dim, hidden_dim) * np.sqrt(2.0 / input_dim)
+        self.b1 = np.zeros((1, hidden_dim))
+        self.W2 = np.random.randn(hidden_dim, output_dim) * np.sqrt(2.0 / hidden_dim)
+        self.b2 = np.zeros((1, output_dim))
+        self.lr = lr
+        self.optimizer = optimizer
+        self.l2_reg = l2_reg
+        self.dropout_rate = dropout_rate
+        
+        # Momentum 需要的速度
+        self.vW1 = np.zeros_like(self.W1)
+        self.vb1 = np.zeros_like(self.b1)
+        self.vW2 = np.zeros_like(self.W2)
+        self.vb2 = np.zeros_like(self.b2)
+        
+        # Adam 需要的一阶/二阶矩
+        self.mW1 = np.zeros_like(self.W1)
+        self.mW2 = np.zeros_like(self.W2)
+        self.mb1 = np.zeros_like(self.b1)
+        self.mb2 = np.zeros_like(self.b2)
+        self._t = 0  # timestep
+    
+    def relu(self, x):
+        return np.maximum(0, x)
+    
+    def sigmoid(self, x):
+        return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
+    
+    def forward(self, X, training=False):
+        self.z1 = X @ self.W1 + self.b1
+        self.a1 = self.relu(self.z1)
+        # Dropout
+        if training and self.dropout_rate &gt; 0:
+            self.mask = (np.random.rand(*self.a1.shape) &gt; self.dropout_rate).astype(float)
+            self.a1 = self.a1 * self.mask / (1 - self.dropout_rate)  # inverted dropout
+        else:
+            self.mask = np.ones_like(self.a1)
+        self.z2 = self.a1 @ self.W2 + self.b2
+        self.out = self.sigmoid(self.z2)
+        return self.out
+    
+    def backward(self, X, y):
+        m = X.shape[0]
+        # 输出层梯度
+        dz2 = self.out - y.reshape(-1, 1)  # (m, 1)
+        dW2 = (self.a1.T @ dz2) / m + self.l2_reg * self.W2
+        db2 = np.mean(dz2, axis=0, keepdims=True)
+        
+        # 隐藏层梯度
+        da1 = dz2 @ self.W2.T
+        da1 = da1 * self.mask / (1 - self.dropout_rate) if self.dropout_rate &gt; 0 else da1
+        dz1 = da1 * (self.z1 &gt; 0)  # ReLU derivative
+        dW1 = (X.T @ dz1) / m + self.l2_reg * self.W1
+        db1 = np.mean(dz1, axis=0, keepdims=True)
+        
+        grads = {'W1': dW1, 'b1': db1, 'W2': dW2, 'b2': db2}
+        return grads
+    
+    def update(self, grads):
+        beta1, beta2, eps = 0.9, 0.999, 1e-8
+        self._t += 1
+        
+        for param_name in ['W1', 'b1', 'W2', 'b2']:
+            param = getattr(self, param_name)
+            grad = grads[param_name]
+            
+            if self.optimizer == 'sgd':
+                param -= self.lr * grad
+            elif self.optimizer == 'momentum':
+                v = getattr(self, 'v' + param_name)
+                v[:] = beta1 * v + (1 - beta1) * grad
+                param -= self.lr * v
+            elif self.optimizer == 'adam':
+                m = getattr(self, 'm' + param_name) if param_name in ['W1', 'W2'] else self.mb2
+                v = getattr(self, 'v' + param_name)
+                m[:] = beta1 * m + (1 - beta1) * grad
+                v[:] = beta2 * v + (1 - beta2) * (grad ** 2)
+                m_hat = m / (1 - beta1 ** self._t)
+                v_hat = v / (1 - beta2 ** self._t)
+                param -= self.lr * m_hat / (np.sqrt(v_hat) + eps)
+    
+    def compute_loss(self, y_pred, y_true):
+        m = y_true.shape[0]
+        y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)
+        loss = -np.mean(y_true.reshape(-1, 1) * np.log(y_pred) + (1 - y_true.reshape(-1, 1)) * np.log(1 - y_pred))
+        if self.l2_reg &gt; 0:
+            loss += 0.5 * self.l2_reg * (np.sum(self.W1 ** 2) + np.sum(self.W2 ** 2))
+        return loss
+
+print('SimpleNN class ready — supports SGD, Momentum, Adam, L2, Dropout')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 对比三种优化器的训练曲线
+
+def train_model(optimizer, lr=0.01, epochs=200, l2_reg=0.0, dropout_rate=0.0):
+    model = SimpleNN(lr=lr, optimizer=optimizer, l2_reg=l2_reg, dropout_rate=dropout_rate)
+    losses = []
+    for epoch in range(epochs):
+        out = model.forward(X_train, training=True)
+        loss = model.compute_loss(out, y_train)
+        losses.append(loss)
+        grads = model.backward(X_train, y_train)
+        model.update(grads)
+    # 测试准确率
+    pred = model.forward(X_test, training=False)
+    acc = np.mean((pred &gt; 0.5).flatten() == y_test)
+    return losses, acc
+
+configs = [
+    ('SGD (lr=0.1)', 'sgd', 0.1),
+    ('Momentum (lr=0.1)', 'momentum', 0.1),
+    ('Adam (lr=0.01)', 'adam', 0.01),
+]
+
+plt.figure(figsize=(10, 4))
+for label, opt, lr in configs:
+    losses, acc = train_model(opt, lr=lr, epochs=300)
+    plt.plot(losses, label=f'{label} (acc={acc:.2f})')
+
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Optimizer Comparison on Moon Dataset')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 正则化对比：无正则 vs L2 vs Dropout
+
+reg_configs = [
+    ('No Regularization', 0.0, 0.0),
+    ('L2 (lambda=0.01)', 0.01, 0.0),
+    ('Dropout (rate=0.3)', 0.0, 0.3),
+    ('L2 + Dropout', 0.01, 0.3),
+]
+
+plt.figure(figsize=(10, 4))
+for label, l2, drop in reg_configs:
+    losses, acc = train_model('adam', lr=0.01, epochs=300, l2_reg=l2, dropout_rate=drop)
+    plt.plot(losses, label=f'{label} (acc={acc:.2f})')
+
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Regularization Comparison (Adam optimizer)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+print('观察：Dropout 的训练 loss 可能更高，但测试准确率往往更好——这正是正则化的效果')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 用 sklearn 的 MLPClassifier 做对比验证
+from sklearn.neural_network import MLPClassifier
+
+# 无正则化
+mlp_plain = MLPClassifier(hidden_layer_sizes=(32,), activation='relu', solver='adam', 
+                          max_iter=300, random_state=42, alpha=0.0)
+mlp_plain.fit(X_train, y_train)
+print(f'sklearn MLP (no reg): train_acc={mlp_plain.score(X_train, y_train):.3f}, test_acc={mlp_plain.score(X_test, y_test):.3f}')
+
+# L2 正则化
+mlp_l2 = MLPClassifier(hidden_layer_sizes=(32,), activation='relu', solver='adam',
+                       max_iter=300, random_state=42, alpha=0.01)
+mlp_l2.fit(X_train, y_train)
+print(f'sklearn MLP (L2=0.01): train_acc={mlp_l2.score(X_train, y_train):.3f}, test_acc={mlp_l2.score(X_test, y_test):.3f}')
+
+# 更大网络 + 早停
+mlp_big = MLPClassifier(hidden_layer_sizes=(64, 32), activation='relu', solver='adam',
+                        max_iter=500, random_state=42, alpha=0.001, early_stopping=True)
+mlp_big.fit(X_train, y_train)
+print(f'sklearn MLP (64x2 + early_stop): train_acc={mlp_big.score(X_train, y_train):.3f}, test_acc={mlp_big.score(X_test, y_test):.3f}')</code></pre></div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<table>
+<thead>
+<tr>
+<th>优化器</th>
+<th>特点</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SGD</td>
+<td>简单，收敛慢</td>
+<td>学术实验、精细调参</td>
+</tr>
+<tr>
+<td>Momentum</td>
+<td>带惯性，加速收敛</td>
+<td>几乎总是比纯 SGD 好</td>
+</tr>
+<tr>
+<td>Adam</td>
+<td>自适应步长，收敛快</td>
+<td><strong>默认首选</strong>，大多数场景适用</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>正则化</th>
+<th>作用</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L2</td>
+<td>惩罚大权重</td>
+<td>不让任何特征「一家独大」</td>
+</tr>
+<tr>
+<td>Dropout</td>
+<td>随机丢弃神经元</td>
+<td>强迫网络学会冗余表示</td>
+</tr>
+<tr>
+<td>BatchNorm</td>
+<td>归一化层输出</td>
+<td>稳定训练 + 轻微正则化</td>
+</tr>
+</tbody>
+</table>
+<h2>课后思考</h2>
+<ol>
+<li>为什么 Adam 几乎不需要调学习率就能工作得不错？它的自适应机制是如何实现的？</li>
+<li>Dropout 在训练和推理时的行为为什么不一致（推理时不丢弃）？</li>
+<li>如果你的模型在训练集上 loss 很低但测试集上表现差，你会依次尝试哪些方法？</li>
+</ol></div>
