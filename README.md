@@ -35,12 +35,8 @@
 | 9 | KMeans 聚类 | [📖 Notebook](lessons/09_KMeans聚类.ipynb) | [2026-04-17](daily/2026-04-17.md) |
 | 10 | PCA 降维 | [📖 Notebook](lessons/10_PCA降维.ipynb) | [2026-04-18](daily/2026-04-18.md) |
 | 11 | 神经网络基础与反向传播 | [📖 Notebook](lessons/11_神经网络基础与反向传播.ipynb) | [2026-04-19](daily/2026-04-19.md) |
-<<<<<<< Updated upstream
-|| 12 | 优化器与正则化 | [📖 Notebook](lessons/12_优化器与正则化.ipynb) | [2026-04-20](daily/2026-04-20.md) | [💬 反馈](feedback/2026-04-20.md) |
-=======
-| 12 | 优化器与正则化 | [📖 Notebook](lessons/12_优化器与正则化.ipynb) | [2026-04-20](daily/2026-04-20.md) |
+| 12 | 优化器与正则化 | [📖 Notebook](lessons/12_优化器与正则化.ipynb) | [2026-04-20](daily/2026-04-20.md) | [💬 反馈](feedback/2026-04-20.md) |
 | 13 | CNN 与图像识别 | [📖 Notebook](lessons/13_CNN与图像识别.ipynb) | [2026-04-21](daily/2026-04-21.md) |
->>>>>>> Stashed changes
 
 ## 🔗 快速入口
 
