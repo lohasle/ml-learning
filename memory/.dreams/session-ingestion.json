@@ -1,26 +1,19 @@
 {
   "version": 3,
   "files": {
-    "ml-learning-coach:sessions/53a229bf-3653-4260-9df3-0e4a685dbc89.jsonl": {
+    "ml-learning-coach:sessions/50bff609-a499-4850-a6c5-cc5d99ba15d1.jsonl": {
+      "mtimeMs": 1776632742900,
+      "size": 93481,
+      "contentHash": "efef3eda8889b5f8dfdacf1a793e68118473132fe4b1029b2fc0f5d3656c7538",
+      "lineCount": 13,
+      "lastContentLine": 13
+    },
+    "ml-learning-coach:sessions/53a229bf-3653-4260-9df3-0e4a685dbc89.jsonl.deleted.2026-04-19T21-05-55.417Z": {
       "mtimeMs": 1776546258338,
       "size": 92271,
       "contentHash": "1b8d5e02a0e00e205057687b70ce85bd341baa07d78ca4f49de3601808fa5ab0",
       "lineCount": 10,
       "lastContentLine": 10
-    },
-    "ml-learning-coach:sessions/a74ce813-73b9-488d-b061-ab2cd27c42d6.jsonl.deleted.2026-04-18T21-04-23.274Z": {
-      "mtimeMs": 1776459871958,
-      "size": 111554,
-      "contentHash": "bfd8b7467be1ba347c3f4c8dcca3b70ed9d46d9a3ab952dbbe359a1b88d4a758",
-      "lineCount": 14,
-      "lastContentLine": 14
-    },
-    "ml-learning-coach:sessions/bada3f46-6a2e-443d-b49a-a86dfa8ecdc7.jsonl.deleted.2026-04-17T21-04-38.550Z": {
-      "mtimeMs": 1776373664405,
-      "size": 98967,
-      "contentHash": "4a0afe340748864d37e02d1e3372b8ce2c640cb12d8b1cde966edfa1f6d6989d",
-      "lineCount": 15,
-      "lastContentLine": 15
     }
   },
   "seenMessages": {
@@ -105,6 +98,21 @@
       "a3b3040f27731a5a147b4a02b325ada46e4e26a7",
       "1cf8c76c35c16eab3f9b1695c2747d4fe94a8950",
       "76d14a4a7356e88813efbea4c4eae6627a914bbb"
+    ],
+    "ml-learning-coach:50bff609-a499-4850-a6c5-cc5d99ba15d1": [
+      "2e5de633257428454c41991c9f87ecb85ec0e8fc",
+      "13b26d7fb0bba052edcf6f3326c9bfa5d2f6957c",
+      "5b88ad448b0d84ff6f745166e2e9f7b42ce9e175",
+      "3d6ee418cba6d9a77a0992fdea6e574f0b62ca18",
+      "4119f08c201826cfce7e7665f2d7b4709282b000",
+      "3e8b42bc95edb5b6a6a65b28ac7963e4b880ad3c",
+      "2ceddb8f864b1977ce1e3703544c5324be1ca2d1",
+      "4df471019d5d883e8758a7d4e5ed762e45fc1b41",
+      "a5b38232da69361f04023c1711cccb55cbcd3774",
+      "970009358acfaff47ff154dd823969fcd8cebed2",
+      "3dee49d32e93ca4d862e86839a1ef48d4a3fd9e7",
+      "32a3a41cf613175e2b82c3fb3b63d49de66900fc",
+      "dcde79f7268466872824428f459fc034455c4b7d"
     ]
   }
 }

@@ -1,0 +1,334 @@
+<div class="nb-cell nb-markdown"><h1>第13课：CNN 与图像识别（MNIST）</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解卷积神经网络（CNN）的核心思想：局部感知 + 参数共享</li>
+<li>掌握卷积层、池化层、全连接层的协作方式</li>
+<li>从零用 NumPy 实现一个简单 CNN，并在 MNIST 上跑通</li>
+<li>用 PyTorch 快速搭建 CNN，对比效果</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<h3>为什么普通全连接网络不适合图像？</h3>
+<p>一张 28×28 的灰度图有 784 个像素。如果用全连接网络，第一层 100 个神经元就需要 78,400 个参数。
+而实际图像只有 224×224 就有 150,528 个输入——参数爆炸。</p>
+<p>更关键的问题：全连接网络<strong>不关心空间结构</strong>。它把图像拉成一维向量，丢失了「相邻像素关系」这一最关键的信息。</p>
+<h3>CNN 的三个关键直觉</h3>
+<ol>
+<li><strong>局部感知</strong>：每个神经元只看一小块区域（比如 3×3），不是整张图</li>
+<li><strong>参数共享</strong>：同一个滤波器（filter/kernel）在整张图上滑动——同一套参数检测同一模式</li>
+<li><strong>平移不变性</strong>：无论猫在左上角还是右下角，同一个滤波器都能检测到</li>
+</ol>
+<p>这就是 CNN 在图像任务上碾压全连接网络的原因。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import fetch_openml
+import warnings
+warnings.filterwarnings('ignore')
+
+# 加载 MNIST
+print('加载 MNIST 数据集...')
+mnist = fetch_openml('mnist_784', version=1, as_frame=False)
+X, y = mnist.data, mnist.target.astype(int)
+
+# 取子集（训练 5000，测试 1000）加速演示
+X_train, y_train = X[:5000].reshape(-1, 28, 28), y[:5000]
+X_test, y_test = X[6000:7000].reshape(-1, 28, 28), y[6000:7000]
+
+print(f'训练集: {X_train.shape}, 测试集: {X_test.shape}')
+
+# 可视化几个样本
+fig, axes = plt.subplots(1, 6, figsize=(12, 2))
+for i, ax in enumerate(axes):
+    ax.imshow(X_train[i], cmap='gray')
+    ax.set_title(f'Label: {y_train[i]}')
+    ax.axis('off')
+plt.suptitle('MNIST 手写数字样本')
+plt.tight_layout()
+plt.show()</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># 从零实现卷积操作
+
+def conv2d(input_img, kernel, stride=1, padding=0):
+    """二维卷积（实际上 是互相关运算）
+    input_img: (H, W)
+    kernel: (kH, kW)
+    """
+    if padding &gt; 0:
+        input_img = np.pad(input_img, padding, mode='constant')
+    
+    H, W = input_img.shape
+    kH, kW = kernel.shape
+    out_H = (H - kH) // stride + 1
+    out_W = (W - kW) // stride + 1
+    output = np.zeros((out_H, out_W))
+    
+    for i in range(out_H):
+        for j in range(out_W):
+            h_start = i * stride
+            w_start = j * stride
+            region = input_img[h_start:h_start+kH, w_start:w_start+kW]
+            output[i, j] = np.sum(region * kernel)
+    
+    return output
+
+def max_pool2d(input_img, pool_size=2, stride=2):
+    """最大池化"""
+    H, W = input_img.shape
+    out_H = (H - pool_size) // stride + 1
+    out_W = (W - pool_size) // stride + 1
+    output = np.zeros((out_H, out_W))
+    
+    for i in range(out_H):
+        for j in range(out_W):
+            h_start = i * stride
+            w_start = j * stride
+            region = input_img[h_start:h_start+pool_size, w_start:w_start+pool_size]
+            output[i, j] = np.max(region)
+    
+    return output
+
+# 用几种经典滤波器对 MNIST 数字做卷积
+sample = X_train[0] / 255.0  # 归一化
+
+# 边缘检测
+edge_kernel = np.array([[-1, -1, -1],
+                         [-1,  8, -1],
+                         [-1, -1, -1]])
+
+# 横向边缘
+h_edge = np.array([[-1, -1, -1],
+                    [ 0,  0,  0],
+                    [ 1,  1,  1]])
+
+# 模糊
+blur_kernel = np.ones((3, 3)) / 9.0
+
+fig, axes = plt.subplots(1, 4, figsize=(14, 3))
+axes[0].imshow(sample, cmap='gray'); axes[0].set_title('原图')
+axes[1].imshow(conv2d(sample, edge_kernel), cmap='gray'); axes[1].set_title('边缘检测')
+axes[2].imshow(conv2d(sample, h_edge), cmap='gray'); axes[2].set_title('横向边缘')
+axes[3].imshow(conv2d(sample, blur_kernel), cmap='gray'); axes[3].set_title('模糊')
+for ax in axes:
+    ax.axis('off')
+plt.suptitle('手动卷积滤波效果')
+plt.tight_layout()
+plt.show()
+
+print('卷积操作核心：用小滤波器扫描整图 → 提取局部特征')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># 简易 CNN 前向传播（无训练，演示结构）
+
+def relu(x):
+    return np.maximum(0, x)
+
+def softmax(x):
+    e = np.exp(x - np.max(x))
+    return e / e.sum()
+
+class SimpleCNN:
+    """最简 CNN：Conv → Pool → Flatten → FC → Softmax"""
+    def __init__(self):
+        # 随机初始化 4 个 3x3 滤波器
+        self.conv1_filters = np.random.randn(4, 3, 3) * 0.1
+        self.fc_weights = None  # 延迟初始化
+    
+    def forward(self, x):
+        """x: (28, 28)"""
+        # 1) 卷积层：4 个滤波器
+        conv_out = []
+        for f in self.conv1_filters:
+            conv_out.append(conv2d(x, f, padding=1))  # same padding
+        conv_out = np.array(conv_out)  # (4, 28, 28)
+        conv_out = relu(conv_out)
+        
+        # 2) 池化层：2x2
+        pool_out = []
+        for fm in conv_out:
+            pool_out.append(max_pool2d(fm))
+        pool_out = np.array(pool_out)  # (4, 14, 14)
+        
+        # 3) 展平
+        flat = pool_out.flatten()  # 4 * 14 * 14 = 784
+        
+        # 4) 全连接层
+        if self.fc_weights is None:
+            self.fc_weights = np.random.randn(784, 10) * 0.01
+        logits = flat @ self.fc_weights
+        probs = softmax(logits)
+        
+        return probs, conv_out, pool_out
+
+cnn = SimpleCNN()
+probs, conv_maps, pool_maps = cnn.forward(sample)
+
+# 可视化特征图
+fig, axes = plt.subplots(2, 4, figsize=(14, 6))
+for i in range(4):
+    axes[0, i].imshow(conv_maps[i], cmap='viridis')
+    axes[0, i].set_title(f'卷积特征图 {i+1}')
+    axes[0, i].axis('off')
+    axes[1, i].imshow(pool_maps[i], cmap='viridis')
+    axes[1, i].set_title(f'池化后 {i+1}')
+    axes[1, i].axis('off')
+plt.suptitle('CNN 各层特征图（随机初始化，未训练）')
+plt.tight_layout()
+plt.show()
+
+print(f'预测概率分布: {probs.round(3)}')
+print(f'预测类别: {np.argmax(probs)}, 真实类别: {y_train[0]}')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># 用 PyTorch 搭建真正的 CNN 并训练
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, TensorDataset
+
+# 准备数据
+X_t = torch.FloatTensor(X[:10000].reshape(-1, 1, 28, 28) / 255.0)
+y_t = torch.LongTensor(y[:10000])
+X_val = torch.FloatTensor(X[6000:7000].reshape(-1, 1, 28, 28) / 255.0)
+y_val = torch.LongTensor(y[6000:7000])
+
+train_ds = TensorDataset(X_t, y_t)
+train_loader = DataLoader(train_ds, batch_size=64, shuffle=True)
+
+class PyTorchCNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # 卷积层1: 1通道 → 16通道, 3x3
+        self.conv1 = nn.Conv2d(1, 16, 3, padding=1)
+        # 卷积层2: 16通道 → 32通道, 3x3
+        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
+        # 全连接层
+        self.fc1 = nn.Linear(32 * 7 * 7, 128)
+        self.fc2 = nn.Linear(128, 10)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.dropout = nn.Dropout(0.25)
+    
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))  # (B, 16, 14, 14)
+        x = self.pool(F.relu(self.conv2(x)))  # (B, 32, 7, 7)
+        x = x.view(-1, 32 * 7 * 7)
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
+        return x
+
+model = PyTorchCNN()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+criterion = nn.CrossEntropyLoss()
+
+# 训练
+train_losses = []
+val_accs = []
+
+for epoch in range(5):
+    model.train()
+    epoch_loss = 0
+    for xb, yb in train_loader:
+        optimizer.zero_grad()
+        pred = model(xb)
+        loss = criterion(pred, yb)
+        loss.backward()
+        optimizer.step()
+        epoch_loss += loss.item()
+    
+    train_losses.append(epoch_loss / len(train_loader))
+    
+    # 验证
+    model.eval()
+    with torch.no_grad():
+        val_pred = model(X_val).argmax(dim=1)
+        acc = (val_pred == y_val).float().mean().item()
+        val_accs.append(acc)
+    
+    print(f'Epoch {epoch+1}/5 | Loss: {train_losses[-1]:.4f} | Val Acc: {acc:.4f}')
+
+# 可视化训练过程
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+ax1.plot(train_losses, 'b-o')
+ax1.set_title('训练损失'); ax1.set_xlabel('Epoch')
+ax2.plot(val_accs, 'r-o')
+ax2.set_title('验证准确率'); ax2.set_xlabel('Epoch')
+plt.tight_layout()
+plt.show()
+
+print(f'\n最终验证准确率: {val_accs[-1]*100:.1f}%')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># 可视化 CNN 学到的滤波器 + 预测结果
+
+# 展示第一个卷积层的 16 个滤波器
+fig, axes = plt.subplots(2, 8, figsize=(16, 4))
+filters = model.conv1.weight.data.squeeze().numpy()
+for i, ax in enumerate(axes.flat):
+    ax.imshow(filters[i], cmap='RdBu')
+    ax.set_title(f'F{i+1}', fontsize=9)
+    ax.axis('off')
+plt.suptitle('第一层卷积滤波器（训练后）')
+plt.tight_layout()
+plt.show()
+
+# 展示几个预测结果
+model.eval()
+with torch.no_grad():
+    sample_pred = model(X_val[:12]).argmax(dim=1).numpy()
+
+fig, axes = plt.subplots(2, 6, figsize=(14, 4))
+for i, ax in enumerate(axes.flat):
+    ax.imshow(X_val[i].squeeze().numpy(), cmap='gray')
+    color = 'green' if sample_pred[i] == y_val[i].item() else 'red'
+    ax.set_title(f'Pred: {sample_pred[i]} / True: {y_val[i].item()}', color=color, fontsize=9)
+    ax.axis('off')
+plt.suptitle('CNN 预测结果（绿色=正确，红色=错误）')
+plt.tight_layout()
+plt.show()</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<ul>
+<li><strong>卷积</strong> = 用小滤波器扫描图像 → 自动提取边缘、纹理等特征</li>
+<li><strong>池化</strong> = 降采样 → 减少参数 + 增强平移不变性</li>
+<li><strong>典型 CNN 结构</strong>：Conv → ReLU → Pool → Conv → ReLU → Pool → Flatten → FC → Softmax</li>
+<li>PyTorch 只需几行代码就能搭建一个效果不错的 CNN（MNIST 上 5 个 epoch 就能达到 ~97%）</li>
+</ul>
+<h2>CNN vs 全连接：参数对比</h2>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>输入 28×28</th>
+<th>第一层参数量</th>
+<th>是否利用空间结构</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>全连接 (100 neurons)</td>
+<td>784</td>
+<td>78,400</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>CNN (16 filters 3×3)</td>
+<td>28×28</td>
+<td>144</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<h2>课后思考</h2>
+<ol>
+<li>为什么 CNN 的滤波器能自动学到有用的特征（如边缘），而不需要我们手动设计？</li>
+<li>如果把 MNIST 从 28×28 放大到 224×224，全连接网络和 CNN 的参数差距会怎样变化？</li>
+<li>池化层没有可学习参数，它为什么有用？有没有替代方案？</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课学习 <strong>RNN / LSTM 与序列建模</strong>——从「空间结构」（图像）转向「时间结构」（序列数据），这是理解自然语言处理的关键一步。</p></div>
