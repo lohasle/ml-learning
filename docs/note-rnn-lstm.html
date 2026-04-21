@@ -1,0 +1,53 @@
+<h1>RNN / LSTM 与序列建模</h1>
+<h2>核心思想</h2>
+<p>RNN 是处理<strong>序列数据</strong>的神经网络。核心机制是隐藏状态 $h_t$ 的循环传递：每一步的输出依赖当前输入和上一步的隐藏状态。</p>
+<h2>关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RNN</td>
+<td>$h_t = \tanh(W x_t + U h_{t-1} + b)$</td>
+<td>新输入+旧记忆压缩</td>
+</tr>
+<tr>
+<td>LSTM 遗忘门</td>
+<td>$f_t = \sigma(W_f [h_{t-1}, x_t] + b_f)$</td>
+<td>0=全忘, 1=全留</td>
+</tr>
+<tr>
+<td>LSTM 输入门</td>
+<td>$i_t = \sigma(W_i [h_{t-1}, x_t] + b_i)$</td>
+<td>新信息写入控制</td>
+</tr>
+<tr>
+<td>LSTM 细胞更新</td>
+<td>$C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$</td>
+<td>擦旧+写新</td>
+</tr>
+<tr>
+<td>LSTM 输出</td>
+<td>$h_t = o_t \odot \tanh(C_t)$</td>
+<td>从传送带读出</td>
+</tr>
+</tbody>
+</table>
+<h2>RNN → LSTM → GRU 演进</h2>
+<ul>
+<li><strong>RNN</strong>（1986）：简单循环，梯度消失问题</li>
+<li><strong>LSTM</strong>（1997）：加门控+细胞状态，解决长依赖</li>
+<li><strong>GRU</strong>（2014）：简化 LSTM，合并门控，参数更少</li>
+<li><strong>Transformer</strong>（2017）：去掉循环，用注意力机制处理全局依赖</li>
+</ul>
+<h2>关联概念</h2>
+<ul>
+<li>前置：CNN（空间局部性）→ 本课：RNN/LSTM（时间序列）→ 后续：Attention/Transformer</li>
+<li>关键论文：Hochreiter &amp; Schmidhuber, "Long Short-Term Memory", 1997</li>
+<li>关键项目：Google Neural Machine Translation (2016) 使用 LSTM 做机器翻译</li>
+</ul>

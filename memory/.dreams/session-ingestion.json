@@ -1,7 +1,7 @@
 {
   "version": 3,
   "files": {
-    "ml-learning-coach:sessions/50bff609-a499-4850-a6c5-cc5d99ba15d1.jsonl": {
+    "ml-learning-coach:sessions/50bff609-a499-4850-a6c5-cc5d99ba15d1.jsonl.deleted.2026-04-20T21-05-19.777Z": {
       "mtimeMs": 1776632742900,
       "size": 93481,
       "contentHash": "efef3eda8889b5f8dfdacf1a793e68118473132fe4b1029b2fc0f5d3656c7538",
@@ -14,6 +14,13 @@
       "contentHash": "1b8d5e02a0e00e205057687b70ce85bd341baa07d78ca4f49de3601808fa5ab0",
       "lineCount": 10,
       "lastContentLine": 10
+    },
+    "ml-learning-coach:sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl": {
+      "mtimeMs": 1776719111239,
+      "size": 126400,
+      "contentHash": "2e3682de5c4a25d559286260d0b46a3fd3c4b6f046db5ed07c9f03af67a84402",
+      "lineCount": 18,
+      "lastContentLine": 18
     }
   },
   "seenMessages": {
@@ -113,6 +120,26 @@
       "3dee49d32e93ca4d862e86839a1ef48d4a3fd9e7",
       "32a3a41cf613175e2b82c3fb3b63d49de66900fc",
       "dcde79f7268466872824428f459fc034455c4b7d"
+    ],
+    "ml-learning-coach:9400edeb-a0f2-4bff-8ed1-e8d212b285e5": [
+      "45ec68731030eb150786065a236b6fdf190e4709",
+      "48d3a2114034adb5172b078e046bd15becdb4eb6",
+      "7d3acebf93722a2f8b4d27f61dd471cd1deeb500",
+      "820bc33a1d55479048994b314feeaafbf3359354",
+      "0397070ec6d2360a19c22fee9ed644caf7494f7f",
+      "8121c1e1663b0ae8b42d78adf9c48a9e62430528",
+      "2280c8b610f98323adac956b81dad16461a71aea",
+      "d8161c3e0c46778dbfc2f23a9b5cb787136e3eb0",
+      "5c66705fce589479d5f2f654a2b19b4f432052b4",
+      "1ccf38931441c97498a92297671d7836249c94ba",
+      "805c70939e9ec27220106a67079d7a3e30626e79",
+      "be8a82e9be0e2a8a249e203e2086c2a734d5bc55",
+      "cddb52055423f336a866af286c05c5ef1f07e3e4",
+      "63d91633c6ca4f5d4a992840919292c7949839e5",
+      "4efa18286faeef13b81398767a471c111b96120c",
+      "d4bc07ca5eec98f88c1831e653bdebcb1701b855",
+      "bb9cea4efca3ac9bd87db9ed0f5cfe1803f1781a",
+      "fc3c04fcc6f8a658b6b8c5268bd31ed797f1f79b"
     ]
   }
 }

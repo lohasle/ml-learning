@@ -1,0 +1,127 @@
+<h1>2026年4月22日 - 第14课：RNN / LSTM 与序列建模</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解循环神经网络（RNN）如何处理序列数据，以及 LSTM 如何通过门控机制解决梯度消失问题。</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课（CNN）解决了<strong>空间维度</strong>的特征提取问题——图像中相邻像素的局部模式。
+今天进入<strong>时间维度</strong>——序列数据中，当前时刻的信息和之前的历史强相关。</p>
+<p>RNN/LSTM 是 Transformer 出现之前 NLP 领域的绝对主力（1997-2017）。理解它们，才能真正理解 Transformer 为什么是一次革命。</p>
+<h2>核心概念解释</h2>
+<h3>1. 序列数据 vs 独立数据</h3>
+<table>
+<thead>
+<tr>
+<th>数据类型</th>
+<th>例子</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>独立数据</td>
+<td>房价预测（每套房独立）</td>
+<td>样本间无顺序关系</td>
+</tr>
+<tr>
+<td>序列数据</td>
+<td>文本、语音、股价</td>
+<td>顺序决定含义</td>
+</tr>
+</tbody>
+</table>
+<p><strong>直觉</strong>：「我爱你」和「你爱我」用到的字完全一样，但意思相反——顺序本身就是信息。</p>
+<h3>2. RNN：带记忆的网络</h3>
+<p>$$h_t = \tanh(W_{xh} \cdot x_t + W_{hh} \cdot h_{t-1} + b_h)$$</p>
+<p><strong>直觉</strong>：像一个边读书边做笔记的人——每读一个字，就把新字和之前的笔记混在一起，压缩成新的笔记。问题是：书太长的话，开头的内容就被"压缩没"了。</p>
+<h3>3. LSTM：选择性地记忆</h3>
+<p>LSTM 多了一条「传送带」$C_t$（细胞状态），加上三道门：</p>
+<table>
+<thead>
+<tr>
+<th>门控</th>
+<th>作用</th>
+<th>类比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>遗忘门 $f_t$</td>
+<td>旧记忆里丢掉什么</td>
+<td>橡皮擦</td>
+</tr>
+<tr>
+<td>输入门 $i_t$</td>
+<td>新信息里记住什么</td>
+<td>钢笔</td>
+</tr>
+<tr>
+<td>输出门 $o_t$</td>
+<td>当前展示什么</td>
+<td>聚光灯</td>
+</tr>
+</tbody>
+</table>
+<p><strong>核心公式</strong>：$C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$</p>
+<p>直觉：传送带上的东西，你可以选择性擦除、选择性添加——所以长距离信息不会被"压缩没"。</p>
+<h3>4. GRU：LSTM 的精简版</h3>
+<p>GRU 把遗忘门和输入门合并成一个「更新门」，参数更少，速度更快，效果通常差不多。</p>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RNN 隐藏状态</td>
+<td>$h_t = \tanh(W x_t + U h_{t-1})$</td>
+<td>新输入+旧记忆混合压缩</td>
+</tr>
+<tr>
+<td>LSTM 遗忘门</td>
+<td>$f_t = \sigma(W_f [h_{t-1}, x_t])$</td>
+<td>0=全忘，1=全留</td>
+</tr>
+<tr>
+<td>LSTM 细胞更新</td>
+<td>$C_t = f_t \cdot C_{t-1} + i_t \cdot \tilde{C}_t$</td>
+<td>擦旧+写新</td>
+</tr>
+<tr>
+<td>LSTM 输出</td>
+<td>$h_t = o_t \cdot \tanh(C_t)$</td>
+<td>从传送带上读出</td>
+</tr>
+<tr>
+<td>GRU 更新门</td>
+<td>$z_t = \sigma(W_z [h_{t-1}, x_t])$</td>
+<td>合并遗忘+输入为一个门</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 中从零实现 SimpleRNN 和 SimpleLSTM，不依赖框架</li>
+<li>通过「隐藏状态范数变化图」直观看到 RNN 的梯度消失 vs LSTM 的稳定传播</li>
+<li>PyTorch 对比实验：RNN/LSTM/GRU 在同一任务上的训练曲线</li>
+<li>常见坑点：RNN 中 <code>tanh</code> 的饱和导致梯度消失；初始化对 LSTM 影响很大</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: LSTM 比 RNN 慢多少？</strong>
+A: 大约 2-4 倍（参数量是 RNN 的 4 倍），但对长序列效果好得多。短序列（&lt;20步）RNN 可能够用。</p>
+<p><strong>Q: LSTM 现在还有用吗？不是都被 Transformer 替代了？</strong>
+A: 小数据、边缘设备、实时流式处理场景下 LSTM 仍有优势（不需要存整个序列，内存友好）。Transformer 的自注意力是 $O(n^2)$ 复杂度，序列特别长时 LSTM 反而更实用。</p>
+<p><strong>Q: GRU 和 LSTM 怎么选？</strong>
+A: 经验法则——数据量小用 GRU（参数少，不容易过拟合），数据量大用 LSTM（表达能力强）。实际效果通常差不多，可以先试 GRU。</p>
+<h2>本课总结</h2>
+<ol>
+<li>RNN 通过隐藏状态的循环传递来处理序列，但存在梯度消失问题</li>
+<li>LSTM 用「细胞状态传送带 + 三道门」让长距离梯度稳定传播</li>
+<li>GRU 是 LSTM 的简化版，参数更少，效果通常相当</li>
+<li>三者的演进路线：RNN → LSTM → GRU → Transformer</li>
+<li>理解 LSTM 的门控机制，是理解后续 Attention 机制的重要基础</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课：<strong>Attention 机制</strong>——从「逐步传递信息」到「直接看全局」，这是通向 Transformer 的关键一步。</p>

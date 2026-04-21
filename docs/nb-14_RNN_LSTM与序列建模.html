@@ -1,0 +1,185 @@
+<div class="nb-cell nb-markdown"><h1>第14课：RNN / LSTM 与序列建模</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解序列数据的特点，为什么 CNN 不够用</li>
+<li>从零实现简单 RNN，理解隐藏状态的传递机制</li>
+<li>掌握 LSTM 的三大门控（遗忘门、输入门、输出门）</li>
+<li>用 PyTorch 实现文本分类，对比 RNN vs LSTM</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<h3>为什么需要 RNN？</h3>
+<p>前馈网络（MLP、CNN）假设输入是<strong>独立的、固定大小的</strong>。但很多数据天然是序列：
+- 文本：顺序改变含义
+- 股价：今天依赖昨天
+- 语音：当前帧和前后帧相关</p>
+<p>RNN 核心：<strong>隐藏状态 h，每一步压缩之前的信息</strong>。</p>
+<h3>在 AI 演进中的位置</h3>
+<pre><code>MLP → CNN（空间局部性）→ RNN/LSTM（时间序列）→ Attention/Transformer（全局依赖）
+</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(42)</code></pre></div>
+<div class="nb-cell nb-markdown"><h2>1. 从零实现简单 RNN</h2>
+<p>核心公式：h_t = tanh(W_xh * x_t + W_hh * h_{t-1} + b_h)
+直觉：每一步把「新输入」和「旧记忆」混在一起压缩。</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>class SimpleRNN:
+    def __init__(self, input_size, hidden_size, output_size):
+        self.Wxh = np.random.randn(input_size, hidden_size) * np.sqrt(2.0 / (input_size + hidden_size))
+        self.Whh = np.random.randn(hidden_size, hidden_size) * np.sqrt(2.0 / 2 / hidden_size)
+        self.Why = np.random.randn(hidden_size, output_size) * np.sqrt(2.0 / (hidden_size + output_size))
+        self.bh = np.zeros(hidden_size)
+        self.by = np.zeros(output_size)
+        self.hidden_size = hidden_size
+
+    def forward(self, x_seq):
+        h = np.zeros(self.hidden_size)
+        self.hiddens = [h.copy()]
+        self.outputs = []
+        for t in range(len(x_seq)):
+            h = np.tanh(x_seq[t] @ self.Wxh + h @ self.Whh + self.bh)
+            y = h @ self.Why + self.by
+            self.hiddens.append(h.copy())
+            self.outputs.append(y)
+        return self.outputs, self.hiddens
+
+# 测试：用正弦波看隐藏状态变化
+rnn = SimpleRNN(input_size=1, hidden_size=16, output_size=1)
+x_seq = np.sin(np.linspace(0, 4 * np.pi, 50)).reshape(-1, 1)
+outputs, hiddens = rnn.forward(x_seq)
+
+h_arr = np.array(hiddens[1:])
+plt.figure(figsize=(12, 4))
+plt.subplot(1, 2, 1)
+plt.plot(x_seq, label='Input')
+plt.title('Input: Sine Wave')
+plt.legend()
+plt.subplot(1, 2, 2)
+plt.plot(h_arr[:, :4])
+plt.title('Hidden States (first 4 dims)')
+plt.tight_layout()
+plt.show()
+print(f'RNN output shape: {np.array(outputs).shape}')</code></pre></div>
+<div class="nb-cell nb-markdown"><h2>2. LSTM 门控机制</h2>
+<p>LSTM 多了一条细胞状态 C_t（传送带），加三道门：
+- 遗忘门 f_t：旧记忆丢什么
+- 输入门 i_t：新信息记什么
+- 输出门 o_t：当前展示什么</p>
+<p>核心：C_t = f_t * C_{t-1} + i_t * C_t_candidate</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>class SimpleLSTM:
+    def __init__(self, input_size, hidden_size):
+        self.hidden_size = hidden_size
+        D, H = input_size, hidden_size
+        self.W = np.random.randn(D + H, 4 * H) * np.sqrt(2.0 / (D + H))
+        self.b = np.zeros(4 * H)
+
+    def _sigmoid(self, x):
+        return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
+
+    def forward(self, x_seq):
+        h = np.zeros(self.hidden_size)
+        C = np.zeros(self.hidden_size)
+        self.cs = [C.copy()]
+        for t in range(len(x_seq)):
+            combined = np.concatenate([x_seq[t], h])
+            gates = combined @ self.W + self.b
+            H = self.hidden_size
+            f = self._sigmoid(gates[:H])
+            i = self._sigmoid(gates[H:2*H])
+            C_bar = np.tanh(gates[2*H:3*H])
+            o = self._sigmoid(gates[3*H:])
+            C = f * C + i * C_bar
+            h = o * np.tanh(C)
+            self.cs.append(C.copy())
+        return h, C
+
+# 对比长序列中的状态
+seq_len = 100
+x_long = np.random.randn(seq_len, 4)
+rnn2 = SimpleRNN(input_size=4, hidden_size=32, output_size=1)
+lstm2 = SimpleLSTM(input_size=4, hidden_size=32)
+_, rnn_h = rnn2.forward(x_long)
+_, _ = lstm2.forward(x_long)
+
+rnn_norms = [np.linalg.norm(h) for h in rnn_h[1:]]
+lstm_norms = [np.linalg.norm(c) for c in lstm2.cs[1:]]
+plt.figure(figsize=(10, 4))
+plt.plot(rnn_norms, label='RNN hidden norm', alpha=0.8)
+plt.plot(lstm_norms, label='LSTM cell norm', alpha=0.8)
+plt.title('RNN vs LSTM: State Norms Over Long Sequence')
+plt.legend()
+plt.tight_layout()
+plt.show()</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># PyTorch: RNN vs LSTM vs GRU 训练对比
+import torch
+import torch.nn as nn
+
+class RNNClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.emb = nn.Embedding(5000, 32)
+        self.rnn = nn.RNN(32, 64, batch_first=True)
+        self.fc = nn.Linear(64, 1)
+    def forward(self, x):
+        _, h = self.rnn(self.emb(x))
+        return torch.sigmoid(self.fc(h.squeeze(0)))
+
+class LSTMClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.emb = nn.Embedding(5000, 32)
+        self.lstm = nn.LSTM(32, 64, batch_first=True)
+        self.fc = nn.Linear(64, 1)
+    def forward(self, x):
+        _, (h, _) = self.lstm(self.emb(x))
+        return torch.sigmoid(self.fc(h.squeeze(0)))
+
+class GRUClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.emb = nn.Embedding(5000, 32)
+        self.gru = nn.GRU(32, 64, batch_first=True)
+        self.fc = nn.Linear(64, 1)
+    def forward(self, x):
+        _, h = self.gru(self.emb(x))
+        return torch.sigmoid(self.fc(h.squeeze(0)))
+
+def train_model(model_cls, name):
+    model = model_cls()
+    opt = torch.optim.Adam(model.parameters(), lr=0.005)
+    losses = []
+    for _ in range(30):
+        x = torch.randint(0, 5000, (16, 50))
+        y = torch.randint(0, 2, (16, 1)).float()
+        pred = model(x)
+        loss = nn.BCELoss()(pred, y)
+        opt.zero_grad(); loss.backward(); opt.step()
+        losses.append(loss.item())
+    return losses
+
+rnn_l = train_model(RNNClassifier, 'RNN')
+lstm_l = train_model(LSTMClassifier, 'LSTM')
+gru_l = train_model(GRUClassifier, 'GRU')
+
+plt.figure(figsize=(8, 4))
+plt.plot(rnn_l, label='RNN', alpha=0.7)
+plt.plot(lstm_l, label='LSTM', alpha=0.7)
+plt.plot(gru_l, label='GRU', alpha=0.7)
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('RNN vs LSTM vs GRU Training Loss')
+plt.legend()
+plt.tight_layout()
+plt.show()</code></pre></div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<ol>
+<li><strong>RNN</strong> 核心是隐藏状态循环传递，天然适合序列但存在梯度消失</li>
+<li><strong>LSTM</strong> 用三道门 + 细胞状态传送带解决长距离依赖</li>
+<li><strong>GRU</strong> 是 LSTM 简化版，参数更少</li>
+<li>演进路线：RNN → LSTM → GRU → Transformer</li>
+</ol>
+<h2>课后思考</h2>
+<ol>
+<li>LSTM 遗忘门接近 0 时细胞状态会怎样？</li>
+<li>为什么 Transformer 能替代 LSTM？</li>
+<li>推荐系统中会用 RNN 还是 Transformer？</li>
+</ol></div>

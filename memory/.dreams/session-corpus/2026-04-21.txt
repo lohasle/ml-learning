@@ -1,0 +1,18 @@
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L5] User: [cron:64dbc085 AI机器学习每日学习] 执行今日 ML 系统学习任务。 先阅读 skills/ml-daily/SKILL.md，严格按其中的 5 个 Phase 执行。 关键提醒： 1. Phase 2 补齐缺口不可跳过 2. Phase 4 级联同步必须更新 README.md、index.html、notes-lab.html 3. Phase 5 validate 通过后才能 push 4. git push 失败重试 3 次，仍失败则保留本地变更并报告 5. 新课程 Notebook 必须 ≥ 5
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L18] Assistant: Phase 1 通过，无缺口。直接进入 Phase 3。让我查看当前进度确定第 13 课主题。
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L21] Assistant: 第 13 课应该是 **CNN 与图像识别（MNIST）**，这是阶段 3 深度学习基础的第三课。让我读取模板。
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L30] Assistant: 现在，我将查看最新的日常和README文件，以了解具体的结构模式：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L35] Assistant: 好的。现在我来检查一下 `notes-lab.html` 和 `docs/daily.html`，看看它们存在哪些模式：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L43] Assistant: 现在我已全面了解情况。让我再快速查看一下 `daily.html` 的时间线条目模式：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L45] Assistant: 现在，我将查看 `notes-lab.html` 的课程分组结构：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L49] Assistant: 现在我已准备就绪。让我并行创建所有文件：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L53] Assistant: 现在生成 HTML 片段并更新所有级联文件：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L55] Assistant: 现在更新级联文件。让我来读取当前的 `index.html` 和 `notes-lab.html`，以便进行精确编辑：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L65] Assistant: 现在更新 `notes-lab.html` —— 在“阶段 3”下为第13课添加树形项。
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L67] Assistant: 现在更新 daily.html 时间线——在开头添加新条目：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L69] Assistant: 现在更新 README.md:
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L71] Assistant: 现在再次运行 validate (Phase 5):
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L73] Assistant: Phase 5 通过。Git 操作：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L75] Assistant: Push 成功。让我确认 README.md 没有冲突标记问题：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L77] Assistant: 有冲突残留，让我修复：
+[ml-learning-coach/sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl#L85] Assistant: 全部完成。 --- ## 🧠 今日学习简报 ### 第13课：CNN 与图像识别（MNIST） **为什么今天学这个？** 上一课学了训练技巧（优化器+正则化），但全连接网络处理图像有两个硬伤：参数爆炸 + 丢失空间结构。CNN 用「局部感知 + 参数共享」优雅地解决了这两个问题，是深度学习第一次大爆发（2012 AlexNet）的核心功臣。 **核心要点：** 1. **卷积** = 用小滤波器（3×3）扫描整张图 → 自动提取边缘、纹理等特征 2. **池化** = 2×2 区域取最大值 → 降维 + 
