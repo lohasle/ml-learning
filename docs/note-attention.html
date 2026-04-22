@@ -1,0 +1,76 @@
+<h1>Attention 机制</h1>
+<h2>概念定位</h2>
+<p>Attention 是从 RNN 时代到 Transformer 时代的关键桥梁。它解决了 Seq2Seq 架构中 encoder 必须将所有信息压缩到固定长度向量的信息瓶颈问题。</p>
+<h2>核心思想</h2>
+<p>让模型在处理序列的每一步，都能「回头看」所有位置的信息，自动学习哪些位置更相关。</p>
+<h2>关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>相关性</td>
+<td>QK^T</td>
+<td>Query 与各 Key 的相似度</td>
+</tr>
+<tr>
+<td>缩放</td>
+<td>÷√d_k</td>
+<td>控制数值范围</td>
+</tr>
+<tr>
+<td>权重</td>
+<td>softmax(·)</td>
+<td>归一化为概率分布</td>
+</tr>
+<tr>
+<td>输出</td>
+<td>weights·V</td>
+<td>加权提取信息</td>
+</tr>
+</tbody>
+</table>
+<h2>Q/K/V 类比</h2>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>图书馆类比</th>
+<th>模型中</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Query</td>
+<td>搜索词</td>
+<td>当前需要的信息</td>
+</tr>
+<tr>
+<td>Key</td>
+<td>书名/标签</td>
+<td>每个位置的特征</td>
+</tr>
+<tr>
+<td>Value</td>
+<td>书的内容</td>
+<td>每个位置的实际信息</td>
+</tr>
+</tbody>
+</table>
+<h2>关键论文</h2>
+<ul>
+<li>Bahdanau et al. (2014) - 首次提出 Attention 用于机器翻译</li>
+<li>Luong Attention (2015) - 简化计算</li>
+<li>Vaswani et al. (2017) - "Attention Is All You Need" → Transformer</li>
+</ul>
+<h2>关联概念</h2>
+<ul>
+<li><strong>前置：</strong> RNN/LSTM（第14课）- Attention 最初附着在 RNN 上</li>
+<li><strong>后续：</strong> Transformer（第16课）- 纯 Attention 架构</li>
+<li><strong>延伸：</strong> Self-Attention、Multi-Head Attention、FlashAttention</li>
+</ul>

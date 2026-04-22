@@ -27,11 +27,11 @@
 - [ ] 神经网络基础与反向传播
 - [ ] 优化器与正则化 ✅ (2026-04-20)
 - [ ] CNN 与图像识别（MNIST）
-- [ ] RNN / LSTM 与序列建模
+- [x] RNN / LSTM 与序列建模
 
 ## 阶段 4：Transformer → LLM
 
-- [ ] Attention 机制
+- [x] Attention 机制
 - [ ] Transformer 架构
 - [ ] 预训练语言模型（BERT、GPT）
 - [ ] 大模型微调

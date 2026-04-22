@@ -1,21 +1,14 @@
 {
   "version": 3,
   "files": {
-    "ml-learning-coach:sessions/50bff609-a499-4850-a6c5-cc5d99ba15d1.jsonl.deleted.2026-04-20T21-05-19.777Z": {
-      "mtimeMs": 1776632742900,
-      "size": 93481,
-      "contentHash": "efef3eda8889b5f8dfdacf1a793e68118473132fe4b1029b2fc0f5d3656c7538",
-      "lineCount": 13,
-      "lastContentLine": 13
+    "ml-learning-coach:sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl": {
+      "mtimeMs": 1776805577846,
+      "size": 127024,
+      "contentHash": "4034e4103d9b9feaeb66b096cac17581cb040ee8be30b14434a48a6bf3d96e86",
+      "lineCount": 15,
+      "lastContentLine": 15
     },
-    "ml-learning-coach:sessions/53a229bf-3653-4260-9df3-0e4a685dbc89.jsonl.deleted.2026-04-19T21-05-55.417Z": {
-      "mtimeMs": 1776546258338,
-      "size": 92271,
-      "contentHash": "1b8d5e02a0e00e205057687b70ce85bd341baa07d78ca4f49de3601808fa5ab0",
-      "lineCount": 10,
-      "lastContentLine": 10
-    },
-    "ml-learning-coach:sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl": {
+    "ml-learning-coach:sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl.deleted.2026-04-21T21-06-24.943Z": {
       "mtimeMs": 1776719111239,
       "size": 126400,
       "contentHash": "2e3682de5c4a25d559286260d0b46a3fd3c4b6f046db5ed07c9f03af67a84402",
@@ -140,6 +133,23 @@
       "d4bc07ca5eec98f88c1831e653bdebcb1701b855",
       "bb9cea4efca3ac9bd87db9ed0f5cfe1803f1781a",
       "fc3c04fcc6f8a658b6b8c5268bd31ed797f1f79b"
+    ],
+    "ml-learning-coach:258335e3-2791-4712-bb00-cbf65e396ad1": [
+      "dfbd4f8947b71fbbc9610a156833cfd9c5cc30c4",
+      "a30522a2c2cf521be974d347d0ab19403cf05f13",
+      "00af5c4c0f4b9deb84ab80cf67f50c27b6c80eb4",
+      "99fe61c76df45109168761b9dd0442d70f012b91",
+      "ed9cba3e933831f30cf907e265b31749de56244c",
+      "4ce77a2287ed7f931a0751fbf47524c494d37fe8",
+      "156255b6a9fa425d20a0d67517898773f74b20aa",
+      "4d9a5a38a1dee54a3acea0ab910b22796712b1af",
+      "0554de76e5b5c61aeacf9d74bf8b657bacdc7842",
+      "a3de613add50fdf5e92754e4120b4d26b1d499bf",
+      "6620314cf75e9993a4fcca49a644ae6a701656c6",
+      "acb0fff42f12d1db8a2905d4a69e4e4bd9d14c28",
+      "68171f889c987d409f1e2200c6271fc493ea5561",
+      "48b251b83f69d07c0949463368553ce3801aad8b",
+      "ceda74dc407ee1dd8cdd8b305cdbeb8493a68839"
     ]
   }
 }

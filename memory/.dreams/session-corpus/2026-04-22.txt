@@ -1,0 +1,15 @@
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L5] User: [cron:64dbc085 AI机器学习每日学习] 执行今日 ML 系统学习任务。 先阅读 skills/ml-daily/SKILL.md，严格按其中的 5 个 Phase 执行。 关键提醒： 1. Phase 2 补齐缺口不可跳过 2. Phase 4 级联同步必须更新 README.md、index.html、notes-lab.html 3. Phase 5 validate 通过后才能 push 4. git push 失败重试 3 次，仍失败则保留本地变更并报告 5. 新课程 Notebook 必须 ≥ 5
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L22] Assistant: Now I have the full picture. Phase 1 passed. No gaps. Next lesson is **第14课：RNN / LSTM 与序列建模**. Let me generate all the content.
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L26] Assistant: Now generate the notes file and HTML fragments, then do cascading updates.
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L28] Assistant: Now generate HTML fragments and update the cascade files.
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L30] Assistant: JSON error in the notebook. Let me fix it - there was a typo in the last code cell.
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L38] Assistant: Now fix the broken newline in the last code cell:
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L44] Assistant: The `\n` was turned into a literal newline. Let me fix:
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L46] Assistant: Let me just regenerate the notebook properly with a Python script to ensure valid JSON:
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L48] Assistant: Now generate HTML fragments and do cascading updates:
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L50] Assistant: 现在级联更新 README.md、docs/index.html、docs/notes-lab.html、docs/daily.html：
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L54] Assistant: 现在更新 docs/index.html, docs/notes-lab.html, docs/daily.html:
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L66] Assistant: 现在更新 docs/daily.html:
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L72] Assistant: 现在进行阶段5验证：
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L78] Assistant: 验证通过。现在，Git 提交并推送：
+[ml-learning-coach/sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl#L80] Assistant: --- ## 🧠 今日学习简报 ### 第14课：RNN / LSTM 与序列建模 **为什么今天学这个？** 上课学了 CNN 处理空间维度，今天进入**时间维度**。RNN/LSTM 是 1997-2017 年 NLP 的绝对主力，理解它才能理解 Transformer 为什么是一场革命。 ### 核心要点（5 分钟速览） 1. **RNN** = 带记忆的网络，每步把新输入和旧记忆混合压缩：`h_t = tanh(W·x_t + U·h_{t-1})` 2. **致命问题**：序列一长，梯度消失——开
