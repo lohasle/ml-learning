@@ -32,7 +32,7 @@
 ## 阶段 4：Transformer → LLM
 
 - [x] Attention 机制
-- [ ] Transformer 架构
+- [x] Transformer 架构 ✅ (2026-04-24)
 - [ ] 预训练语言模型（BERT、GPT）
 - [ ] 大模型微调
 - [ ] RAG

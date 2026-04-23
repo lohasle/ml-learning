@@ -1,12 +1,19 @@
 {
   "version": 3,
   "files": {
-    "ml-learning-coach:sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl": {
+    "ml-learning-coach:sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl.deleted.2026-04-22T21-05-42.913Z": {
       "mtimeMs": 1776805577846,
       "size": 127024,
       "contentHash": "4034e4103d9b9feaeb66b096cac17581cb040ee8be30b14434a48a6bf3d96e86",
       "lineCount": 15,
       "lastContentLine": 15
+    },
+    "ml-learning-coach:sessions/5f779c0b-1f33-4f93-8512-d7cefeb52658.jsonl": {
+      "mtimeMs": 1776891926512,
+      "size": 2233,
+      "contentHash": "00545c27dd5d98ce19ea33b8780695d54065e659d45b943ef81203748a9c7128",
+      "lineCount": 1,
+      "lastContentLine": 1
     },
     "ml-learning-coach:sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl.deleted.2026-04-21T21-06-24.943Z": {
       "mtimeMs": 1776719111239,
@@ -14,6 +21,13 @@
       "contentHash": "2e3682de5c4a25d559286260d0b46a3fd3c4b6f046db5ed07c9f03af67a84402",
       "lineCount": 18,
       "lastContentLine": 18
+    },
+    "ml-learning-coach:sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl": {
+      "mtimeMs": 1776891930546,
+      "size": 92123,
+      "contentHash": "9d7145c4c259fbeea64772b0f79c12bc605537ae2cf4b1183e68ca4a3da84867",
+      "lineCount": 13,
+      "lastContentLine": 13
     }
   },
   "seenMessages": {
@@ -150,6 +164,24 @@
       "68171f889c987d409f1e2200c6271fc493ea5561",
       "48b251b83f69d07c0949463368553ce3801aad8b",
       "ceda74dc407ee1dd8cdd8b305cdbeb8493a68839"
+    ],
+    "ml-learning-coach:5f779c0b-1f33-4f93-8512-d7cefeb52658": [
+      "48b459037a487e476b62248397c53250db02bfea"
+    ],
+    "ml-learning-coach:c8867e7a-a036-40a5-bd67-518adca820f7": [
+      "f8b7919cca71dc2a1058ad8104eb63ca352126f8",
+      "8e1493d17e9e2425c17eeda1bd0a9e56618185ad",
+      "b3c5606ff0fc55ba76b9c27e72306baa8bd967b8",
+      "50818e263561cade721d29ae52b48445faf8942c",
+      "9e1f5d2b1a45ea69b02a2cbbd3f4f68e019cd814",
+      "568d120fa7a53f86cf97ddf4fbf53a749d120208",
+      "0bff6a7788b97e0075590529263f6586eace10e7",
+      "1c883570af19ca2597c65ae8b5377a0697058ba1",
+      "f5dc5603f6a2dbaf20f78a2dd0079517b5071a0d",
+      "003736965cf7af657290547097bda569114481ba",
+      "dda4688442218a4f367d664296198e9b2ac2646d",
+      "191975843726b19dc4a02400450f807722f3d5aa",
+      "082fc3d641b85f266d16aa54f770fc301a320c57"
     ]
   }
 }

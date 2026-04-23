@@ -1,0 +1,14 @@
+[ml-learning-coach/sessions/5f779c0b-1f33-4f93-8512-d7cefeb52658.jsonl#L2] Assistant: 🧠 第15课已就绪：**Attention 机制** 今天的核心问题：RNN 把所有信息塞进一个固定向量，序列一长就崩。怎么办？ 🔑 核心要点： - **Q/K/V 机制**：Query=我要什么，Key=你有什么，V…索的类比 - **Scaled Dot-Product Attention**：Q·K^T → 除以√d_k → softmax → 乘以V - **为什么要缩放**：维度高时点积方差大，softmax 退化为 one-hot，梯度消失 - **里程碑意义**：从 Bahdanau(2014
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L5] User: [cron:64dbc085 AI机器学习每日学习] 执行今日 ML 系统学习任务。 先阅读 skills/ml-daily/SKILL.md，严格按其中的 5 个 Phase 执行。 关键提醒： 1. Phase 2 补齐缺口不可跳过 2. Phase 4 级联同步必须更新 README.md、index.html、notes-lab.html 3. Phase 5 validate 通过后才能 push 4. git push 失败重试 3 次，仍失败则保留本地变更并报告 5. 新课程 Notebook 必须 ≥ 5
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L12] Assistant: Phase 1 通过，无缺口。已有14课，查看路线图确定第15课主题。
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L16] Assistant: 第14课是RNN/LSTM，下一课是第15课：**Attention 机制**，进入阶段4。
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L20] Assistant: 现在我来生成第 15 课：Attention 机制。
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L26] Assistant: 现在生成 HTML 片段并进行级联同步。
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L28] Assistant: 现在更新 README.md、index.html、notes-lab.html、daily.html。我先读取当前文件。
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L32] Assistant: 现在更新 index.html、notes-lab.html 和 daily.html。
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L46] Assistant: 现在更新 daily.html:
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L52] Assistant: 现在更新路线图：
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L56] Assistant: 好的。现在进入阶段5 - 验证:
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L58] Assistant: 验证通过。Git 提交并推送：
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L60] Assistant: 全部完成。发送通知：
+[ml-learning-coach/sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl#L62] Assistant: 任务完成。第15课 Attention 机制已生成并推送到 GitHub，所有级联同步文件已更新，validate 通过，push 成功。

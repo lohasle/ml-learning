@@ -1,0 +1,285 @@
+<div class="nb-cell nb-markdown"><h1>第16课：Transformer 架构</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 Transformer 如何用 Self-Attention 完全替代 RNN</li>
+<li>掌握多头注意力（Multi-Head Attention）的原理与直觉</li>
+<li>理解位置编码（Positional Encoding）为什么不可或缺</li>
+<li>理解 Encoder-Decoder Transformer 的完整数据流</li>
+<li>动手实现多头注意力 + 位置编码</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>1. 为什么需要 Transformer？</h2>
+<p>上一课学了 Attention——decoder 能「回头看」encoder 的所有输出。
+但 RNN 仍然有三大问题：
+- <strong>顺序计算瓶颈：</strong> 必须一步步处理，无法并行
+- <strong>长距离依赖衰减：</strong> 即使有 LSTM，序列太长信息还是会丢失
+- <strong>训练效率低：</strong> 序列越长训练越慢</p>
+<p><strong>Transformer 的核心思想（2017, Vaswani et al.）：</strong></p>
+<blockquote>
+<p>「Attention Is All You Need」——干脆完全不要 RNN，只用 Attention。</p>
+</blockquote>
+<p>这在 AI 演进史上是<strong>革命性的一步</strong>：
+- 2017 年论文发表 → 彻底改变了 NLP 领域
+- 2018 年 BERT（Encoder-only Transformer）
+- 2018-2020 年 GPT 系列（Decoder-only Transformer）
+- 2022 年至今的所有大模型都基于 Transformer 变体</p>
+<p><strong>架构师视角：</strong> RNN 是「串行流水线」，Transformer 是「并行广播 + 路由」——每个位置同时看到所有其他位置。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+
+def scaled_dot_product_attention(Q, K, V, mask=None):
+    """上一课的实现，Transformer 的基础构件"""
+    d_k = Q.shape[-1]
+    scores = Q @ K.transpose(0, 1) / np.sqrt(d_k)
+    if mask is not None:
+        scores = np.where(mask, scores, -1e9)
+    weights = np.exp(scores - scores.max(axis=-1, keepdims=True))
+    weights = weights / weights.sum(axis=-1, keepdims=True)
+    return weights @ V, weights
+
+# 验证：4 个 token，每个有 8 维表示
+np.random.seed(42)
+Q = np.random.randn(4, 8)
+K = np.random.randn(4, 8)
+V = np.random.randn(4, 8)
+output, weights = scaled_dot_product_attention(Q, K, V)
+print('Self-Attention output shape:', output.shape)
+print('Attention weights:\n', np.round(weights, 3))</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>2. 多头注意力（Multi-Head Attention）</h2>
+<p><strong>直觉：</strong> 单次 Attention 只能学一种「看哪里」的模式。多头注意力让模型同时从多个角度关注输入。</p>
+<p><strong>类比：</strong>
+- 一个注意力头 = 一个人在读文章，只关注「人名」
+- 多头 = 多个人同时读，分别关注「人名」「时间」「地点」「因果关系」
+- 最后把所有人的理解拼起来</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>原始论文值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>d_model</td>
+<td>512</td>
+<td>模型维度</td>
+</tr>
+<tr>
+<td>h (头数)</td>
+<td>8</td>
+<td>注意力头数量</td>
+</tr>
+<tr>
+<td>d_k = d_v</td>
+<td>64</td>
+<td>每个头的维度 = 512/8</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>def multi_head_attention(X, W_Q, W_K, W_V, W_O, n_heads):
+    """多头注意力（纯 NumPy）"""
+    seq_len, d_model = X.shape
+    d_k = d_model // n_heads
+    
+    Q = X @ W_Q
+    K = X @ W_K
+    V = X @ W_V
+    
+    # 拆分为多头
+    Q = Q.reshape(seq_len, n_heads, d_k).transpose(1, 0, 2)
+    K = K.reshape(seq_len, n_heads, d_k).transpose(1, 0, 2)
+    V = V.reshape(seq_len, n_heads, d_k).transpose(1, 0, 2)
+    
+    head_outputs = []
+    for i in range(n_heads):
+        out, _ = scaled_dot_product_attention(Q[i], K[i], V[i])
+        head_outputs.append(out)
+    
+    concat = np.concatenate(head_outputs, axis=-1)
+    output = concat @ W_O
+    return output
+
+np.random.seed(42)
+d_model, n_heads = 8, 2
+X = np.random.randn(4, d_model)
+W_Q = np.random.randn(d_model, d_model) * 0.1
+W_K = np.random.randn(d_model, d_model) * 0.1
+W_V = np.random.randn(d_model, d_model) * 0.1
+W_O = np.random.randn(d_model, d_model) * 0.1
+
+mha_output = multi_head_attention(X, W_Q, W_K, W_V, W_O, n_heads)
+print('Multi-Head Attention output shape:', mha_output.shape)
+print('First 2 tokens:')
+print(np.round(mha_output[:2], 3))</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>3. 位置编码（Positional Encoding）</h2>
+<p><strong>关键问题：</strong> Self-Attention 是「集合操作」——它不知道 token 的顺序！</p>
+<p>"我打你" 和 "你打我" 在 Self-Attention 看来完全一样。</p>
+<p><strong>解法：</strong> 用正弦/余弦函数给每个位置生成唯一向量，加到 embedding 上。
+- 不同维度用不同频率 → 低频捕获「大致位置」，高频捕获「精确位置」
+- 类比：经纬度——经度定区域，纬度进一步定位</p>
+<p>公式：
+- PE(pos, 2i) = sin(pos / 10000^(2i/d_model))
+- PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model))</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>def positional_encoding(seq_len, d_model):
+    """生成正弦位置编码"""
+    PE = np.zeros((seq_len, d_model))
+    position = np.arange(seq_len)[:, np.newaxis]
+    div_term = 10000 ** (np.arange(0, d_model, 2) / d_model)
+    PE[:, 0::2] = np.sin(position / div_term)
+    PE[:, 1::2] = np.cos(position / div_term)
+    return PE
+
+pe = positional_encoding(50, 64)
+print('Position encoding shape:', pe.shape)
+print('Pos 0 first 8 dims:', np.round(pe[0, :8], 4))
+print('Pos 1 first 8 dims:', np.round(pe[1, :8], 4))
+print(f'Pos 0 vs 1 distance: {np.linalg.norm(pe[0] - pe[1]):.4f}')
+print(f'Pos 0 vs 10 distance: {np.linalg.norm(pe[0] - pe[10]):.4f}')
+print(f'Pos 0 vs 49 distance: {np.linalg.norm(pe[0] - pe[49]):.4f}')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>def transformer_encoder_block(X, W_Q, W_K, W_V, W_O, W1, b1, W2, b2, n_heads):
+    """单个 Transformer Encoder Block: MHA -&gt; Add&amp;Norm -&gt; FFN -&gt; Add&amp;Norm"""
+    attn_out = multi_head_attention(X, W_Q, W_K, W_V, W_O, n_heads)
+    X = X + attn_out
+    mean = X.mean(axis=-1, keepdims=True)
+    std = X.std(axis=-1, keepdims=True) + 1e-6
+    X = (X - mean) / std
+    
+    ffn_out = np.maximum(0, X @ W1 + b1) @ W2 + b2
+    X = X + ffn_out
+    mean = X.mean(axis=-1, keepdims=True)
+    std = X.std(axis=-1, keepdims=True) + 1e-6
+    X = (X - mean) / std
+    return X
+
+np.random.seed(42)
+d_model, n_heads, d_ff = 64, 4, 256
+seq_len = 10
+X = np.random.randn(seq_len, d_model) * 0.1
+X = X + positional_encoding(seq_len, d_model)
+
+scale = 0.02
+W_Q = np.random.randn(d_model, d_model) * scale
+W_K = np.random.randn(d_model, d_model) * scale
+W_V = np.random.randn(d_model, d_model) * scale
+W_O = np.random.randn(d_model, d_model) * scale
+W1 = np.random.randn(d_model, d_ff) * scale
+b1 = np.zeros(d_ff)
+W2 = np.random.randn(d_ff, d_model) * scale
+b2 = np.zeros(d_model)
+
+output = transformer_encoder_block(X, W_Q, W_K, W_V, W_O, W1, b1, W2, b2, n_heads)
+print(f'Encoder Block output shape: {output.shape}')
+print(f'Mean: {output.mean():.4f}, Std: {output.std():.4f}')
+print('Data flow: embeddings -&gt; +PE -&gt; MHA -&gt; AddNorm -&gt; FFN -&gt; AddNorm')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>4. Transformer 完整架构总结</h2>
+<pre><code>Input Token IDs
+    |
+Embedding + Positional Encoding
+    |
+[Encoder Block x N]
+  Multi-Head Self-Attention + Add &amp; Norm
+  Feed-Forward Network + Add &amp; Norm
+    |
+[Decoder Block x N]
+  Masked Self-Attention + Add &amp; Norm
+  Cross-Attention + Add &amp; Norm  
+  Feed-Forward Network + Add &amp; Norm
+    |
+Linear + Softmax -&gt; Output Probabilities
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>设计</th>
+<th>选择</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>序列建模</td>
+<td>Self-Attention</td>
+<td>完全并行，O(1)步传递</td>
+</tr>
+<tr>
+<td>位置信息</td>
+<td>正弦PE</td>
+<td>无需学习，可泛化</td>
+</tr>
+<tr>
+<td>归一化</td>
+<td>LayerNorm</td>
+<td>与序列长度无关</td>
+</tr>
+<tr>
+<td>残差连接</td>
+<td>每个 sub-layer</td>
+<td>防梯度消失</td>
+</tr>
+</tbody>
+</table>
+<h3>三种 Transformer 变体</h3>
+<table>
+<thead>
+<tr>
+<th>变体</th>
+<th>代表</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Encoder-Only</td>
+<td>BERT</td>
+<td>文本理解</td>
+</tr>
+<tr>
+<td>Decoder-Only</td>
+<td>GPT</td>
+<td>文本生成</td>
+</tr>
+<tr>
+<td>Encoder-Decoder</td>
+<td>T5</td>
+<td>翻译、序列转换</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 实践：观察 Transformer 处理简单句子的信息流
+np.random.seed(42)
+d_model = 32
+seq_len = 6
+tokens = ['I', 'like', 'learning', 'AI', 'very', 'much']
+
+embeddings = np.random.randn(seq_len, d_model) * 0.1
+pe = positional_encoding(seq_len, d_model)
+X = embeddings + pe
+
+print('=== Transformer Info Flow Demo ===')
+print(f'Input: {" ".join(tokens)}')
+print(f'After embedding + PE: {X.shape}')
+
+sim = (X @ X.T) / np.sqrt(d_model)
+print(f'\nToken similarity matrix (x100):')
+header = '       ' + '  '.join(f'{t:&gt;7}' for t in tokens)
+print(header)
+for i, t in enumerate(tokens):
+    row = '  '.join(f'{sim[i,j]*100:7.1f}' for j in range(seq_len))
+    print(f'  {t:&gt;7}: {row}')
+
+print(f'\nKey takeaway: Transformer = Self-Attention + PE + Residual + LayerNorm')
+print(f'Next: Pre-trained Language Models (BERT/GPT)')</code></pre>
+</div>
