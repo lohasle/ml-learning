@@ -1,0 +1,14 @@
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L5] User: [cron:64dbc085 AI机器学习每日学习] 执行今日 ML 系统学习任务。 先阅读 skills/ml-daily/SKILL.md，严格按其中的 5 个 Phase 执行。 关键提醒： 1. Phase 2 补齐缺口不可跳过 2. Phase 4 级联同步必须更新 README.md、index.html、notes-lab.html 3. Phase 5 validate 通过后才能 push 4. git push 失败重试 3 次，仍失败则保留本地变更并报告 5. 新课程 Notebook 必须 ≥ 5
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L12] Assistant: 已有15课，最后一课是第15课 Attention机制。下一课应该是**第16课：Transformer架构**。让我检查现有文件和模板。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L21] Assistant: 好，现在我要创建第16课：Transformer架构。让我先看一下现有的notebook结构作为参考，然后生成所有需要的文件。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L23] Assistant: 现在生成第16课所有文件。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L27] Assistant: 现在生成 daily MD、notes、HTML 片段，并更新级联文件。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L31] Assistant: 现在生成 HTML 片段并更新级联文件。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L33] Assistant: 现在更新 README.md、index.html、notes-lab.html、daily.html。让我先看现有文件结构。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L38] Assistant: 现在让我看看课程15附近的 `index.html`，以便了解其结构并添加课程16：
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L41] Assistant: 我看到 daily.html 中有重复条目。现在我将更新这 4 个级联文件：
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L47] Assistant: 现在更新 daily.html — 在闭合的 `</div>` 标签之前添加第16课的时间线条目。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L51] Assistant: 现在更新路线图，将 Transformer 标记为已完成：
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L53] Assistant: 阶段5: 验证。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L55] Assistant: 验证通过。Git 提交并推送。
+[ml-learning-coach/sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl#L59] Assistant: 全部完成。推送今日学习简报： --- ## 🧠 今日学习：第16课 — Transformer 架构 ### 为什么学这个 上一课学了 Attention 解决了 Seq2Seq 的信息瓶颈，但底层仍然是 RNN。2017 年「Attention Is All You Need」提出 Transformer——**完全抛弃 RNN，只用 Attention**。这是 AI 演进史上最关键的架构变革，所有现代大模型都基于它。 ### 演进位置 ``` RNN/LSTM → Attention → ★ Tran

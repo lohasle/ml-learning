@@ -1,0 +1,40 @@
+<h1>预训练语言模型——BERT 与 GPT</h1>
+<h2>核心概念</h2>
+<h3>预训练 + 微调范式</h3>
+<p>先在海量无标注文本上学习语言规律，再用少量标注数据适配下游任务。这彻底改变了 NLP 的开发方式。</p>
+<h3>BERT（Bidirectional Encoder Representations from Transformers）</h3>
+<ul>
+<li>架构：Transformer Encoder</li>
+<li>训练目标：MLM（Masked Language Model）+ NSP</li>
+<li>特点：双向注意力，能同时看到左右上下文</li>
+<li>擅长：文本分类、命名实体识别、问答</li>
+</ul>
+<h3>GPT（Generative Pre-trained Transformer）</h3>
+<ul>
+<li>架构：Transformer Decoder</li>
+<li>训练目标：CLM（Causal Language Model）</li>
+<li>特点：单向（因果）注意力，只能看到左边已生成的词</li>
+<li>擅长：文本生成、对话、续写</li>
+</ul>
+<h2>关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MLM 损失</td>
+<td>L = -Σ log P(masked | context)</td>
+<td>完形填空</td>
+</tr>
+<tr>
+<td>CLM 损失</td>
+<td>L = -Σ log P(x_t | x_{</td>
+<td></td>
+</tr>
+</tbody>
+</table>

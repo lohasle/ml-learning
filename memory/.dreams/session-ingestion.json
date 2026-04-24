@@ -1,12 +1,12 @@
 {
   "version": 3,
   "files": {
-    "ml-learning-coach:sessions/258335e3-2791-4712-bb00-cbf65e396ad1.jsonl.deleted.2026-04-22T21-05-42.913Z": {
-      "mtimeMs": 1776805577846,
-      "size": 127024,
-      "contentHash": "4034e4103d9b9feaeb66b096cac17581cb040ee8be30b14434a48a6bf3d96e86",
-      "lineCount": 15,
-      "lastContentLine": 15
+    "ml-learning-coach:sessions/57e3daa1-3138-4aa9-8ba8-14c41e1f1771.jsonl": {
+      "mtimeMs": 1776978433341,
+      "size": 130798,
+      "contentHash": "22f1c34b94de16a58c2e40e7e194da9055c18cda47c9cd71946764288820c2b4",
+      "lineCount": 14,
+      "lastContentLine": 14
     },
     "ml-learning-coach:sessions/5f779c0b-1f33-4f93-8512-d7cefeb52658.jsonl": {
       "mtimeMs": 1776891926512,
@@ -15,14 +15,7 @@
       "lineCount": 1,
       "lastContentLine": 1
     },
-    "ml-learning-coach:sessions/9400edeb-a0f2-4bff-8ed1-e8d212b285e5.jsonl.deleted.2026-04-21T21-06-24.943Z": {
-      "mtimeMs": 1776719111239,
-      "size": 126400,
-      "contentHash": "2e3682de5c4a25d559286260d0b46a3fd3c4b6f046db5ed07c9f03af67a84402",
-      "lineCount": 18,
-      "lastContentLine": 18
-    },
-    "ml-learning-coach:sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl": {
+    "ml-learning-coach:sessions/c8867e7a-a036-40a5-bd67-518adca820f7.jsonl.deleted.2026-04-23T21-07-19.085Z": {
       "mtimeMs": 1776891930546,
       "size": 92123,
       "contentHash": "9d7145c4c259fbeea64772b0f79c12bc605537ae2cf4b1183e68ca4a3da84867",
@@ -182,6 +175,22 @@
       "dda4688442218a4f367d664296198e9b2ac2646d",
       "191975843726b19dc4a02400450f807722f3d5aa",
       "082fc3d641b85f266d16aa54f770fc301a320c57"
+    ],
+    "ml-learning-coach:57e3daa1-3138-4aa9-8ba8-14c41e1f1771": [
+      "a00af24a33481f4b49218ee9698c54957906f466",
+      "dad74dc7d42ae3b1e27b6d9dc2211e5b85e1eb7a",
+      "f31eab8ea6ae56637bda221a402bf3e807d57515",
+      "0b781c0eb426100530dc5f749ac76e5795e6a034",
+      "7a816f93a38fb8551f3a0b66614be1afe5d8f9ac",
+      "383a8fb72dad5942a48239595eaf5d8d3b803d27",
+      "741f90c9bdba11e8ddf2af6acc818bc92d3f9a75",
+      "89965f580023361bc0e0eb50e17114df7d3309fe",
+      "8a3ca3f39962f003ce2f5933f3464432335d4d38",
+      "7f0b00ee1796d813406474c24eaff91cd9b7df68",
+      "8ad575b817ca3f36c02e6e5d58e8568c64211730",
+      "dd178bb08461168849f7dae341666bae67e71932",
+      "2ee1f539837a50ba1146ad48169b90dcd4716d5e",
+      "525d9ed3e3a9c5659f4b2b5efa01646ac6897776"
     ]
   }
 }

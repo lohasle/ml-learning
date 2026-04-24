@@ -33,7 +33,7 @@
 
 - [x] Attention 机制
 - [x] Transformer 架构 ✅ (2026-04-24)
-- [ ] 预训练语言模型（BERT、GPT）
+- [x] 预训练语言模型（BERT、GPT） ✅ (2026-04-25)
 - [ ] 大模型微调
 - [ ] RAG
 - [ ] Agent
