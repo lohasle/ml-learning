@@ -1,0 +1,10 @@
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L5] User: [cron:64dbc085 AI机器学习每日学习] 执行今日 ML 系统学习任务。 先阅读 skills/ml-daily/SKILL.md，严格按其中的 5 个 Phase 执行。 关键提醒： 1. Phase 2 补齐缺口不可跳过 2. Phase 4 级联同步必须更新 README.md、index.html、notes-lab.html 3. Phase 5 validate 通过后才能 push 4. git push 失败重试 3 次，仍失败则保留本地变更并报告 5. 新课程 Notebook 必须 ≥ 5
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L18] Assistant: 第16课是 Transformer，下一课是**预训练语言模型（BERT 与 GPT）**——第17课。让我生成内容。
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L21] Assistant: Now let me create the lesson. Today is April 25, 2026 — Lesson 17: Pre-trained Language Models (BERT & GPT).
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L27] Assistant: Now generate the HTML fragments and update the cascade files:
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L29] Assistant: Now update README.md, index.html, notes-lab.html, and daily.html:
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L35] Assistant: Now update docs/index.html, notes-lab.html, and daily.html:
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L57] Assistant: Now update the roadmap:
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L59] Assistant: Phase 5 — run validate:
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L61] Assistant: Validate passed. Now git commit and push:
+[ml-learning-coach/sessions/8ba945ad-5783-4cd4-ab07-abf3fdee577a.jsonl#L63] Assistant: 全部完成 ✅ --- ## 今日学习简报 ### 🧠 第17课：预训练语言模型——BERT 与 GPT **为什么学这个？** 上一课学了 Transformer 架构，但 Transformer 只是骨架。真正改变世界的是 BERT 和 GPT——它们用不同的方式「填」这个骨架，分别引爆了 NLP 理解和文本生成革命。 **核心要点（30 分钟版）：** 1. **预训练 + 微调范式** — 先在海量文本上学语言规律，再用少量标注数据适配任务。以前每个任务从零训练，现在只需微调。 2. **BERT（G

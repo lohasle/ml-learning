@@ -1,0 +1,91 @@
+<h1>2026年4月26日 - 第18课：大模型微调（Fine-tuning）</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解大模型微调的核心方法——从全量微调到 LoRA，掌握如何让预训练模型高效适配你的任务。</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课我们学了 BERT 和 GPT 这样的预训练语言模型。它们是「通才」，但实际应用需要「专才」。微调就是从通才到专才的关键桥梁。这是现代 AI 工程师最常面对的实际工作——不是从零训练模型，而是微调已有模型。</p>
+<h2>核心概念解释</h2>
+<h3>1. 微调的基本思路</h3>
+<ul>
+<li><strong>直觉</strong>：就像大学毕业生入职后的岗前培训。基础能力已经具备，只需要针对性地学习岗位技能。</li>
+<li><strong>原理</strong>：保持预训练学到的权重作为起点，用任务特定数据继续训练，调整参数以适配目标任务。</li>
+<li><strong>代码直觉</strong>：Notebook 中对比了三种方式（Prompt / LoRA / Full FT）的参数量和效果。</li>
+</ul>
+<h3>2. Full Fine-tuning</h3>
+<ul>
+<li><strong>直觉</strong>：把整个模型的所有参数都更新。就像重新装修整栋房子。</li>
+<li><strong>问题</strong>：7B 参数模型需要 ~28GB 显存来微调，70B 需要 ~280GB。成本极高。</li>
+<li><strong>适用场景</strong>：数据充足、任务差异大、追求极致效果。</li>
+</ul>
+<h3>3. LoRA（Low-Rank Adaptation）</h3>
+<ul>
+<li><strong>直觉</strong>：不拆房子，只在墙上贴装饰板。用极少的参数（&lt; 0.1%）来近似权重更新。</li>
+<li><strong>核心公式</strong>：<code>ΔW = A × B</code>，其中 A 是 d×r，B 是 r×d，r 远小于 d。</li>
+<li><strong>为什么有效</strong>：预训练模型已经学到了很好的特征表示，微调只需要在低秩子空间中做小幅调整。</li>
+<li><strong>代码直觉</strong>：Notebook 演示了 d=100 时，原参数 10,000 → LoRA 只需 800（压缩 12.5 倍）。</li>
+</ul>
+<h3>4. QLoRA 与其他 PEFT 方法</h3>
+<ul>
+<li><strong>QLoRA</strong> = LoRA + 4-bit 量化，进一步降低显存，单张 24GB 显卡可微调 7B 模型。</li>
+<li><strong>其他 PEFT</strong>：Adapter（插入小网络层）、Prefix Tuning（学习虚拟 prompt）、Prompt Tuning。</li>
+</ul>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/方法</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>微调目标</td>
+<td>min L(f_θ, D_task)</td>
+<td>在任务数据上最小化损失，θ 从预训练值开始</td>
+</tr>
+<tr>
+<td>LoRA 更新</td>
+<td>W' = W + A×B</td>
+<td>原权重不变，加一个低秩修正</td>
+</tr>
+<tr>
+<td>LoRA 缩放</td>
+<td>ΔW = (α/r) × A×B</td>
+<td>α 控制更新幅度，r 越小压缩越大</td>
+</tr>
+<tr>
+<td>秩选择</td>
+<td>r ∈ {4, 8, 16, 64}</td>
+<td>常用值，越大表达力越强但参数越多</td>
+</tr>
+<tr>
+<td>QLoRA</td>
+<td>NF4 量化 + LoRA</td>
+<td>把原权重压缩到 4bit，只训练 LoRA 参数</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 中演示了 LoRA 低秩近似的可视化效果</li>
+<li>观察参数压缩比：维度越大，LoRA 的优势越明显</li>
+<li>训练曲线对比：LoRA 接近 Full FT 的收敛效果，但显存需求大幅降低</li>
+<li>关键超参：秩 r、缩放因子 α、学习率</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: LoRA 的 r 设多大合适？</strong>
+A: 经验上 r=8 是很好的起点。简单任务 r=4 就够，复杂任务可以 r=16~64。r 越大不总是越好——过大可能过拟合，且失去了参数效率的优势。</p>
+<p><strong>Q: 微调需要多少数据？</strong>
+A: 取决于方法。Full FT 通常需要数千到数万条；LoRA 可以更少，几百条到数千条就能看到效果；QLoRA 在极少量数据（&lt; 1000 条）上也能工作。</p>
+<p><strong>Q: 微调后如何部署？</strong>
+A: LoRA 训练完后可以把 A×B 合并回原权重 W' = W + A×B，推理时零额外开销。也可以不合并，用多个小 LoRA 适配器对应不同任务，动态切换。</p>
+<h2>本课总结</h2>
+<ol>
+<li>微调 = 让预训练的「通才」变成你任务的「专才」</li>
+<li>Full Fine-tuning 改全部参数，效果好但成本高</li>
+<li>LoRA 只调 0.1% 参数就能接近全量效果，是工业界主流方案</li>
+<li>QLoRA + 量化让单卡微调大模型成为现实</li>
+<li>实际工程中 LoRA 是首选，Full FT 是追求极致时的备选</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课我们将学习 <strong>RAG（检索增强生成）</strong>——另一种让大模型适配特定领域的方法，不需要改模型参数，而是通过外部知识库来增强模型输出。这与微调形成互补：微调改模型内部的「知识」，RAG 给模型外部的「参考书」。</p>

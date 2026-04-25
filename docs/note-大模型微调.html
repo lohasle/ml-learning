@@ -1,0 +1,76 @@
+<h1>大模型微调（Fine-tuning）</h1>
+<h2>概述</h2>
+<p>微调是让预训练模型适配特定任务的关键技术。从全量微调到参数高效微调（PEFT），核心目标都是用最少的资源获得最大的领域适配效果。</p>
+<h2>核心方法对比</h2>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>可训练参数</th>
+<th>显存</th>
+<th>效果</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt Engineering</td>
+<td>0</td>
+<td>最低</td>
+<td>有限</td>
+<td>快速验证</td>
+</tr>
+<tr>
+<td>Full Fine-tuning</td>
+<td>100%</td>
+<td>最高</td>
+<td>最好</td>
+<td>数据充足、追求极致</td>
+</tr>
+<tr>
+<td>LoRA</td>
+<td>~0.1%</td>
+<td>中等</td>
+<td>接近 Full FT</td>
+<td>工业界首选</td>
+</tr>
+<tr>
+<td>QLoRA</td>
+<td>~0.1%</td>
+<td>较低</td>
+<td>接近 LoRA</td>
+<td>资源受限</td>
+</tr>
+<tr>
+<td>Adapter</td>
+<td>~1-5%</td>
+<td>中等</td>
+<td>好</td>
+<td>多任务切换</td>
+</tr>
+</tbody>
+</table>
+<h2>关键公式</h2>
+<h3>LoRA 核心公式</h3>
+<pre><code>W' = W + (α/r) × A × B
+</code></pre>
+<ul>
+<li>W: 原始权重 (d×d)，冻结不更新</li>
+<li>A: 下投影矩阵 (d×r)</li>
+<li>B: 上投影矩阵 (r×d)</li>
+<li>r: 秩（通常 4~64）</li>
+<li>α: 缩放因子</li>
+</ul>
+<h3>参数量对比</h3>
+<ul>
+<li>原始: d × d</li>
+<li>LoRA: 2 × d × r</li>
+<li>压缩比: d / (2r)</li>
+</ul>
+<h2>关联概念</h2>
+<ul>
+<li>[[预训练语言模型]] - 微调的前提</li>
+<li>[[Transformer架构]] - 微调的底层架构</li>
+<li>[[RAG]] - 另一种领域适配方式（不改模型）</li>
+<li>[[量化]] - QLoRA 的基础技术</li>
+</ul>

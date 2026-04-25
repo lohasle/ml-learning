@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-24T19:08:36.885Z",
+  "updatedAt": "2026-04-25T19:08:32.439Z",
   "entries": {
     "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1": {
       "key": "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1",
@@ -1572,12 +1572,12 @@
       "source": "memory",
       "snippet": "Reflections: Theme: `assistant` kept surfacing across 42 memories.; confidence: 1.00; evidence: memory/.dreams/session-corpus/2026-04-14.txt:2-2, memory/.dreams/session-corpus/2026-04-14.txt:3-3, memory/.dreams/session-corpus/2026-04-14.txt:4-4; note: reflection",
       "recallCount": 0,
-      "dailyCount": 5,
+      "dailyCount": 6,
       "groundedCount": 0,
-      "totalScore": 3.1,
+      "totalScore": 3.72,
       "maxScore": 0.62,
       "firstRecalledAt": "2026-04-18T19:05:14.420Z",
-      "lastRecalledAt": "2026-04-24T19:06:30.806Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
       "queryHashes": [
         "77ca9720ec15"
       ],
@@ -1587,7 +1587,8 @@
         "2026-04-21",
         "2026-04-23",
         "2026-04-24",
-        "2026-04-25"
+        "2026-04-25",
+        "2026-04-26"
       ],
       "conceptTags": [
         "1.00",
@@ -1608,12 +1609,12 @@
       "source": "memory",
       "snippet": "Possible Lasting Truths: Assistant: ✅ Git push 成功！ --- ## 执行报告 ### validate 结果 - **Phase 1**: 通过 ✅（1 warning：index.html 课程行数与 notebook 数不一致，因为有\"待学习\"第8课预览，属正常） - **Phase 2**: 无需修复（无 gaps） - **Phase 5**: 通过 ✅（7 个 notebook，编号连续，HTML 片段齐全） ### 今日新增 - **第 7 课：SVM 支持向量机** - 新增文件： 1. `l",
       "recallCount": 0,
-      "dailyCount": 5,
+      "dailyCount": 6,
       "groundedCount": 0,
-      "totalScore": 3.1,
+      "totalScore": 3.72,
       "maxScore": 0.62,
       "firstRecalledAt": "2026-04-18T19:05:14.420Z",
-      "lastRecalledAt": "2026-04-24T19:06:30.806Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
       "queryHashes": [
         "77ca9720ec15"
       ],
@@ -1623,7 +1624,8 @@
         "2026-04-21",
         "2026-04-23",
         "2026-04-24",
-        "2026-04-25"
+        "2026-04-25",
+        "2026-04-26"
       ],
       "conceptTags": [
         "index.html",
@@ -2059,12 +2061,12 @@
       "source": "memory",
       "snippet": "Reflections: Theme: `assistant` kept surfacing across 57 memories.; confidence: 1.00; evidence: memory/.dreams/session-corpus/2026-04-14.txt:2-2, memory/.dreams/session-corpus/2026-04-14.txt:3-3, memory/.dreams/session-corpus/2026-04-14.txt:4-4; note: reflection",
       "recallCount": 0,
-      "dailyCount": 4,
+      "dailyCount": 5,
       "groundedCount": 0,
-      "totalScore": 2.48,
+      "totalScore": 3.1,
       "maxScore": 0.62,
       "firstRecalledAt": "2026-04-19T19:05:42.455Z",
-      "lastRecalledAt": "2026-04-24T19:06:30.806Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
       "queryHashes": [
         "21faa0df9302"
       ],
@@ -2074,7 +2076,8 @@
         "2026-04-23",
         "2026-04-22",
         "2026-04-24",
-        "2026-04-25"
+        "2026-04-25",
+        "2026-04-26"
       ],
       "conceptTags": [
         "1.00",
@@ -2095,12 +2098,12 @@
       "source": "memory",
       "snippet": "Possible Lasting Truths: Assistant: ✅ Git push 成功！ --- ## 执行报告 ### validate 结果 - **Phase 1**: 通过 ✅（1 warning：index.html 课程行数与 notebook 数不一致，因为有\"待学习\"第8课预览，属正常） - **Phase 2**: 无需修复（无 gaps） - **Phase 5**: 通过 ✅（7 个 notebook，编号连续，HTML 片段齐全） ### 今日新增 - **第 7 课：SVM 支持向量机** - 新增文件： 1. `l",
       "recallCount": 0,
-      "dailyCount": 4,
+      "dailyCount": 5,
       "groundedCount": 0,
-      "totalScore": 2.48,
+      "totalScore": 3.1,
       "maxScore": 0.62,
       "firstRecalledAt": "2026-04-19T19:05:42.455Z",
-      "lastRecalledAt": "2026-04-24T19:06:30.806Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
       "queryHashes": [
         "21faa0df9302"
       ],
@@ -2110,7 +2113,8 @@
         "2026-04-23",
         "2026-04-22",
         "2026-04-24",
-        "2026-04-25"
+        "2026-04-25",
+        "2026-04-26"
       ],
       "conceptTags": [
         "index.html",
@@ -4729,6 +4733,318 @@
         "全部",
         "完成",
         "推送",
+        "今日",
+        "学习",
+        "简报"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:1:1": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:1:1",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 1,
+      "endLine": 1,
+      "source": "memory",
+      "snippet": "User: [cron:64dbc085 AI机器学习每日学习] 执行今日 ML 系统学习任务。 先阅读 skills/ml-daily/SKILL.md，严格按其中的 5 个 Phase 执行。 关键提醒： 1. Phase 2 补齐缺口不可跳过 2. Phase 4 级联同步必须更新 README.md、index.html、notes-lab.html 3. Phase 5 validate 通过后才能 push 4. git push 失败重试 3 次，仍失败则保留本地变更并报告 5. 新课程 Notebook 必须 ≥ 5 个 cell，不允许",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "skills/ml-daily/skill.md",
+        "readme.md",
+        "index.html",
+        "notes-lab.html",
+        "user",
+        "cron",
+        "64dbc085",
+        "机器"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:2:2": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:2:2",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 2,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "Assistant: 第16课是 Transformer，下一课是**预训练语言模型（BERT 与 GPT）**——第17课。让我生成内容。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "gpt",
+        "assistant",
+        "transformer",
+        "一课",
+        "训练",
+        "语言",
+        "模型",
+        "bert"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:3:3": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:3:3",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 3,
+      "endLine": 3,
+      "source": "memory",
+      "snippet": "Assistant: Now let me create the lesson. Today is April 25, 2026 — Lesson 17: Pre-trained Language Models (BERT & GPT).",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "gpt",
+        "pre-trained",
+        "assistant",
+        "now",
+        "let",
+        "create",
+        "the",
+        "lesson"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:4:4": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:4:4",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 4,
+      "endLine": 4,
+      "source": "memory",
+      "snippet": "Assistant: Now generate the HTML fragments and update the cascade files:",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "assistant",
+        "now",
+        "generate",
+        "the",
+        "html",
+        "fragments",
+        "update",
+        "cascade"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:5:5": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:5:5",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 5,
+      "endLine": 5,
+      "source": "memory",
+      "snippet": "Assistant: Now update README.md, index.html, notes-lab.html, and daily.html:",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "readme.md",
+        "index.html",
+        "notes-lab.html",
+        "daily.html",
+        "assistant",
+        "now",
+        "update",
+        "lab.html"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:6:6": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:6:6",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 6,
+      "endLine": 6,
+      "source": "memory",
+      "snippet": "Assistant: Now update docs/index.html, notes-lab.html, and daily.html:",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "docs/index.html",
+        "notes-lab.html",
+        "daily.html",
+        "assistant",
+        "now",
+        "update",
+        "docs",
+        "index.html"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:7:7": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:7:7",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 7,
+      "endLine": 7,
+      "source": "memory",
+      "snippet": "Assistant: Now update the roadmap:",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "assistant",
+        "now",
+        "update",
+        "the",
+        "roadmap"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:8:8": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:8:8",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 8,
+      "endLine": 8,
+      "source": "memory",
+      "snippet": "Assistant: Phase 5 — run validate:",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "assistant",
+        "phase",
+        "run",
+        "validate"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:9:9": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:9:9",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 9,
+      "endLine": 9,
+      "source": "memory",
+      "snippet": "Assistant: Validate passed. Now git commit and push:",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "assistant",
+        "validate",
+        "passed",
+        "now",
+        "git",
+        "commit",
+        "push"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-04-25.txt:10:10": {
+      "key": "memory:memory/.dreams/session-corpus/2026-04-25.txt:10:10",
+      "path": "memory/.dreams/session-corpus/2026-04-25.txt",
+      "startLine": 10,
+      "endLine": 10,
+      "source": "memory",
+      "snippet": "Assistant: 全部完成 ✅ --- ## 今日学习简报 ### 🧠 第17课：预训练语言模型——BERT 与 GPT **为什么学这个？** 上一课学了 Transformer 架构，但 Transformer 只是骨架。真正改变世界的是 BERT 和 GPT——它们用不同的方式「填」这个骨架，分别引爆了 NLP 理解和文本生成革命。 **核心要点（30 分钟版）：** 1. **预训练 + 微调范式** — 先在海量文本上学语言规律，再用少量标注数据适配任务。以前每个任务从零训练，现在只需微调。 2. **BERT（Google，2018.1",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-04-25T19:06:24.829Z",
+      "lastRecalledAt": "2026-04-25T19:06:24.829Z",
+      "queryHashes": [
+        "0ebfd40e58af"
+      ],
+      "recallDays": [
+        "2026-04-26",
+        "2026-04-25"
+      ],
+      "conceptTags": [
+        "gpt",
+        "2018.1",
+        "assistant",
+        "全部",
+        "完成",
         "今日",
         "学习",
         "简报"
