@@ -42,13 +42,14 @@
 | 16 | Transformer 架构 | [📖 Notebook](lessons/16_Transformer架构.ipynb) | [2026-04-24](daily/2026-04-24.md) |
 | 17 | 预训练语言模型 BERT 与 GPT | [📖 Notebook](lessons/17_预训练语言模型BERT与GPT.ipynb) | [2026-04-25](daily/2026-04-25.md) |
 | 18 | 大模型微调 | [📖 Notebook](lessons/18_大模型微调.ipynb) | [2026-04-26](daily/2026-04-26.md) |
+| 19 | RAG 检索增强生成 | [📖 Notebook](lessons/19_RAG检索增强生成.ipynb) | [2026-04-27](daily/2026-04-27.md) |
 
 ## 🔗 快速入口
 
 - [🗺️ 学习路线](roadmap/roadmap.md)
 - [📅 每日学习记录](daily/)
-  - 🆕 **第18课：大模型微调** (2026-04-26)
-  - **第17课：预训练语言模型 BERT 与 GPT** (2026-04-25)
+  - 🆕 **第19课：RAG 检索增强生成** (2026-04-27)
+  - **第18课：大模型微调** (2026-04-26)
   - **第16课：Transformer 架构** (2026-04-24)
   - **第15课：Attention 机制** (2026-04-23)
   - **第14课：RNN / LSTM 与序列建模** (2026-04-22)
