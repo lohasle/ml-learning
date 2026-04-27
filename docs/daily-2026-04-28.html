@@ -1,0 +1,108 @@
+<h1>2026年4月28日 - 第20课：Agent — 让 LLM 自主行动</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解 AI Agent 的核心架构：LLM + 工具 + 规划 + 记忆，从被动问答到自主行动的关键飞跃。</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课（RAG）让模型能"查资料再回答"，但模型依然是<strong>被动的</strong>——你问什么它查什么。Agent 是质的飞跃：模型自己决定<strong>要不要查、查什么、用什么工具、需要几步、何时停止</strong>。</p>
+<p>从架构视角看，RAG 是"给模型装了一个外接硬盘"，Agent 是"给模型装了一双手和一个日程表"。</p>
+<p><strong>在 AI 演进中的位置</strong>：Agent（2023-2025 爆发）是大模型从"工具"进化为"系统"的关键节点。它让 LLM 从被调用的 API 变成能自主编排工作流的执行者。这也是 Transformer → LLM 阶段的收尾课——至此，你已掌握从线性回归到智能体的完整链条。</p>
+<h2>核心概念解释</h2>
+<h3>1. Agent 的四大组件</h3>
+<ul>
+<li><strong>直觉</strong>：Agent = 大脑（LLM）+ 手（工具）+ 计划表（规划）+ 笔记本（记忆）</li>
+<li><strong>LLM</strong>：负责理解意图、推理决策、生成回答</li>
+<li><strong>Tools</strong>：搜索引擎、计算器、数据库、API、代码执行器——一切外部能力</li>
+<li><strong>Planning</strong>：任务分解、推理策略（ReAct、CoT、ToT）</li>
+<li><strong>Memory</strong>：短期记忆（对话上下文）+ 长期记忆（向量数据库）</li>
+<li><strong>代码对应</strong>：Notebook 中的 <code>ToolRegistry</code>（工具）+ <code>ReActAgent</code>（规划循环）+ <code>history</code>（记忆）</li>
+</ul>
+<h3>2. ReAct 推理范式</h3>
+<ul>
+<li><strong>直觉</strong>：像人解决问题一样——"想想现在该干嘛" → "做一下" → "看看结果" → "再想想"</li>
+<li><strong>循环</strong>：Thought（推理）→ Action（行动）→ Observation（观察）→ Thought → ... → Final Answer</li>
+<li><strong>类比</strong>：你在做一道数学题，先想思路（Thought），算一步（Action），看看对不对（Observation），不对就换思路</li>
+<li><strong>关键论文</strong>：ReAct: Synergizing Reasoning and Acting in Language Models（Yao et al., 2022）</li>
+</ul>
+<h3>3. Function Calling / Tool Use</h3>
+<ul>
+<li><strong>直觉</strong>：LLM 不是真的"调用"函数，而是<strong>输出一段 JSON</strong>，告诉框架"我想用这个工具，参数是这个"</li>
+<li><strong>流程</strong>：用户提问 → LLM 输出 <code>{"action": "search", "input": "..."}</code> → 框架执行搜索 → 结果回传 LLM → LLM 继续</li>
+<li><strong>为什么重要</strong>：这是 Agent 的"神经肌肉接头"——LLM 只负责"想"，工具负责"做"</li>
+<li><strong>生产实践</strong>：OpenAI Function Calling、Anthropic Tool Use、Gemini Function Calling</li>
+</ul>
+<h3>4. Agent 的记忆系统</h3>
+<ul>
+<li><strong>短期记忆</strong>：当前对话的上下文窗口（8K-128K tokens）</li>
+<li><strong>长期记忆</strong>：向量数据库存储历史交互、用户偏好、知识积累</li>
+<li><strong>工作记忆</strong>：当前任务的中间结果、scratchpad</li>
+<li><strong>类比</strong>：短期 = 你正在想的事情，长期 = 你的笔记本，工作 = 草稿纸</li>
+</ul>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>方法/公式</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ReAct 循环</td>
+<td>Thought → Action → Observation → 循环</td>
+<td>像人一样"想一步做一步"</td>
+</tr>
+<tr>
+<td>Tool Selection</td>
+<td>argmax P(tool_i | query, history)</td>
+<td>LLM 根据上下文选最合适的工具</td>
+</tr>
+<tr>
+<td>Prompt 模板</td>
+<td>[Instructions] + [Tools] + [History] + [Query]</td>
+<td>把所有信息打包给 LLM 做决策</td>
+</tr>
+<tr>
+<td>停止条件</td>
+<td>Action = "finish" 或 step ≥ max</td>
+<td>防止 Agent 无限循环</td>
+</tr>
+<tr>
+<td>Function Calling</td>
+<td>JSON: {name, arguments} → 执行 → result</td>
+<td>LLM 输出结构化指令，框架执行</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 实现了完整的 ReAct 循环：<code>ReActAgent</code> 类</li>
+<li><code>ToolRegistry</code> 演示了工具注册和调用的标准模式</li>
+<li><code>MockLLM</code> 模拟了 LLM 的决策过程（真实场景用 OpenAI/Claude API）</li>
+<li>注意 Agent 的最大步数限制——真实系统必须防止无限循环</li>
+<li>架构图展示了四大组件的关系</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: Agent 和普通 LLM 对话有什么区别？</strong>
+A: 普通对话是一次性的——你问它答。Agent 是循环的——它自己决定要调什么工具、看什么结果、要不要继续。核心区别是<strong>自主性</strong>和<strong>多步推理</strong>。一个简单的判断标准：如果系统有"工具选择 → 执行 → 再推理"的循环，它就是 Agent。</p>
+<p><strong>Q: 为什么 Agent 经常"跑偏"或死循环？</strong>
+A: 这是 Agent 工程最大的挑战。原因包括：LLM 选错工具、工具返回无关信息导致推理偏移、没有好的停止条件。解决方案：设置最大步数、添加反思步骤（让 Agent 评估自己刚才的行动是否有效）、用更好的 Prompt 模板。</p>
+<p><strong>Q: 现在应该用哪个 Agent 框架？</strong>
+A: 学习阶段建议先从零写（理解原理），然后 LangGraph 做复杂工作流，OpenAI Assistants API 做快速生产。避免一上来就用最重的框架——先搞懂 Agent 循环的本质，再选工具。</p>
+<h2>本课总结</h2>
+<ol>
+<li>Agent = LLM + Tools + Planning + Memory，核心是从"被动回答"到"自主行动"</li>
+<li>ReAct（推理+行动）是最经典的 Agent 推理范式</li>
+<li>Function Calling 是 LLM 调用外部工具的标准接口</li>
+<li>Agent 的核心挑战：可靠性、可控性、评估</li>
+<li>框架选型要看场景，理解原理比选框架更重要</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课我们将进入<strong>阶段 5：多模态与现代 AI 系统</strong>，学习多模态模型——让 AI 同时理解文本、图像、语音等不同模态。这是 Agent 之后的自然延伸：一个真正强大的 Agent 应该能"看"图像、"听"语音、"读"文档，而不仅仅是处理文字。</p>
+<hr />
+<h2>📍 在总路线中的位置</h2>
+<pre><code>阶段 1: 线性回归 → 逻辑回归 → 模型评估 → 过拟合 ✅
+阶段 2: 决策树 → 随机森林 → SVM → KNN → 聚类 → PCA ✅
+阶段 3: 神经网络 → 优化器 → CNN → RNN/LSTM ✅
+阶段 4: Attention → Transformer → BERT/GPT → 微调 → RAG → Agent ✅ ← 你在这里
+阶段 5: 多模态 → 训练与推理 → AI 系统 ⏳
+</code></pre>

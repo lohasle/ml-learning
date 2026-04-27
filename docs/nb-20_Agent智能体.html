@@ -1,0 +1,393 @@
+<div class="nb-cell nb-markdown"><h1>第20课：Agent — 让 LLM 自主行动</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 Agent 的核心概念：LLM + 工具 + 规划 + 记忆</li>
+<li>掌握 ReAct 推理范式（推理-行动循环）</li>
+<li>从零实现一个简化版 Agent 框架</li>
+<li>了解主流 Agent 框架的设计思路</li>
+</ul>
+<h2>在学习路线中的位置</h2>
+<p>上一课 RAG 让模型能"查资料"，但模型依然是被动的——你问什么它答什么。
+Agent 是关键飞跃：让模型自己决定<strong>什么时候查、查什么、用什么工具、要不要继续</strong>。
+这是 Transformer → LLM 阶段的收尾，也是通向多模态和现代 AI 系统的桥梁。</p></div>
+<div class="nb-cell nb-markdown"><h2>核心概念：Agent 是什么？</h2>
+<p>直觉类比：<strong>RAG 是开卷考试，Agent 是有助手的研究员</strong>。</p>
+<ul>
+<li>RAG：你给模型一份参考资料，它参考着回答</li>
+<li>Agent：模型自己决定"我需要查资料"→ 找搜索引擎 → 看结果 → "还不够"→ 查数据库 → 综合回答</li>
+</ul>
+<h3>Agent 的四大组件</h3>
+<ol>
+<li><strong>LLM（大脑）</strong>：负责理解和推理</li>
+<li><strong>Tools（工具）</strong>：搜索引擎、计算器、数据库、API 等</li>
+<li><strong>Planning（规划）</strong>：ReAct、Chain-of-Thought、Task Decomposition</li>
+<li><strong>Memory（记忆）</strong>：短期（对话历史）+ 长期（向量数据库）</li>
+</ol></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import json
+import re
+from datetime import datetime
+
+# 简化版 LLM 模拟器（不需要真实 API）
+class MockLLM:
+    """模拟一个能做简单推理的 LLM，用于演示 Agent 循环"""
+    
+    def __init__(self):
+        self.call_count = 0
+    
+    def generate(self, prompt: str) -&gt; str:
+        self.call_count += 1
+        # 简化：基于关键词匹配模拟 Agent 行为
+        prompt_lower = prompt.lower()
+        
+        if '天气' in prompt_lower or 'weather' in prompt_lower:
+        return json.dumps({
+                "thought": "用户想知道天气，我需要调用天气工具",
+                "action": "get_weather",
+                "action_input": "北京"
+            })
+        elif '计算' in prompt_lower or '算' in prompt_lower:
+            return json.dumps({
+                "thought": "需要用计算器",
+                "action": "calculator",
+                "action_input": prompt_lower
+            })
+        elif '搜索' in prompt_lower or '什么是' in prompt_lower or 'search' in prompt_lower:
+            return json.dumps({
+                "thought": "需要搜索相关信息",
+                "action": "search",
+                "action_input": prompt_lower
+            })
+        else:
+            return json.dumps({
+                "thought": "我有足够信息可以直接回答",
+                "action": "finish",
+                "action_input": f"根据已有信息，这是我的最终回答（LLM 调用 #{self.call_count}）"
+            })
+
+llm = MockLLM()
+print("✅ MockLLM 初始化完成")
+print(f"测试：{llm.generate('北京今天天气怎么样？')}")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 定义工具集
+class ToolRegistry:
+    """工具注册中心 — Agent 可以使用的所有工具"""
+    
+    def __init__(self):
+        self.tools = {}
+    
+    def register(self, name: str, func, description: str):
+        self.tools[name] = {'func': func, 'description': description}
+    
+    def get_tool(self, name: str):
+        return self.tools.get(name)
+    
+    def list_tools(self) -&gt; str:
+        return '\n'.join([f"- {k}: {v['description']}" for k, v in self.tools.items()])
+    
+    def execute(self, name: str, input_str: str) -&gt; str:
+        tool = self.tools.get(name)
+        if not tool:
+            return f"错误：未知工具 '{name}'"
+        try:
+            return tool['func'](input_str)
+        except Exception as e:
+            return f"工具执行出错：{e}"
+
+# 定义具体工具
+def get_weather(city: str) -&gt; str:
+    # 模拟天气 API
+    mock_data = {
+        '北京': '晴天，22°C，微风',
+        '上海': '多云，25°C，东南风',
+        '深圳': '小雨，28°C，南风'
+    }
+    return mock_data.get(city.strip(), f'{city}：模拟数据-晴，20°C')
+
+def calculator(expr: str) -&gt; str:
+    # 从字符串提取数学表达式
+    import re
+    numbers = re.findall(r'[\d.]+', expr)
+    ops = re.findall(r'[+\-*/]', expr)
+    if len(numbers) &gt;= 2 and ops:
+        a, b = float(numbers[0]), float(numbers[1])
+        op = ops[0]
+        result = {'+': a+b, '-': a-b, '*': a*b, '/': a/b if b != 0 else '除零错误'}.get(op, '未知操作')
+        return f"{a} {op} {b} = {result}"
+    return f"计算结果：{expr}（简化模拟）"
+
+def search(query: str) -&gt; str:
+    # 模拟搜索
+    mock_results = {
+        'python': 'Python 是一种广泛使用的高级编程语言，由 Guido van Rossum 于1991年发布。',
+        'transformer': 'Transformer 是 Google 2017年提出的深度学习架构，基于自注意力机制。',
+        'agent': 'AI Agent 是能够感知环境并采取行动以实现目标的自主系统。'
+    }
+    for key, val in mock_results.items():
+        if key in query.lower():
+            return val
+    return f'搜索结果：关于"{query}"的信息（模拟搜索结果）'
+
+# 注册工具
+registry = ToolRegistry()
+registry.register('get_weather', get_weather, '查询指定城市的天气')
+registry.register('calculator', calculator, '执行数学计算')
+registry.register('search', search, '搜索互联网获取信息')
+
+print("🔧 已注册工具：")
+print(registry.list_tools())</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 核心：ReAct Agent 循环
+class ReActAgent:
+    """
+    ReAct Agent 实现
+    ReAct = Reasoning + Acting
+    核心循环：Thought → Action → Observation → Thought → ... → Final Answer
+    """
+    
+    def __init__(self, llm, tools: ToolRegistry, max_steps: int = 5):
+        self.llm = llm
+        self.tools = tools
+        self.max_steps = max_steps
+        self.history = []  # 对话记忆
+    
+    def run(self, query: str, verbose: bool = True) -&gt; str:
+        """运行 Agent 主循环"""
+        if verbose:
+            print(f"{'='*60}")
+            print(f"🎯 用户问题：{query}")
+            print(f"{'='*60}")
+        
+        context = query
+        
+        for step in range(1, self.max_steps + 1):
+            if verbose:
+                print(f"\n--- Step {step} ---")
+            
+            # 1. LLM 思考并决定行动
+            response_str = self.llm.generate(context)
+            try:
+                response = json.loads(response_str)
+            except:
+                return response_str  # 如果不是 JSON，直接返回
+            
+            thought = response.get('thought', '')
+            action = response.get('action', '')
+            action_input = response.get('action_input', '')
+            
+            if verbose:
+                print(f"💭 Thought: {thought}")
+            
+            # 2. 检查是否要结束
+            if action == 'finish':
+                if verbose:
+                    print(f"✅ Final Answer: {action_input}")
+                self.history.append({'query': query, 'answer': action_input})
+                return action_input
+            
+            # 3. 执行工具
+            if verbose:
+                print(f"🔧 Action: {action}({action_input})")
+            
+            observation = self.tools.execute(action, action_input)
+            
+            if verbose:
+                print(f"👀 Observation: {observation}")
+            
+            # 4. 将观察结果加入上下文，继续循环
+            context = f"之前的观察：{observation}。用户原始问题：{query}"
+        
+        return "达到最大步数限制，Agent 停止。"
+
+# 创建并测试 Agent
+agent = ReActAgent(llm, registry, max_steps=5)
+
+# 测试 1：天气查询
+result1 = agent.run("北京今天天气怎么样？")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 测试 2：搜索 + 回答
+result2 = agent.run("什么是 Transformer？请搜索一下")
+print("\n" + "="*60)
+
+# 测试 3：直接回答（无需工具）
+result3 = agent.run("你好，请介绍一下你自己")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import numpy as np
+
+fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+ax.set_xlim(0, 12)
+ax.set_ylim(0, 7)
+ax.axis('off')
+ax.set_title('Agent ReAct 循环架构图', fontsize=16, fontweight='bold', pad=20)
+
+# 中心：LLM
+llm_box = patches.FancyBboxPatch((4.5, 2.5), 3, 2, boxstyle='round,pad=0.2', 
+                                   facecolor='#C96442', edgecolor='#A05030', linewidth=2)
+ax.add_patch(llm_box)
+ax.text(6, 3.5, 'LLM\n（大脑）', ha='center', va='center', fontsize=14, 
+        fontweight='bold', color='white')
+
+# Thought 气泡
+thought_box = patches.FancyBboxPatch((4.5, 5.2), 3, 1, boxstyle='round,pad=0.15',
+                                      facecolor='#E8D5C4', edgecolor='#C96442', linewidth=1.5)
+ax.add_patch(thought_box)
+ax.text(6, 5.7, '💭 Thought（推理）', ha='center', va='center', fontsize=11)
+
+# Action
+action_box = patches.FancyBboxPatch((8.5, 2.5), 2.5, 2, boxstyle='round,pad=0.15',
+                                     facecolor='#D4E6C3', edgecolor='#6B8E4E', linewidth=1.5)
+ax.add_patch(action_box)
+ax.text(9.75, 3.5, '🔧 Tools\n工具集', ha='center', va='center', fontsize=11)
+
+# Observation
+obs_box = patches.FancyBboxPatch((1, 2.5), 2.5, 2, boxstyle='round,pad=0.15',
+                                  facecolor='#C4D8E6', edgecolor='#4E6B8E', linewidth=1.5)
+ax.add_patch(obs_box)
+ax.text(2.25, 3.5, '👀 Observation\n观察结果', ha='center', va='center', fontsize=11)
+
+# Memory
+memory_box = patches.FancyBboxPatch((4.5, 0.5), 3, 1, boxstyle='round,pad=0.15',
+                                     facecolor='#E6D4C4', edgecolor='#8E6B4E', linewidth=1.5)
+ax.add_patch(memory_box)
+ax.text(6, 1, '🧠 Memory\n记忆', ha='center', va='center', fontsize=11)
+
+# 箭头：Thought → LLM
+ax.annotate('', xy=(6, 4.5), xytext=(6, 5.2),
+            arrowprops=dict(arrowstyle='-&gt;', color='#C96442', lw=2))
+
+# 箭头：LLM → Tools
+ax.annotate('', xy=(8.5, 3.5), xytext=(7.5, 3.5),
+            arrowprops=dict(arrowstyle='-&gt;', color='#6B8E4E', lw=2))
+
+# 箭头：Tools → Observation (curved)
+ax.annotate('', xy=(3.5, 3.5), xytext=(8.5, 2.8),
+            arrowprops=dict(arrowstyle='-&gt;', color='#4E6B8E', lw=2, 
+                          connectionstyle='arc3,rad=-0.3'))
+
+# 箭头：Observation → LLM
+ax.annotate('', xy=(4.5, 3.5), xytext=(3.5, 3.5),
+            arrowprops=dict(arrowstyle='-&gt;', color='#4E6B8E', lw=2))
+
+# 箭头：Memory ↔ LLM
+ax.annotate('', xy=(6, 2.5), xytext=(6, 1.5),
+            arrowprops=dict(arrowstyle='&lt;-&gt;', color='#8E6B4E', lw=1.5))
+
+# Final Answer
+final_box = patches.FancyBboxPatch((9.5, 5.2), 2, 1, boxstyle='round,pad=0.15',
+                                    facecolor='#F5E6D3', edgecolor='#C96442', linewidth=1.5)
+ax.add_patch(final_box)
+ax.text(10.5, 5.7, '✅ Final\nAnswer', ha='center', va='center', fontsize=10)
+
+ax.annotate('', xy=(9.5, 5.7), xytext=(7.5, 5.7),
+            arrowprops=dict(arrowstyle='-&gt;', color='#C96442', lw=1.5))
+
+plt.tight_layout()
+plt.savefig('agent_react_architecture.png', dpi=150, bbox_inches='tight')
+plt.show()
+print("📊 Agent ReAct 循环架构图已生成")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># Agent 框架对比分析
+frameworks = {
+    'LangChain': {
+        'type': '编排框架',
+        'pros': '生态丰富、工具多、文档好',
+        'cons': '抽象层多、调试难、重',
+        'use_case': '快速原型、通用场景'
+    },
+    'LangGraph': {
+        'type': '状态图框架',
+        'pros': '流程可控、可视化好',
+        'cons': '学习曲线稍陡',
+        'use_case': '复杂多步工作流'
+    },
+    'CrewAI': {
+        'type': '多 Agent 协作',
+        'pros': '角色分工、团队协作',
+        'cons': '开销大、协调复杂',
+        'use_case': '多角色协作任务'
+    },
+    'AutoGen': {
+        'type': '对话式 Agent',
+        'pros': '微软背书、多 Agent 对话',
+        'cons': '抽象偏学术',
+        'use_case': '研究、代码生成'
+    },
+    'OpenAI Assistants': {
+        'type': '托管 Agent API',
+        'pros': '开箱即用、无需自建',
+        'cons': '供应商锁定',
+        'use_case': '快速上线生产服务'
+    }
+}
+
+print("📊 主流 Agent 框架对比\n")
+print(f"{'框架':&lt;22} {'类型':&lt;16} {'适用场景':&lt;20}")
+print("-" * 58)
+for name, info in frameworks.items():
+    print(f"{name:&lt;22} {info['type']:&lt;16} {info['use_case']:&lt;20}")
+
+print("\n💡 选型建议：")
+print("  - 学习/理解原理 → 自己从零写（就像我们刚才做的）")
+print("  - 快速验证想法 → LangChain / LangGraph")
+print("  - 生产部署 → OpenAI Assistants API 或自建轻量框架")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>Agent = LLM + 工具 + 规划 + 记忆</h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>作用</th>
+<th>关键词</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM</td>
+<td>理解、推理、决策</td>
+<td>GPT、Claude、Gemini</td>
+</tr>
+<tr>
+<td>Tools</td>
+<td>与外部世界交互</td>
+<td>搜索、API、数据库、代码执行</td>
+</tr>
+<tr>
+<td>Planning</td>
+<td>任务分解与策略</td>
+<td>ReAct、CoT、ToT</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>上下文管理</td>
+<td>短期（窗口）、长期（向量DB）</td>
+</tr>
+</tbody>
+</table>
+<h3>关键概念</h3>
+<ol>
+<li><strong>ReAct 范式</strong>：Thought → Action → Observation 循环，直到得到最终答案</li>
+<li><strong>Tool Use</strong>：LLM 输出结构化 JSON 指定工具名和参数，框架负责调用</li>
+<li><strong>Function Calling</strong>：OpenAI 等提供的原生能力，让 LLM 直接输出函数调用</li>
+<li><strong>多 Agent</strong>：多个 Agent 分工协作（如 Planner + Coder + Reviewer）</li>
+</ol>
+<h2>课后思考</h2>
+<ol>
+<li>Agent 和 RAG 的本质区别是什么？（提示：主动 vs 被动）</li>
+<li>为什么 Agent 需要设置最大步数？如果不限制会怎样？</li>
+<li>如何评估一个 Agent 的好坏？准确率够吗？</li>
+<li>想想你现在使用的各种 AI 工具，哪些是 Agent，哪些不是？</li>
+</ol></div>
