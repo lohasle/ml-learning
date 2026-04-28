@@ -1,0 +1,115 @@
+<h1>2026年4月29日 - 第21课：多模态模型范式</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解多模态 AI 的三种核心架构范式：从 CLIP 的对比学习到 GPT-4V/Gemini 的统一 Token 化，掌握让 AI 同时「看」和「读」的关键技术。</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课（Agent）让 LLM 能自主使用工具，但它只能处理文本。一个真正强大的 AI 应该能「看」图像、「听」语音、「读」文档——这就是多模态。</p>
+<p>从架构视角看，前 20 课我们分别学了文本处理（Transformer/LLM）和图像处理（CNN）。多模态是把这两条线<strong>合二为一</strong>的关键节点。</p>
+<p><strong>在 AI 演进中的位置</strong>：多模态（2021-2025）是从「单模态专家」到「通用 AI」的必经之路。CLIP 证明了图文可以共享语义空间，GPT-4V 证明了统一处理所有模态是可行的，Gemini 则展示了原生多模态设计的潜力。</p>
+<h2>核心概念解释</h2>
+<h3>1. 什么是多模态？</h3>
+<ul>
+<li><strong>直觉</strong>：你看到一张菜单照片，大脑同时处理图像（菜品样子）和文字（菜名价格），然后综合判断想吃什么。多模态 AI 就是让模型也能做到这一点</li>
+<li><strong>技术定义</strong>：能同时接收、理解和生成多种类型数据（文本、图像、音频、视频）的 AI 系统</li>
+<li><strong>关键挑战</strong>：不同模态的数据结构完全不同——文本是离散的 token 序列，图像是连续的像素矩阵，音频是时序波形。如何让它们「说同一种语言」？</li>
+</ul>
+<h3>2. 范式一：共享嵌入空间（CLIP）</h3>
+<ul>
+<li><strong>直觉</strong>：想象一个巨大的衣柜，左边挂图片，右边挂文字描述。CLIP 学会了把「匹配的图片和描述」挂在同一排</li>
+<li><strong>核心机制</strong>：双编码器 + 对比学习</li>
+<li>图像编码器（ViT）→ 图像向量 $v_i$</li>
+<li>文本编码器（Transformer）→ 文本向量 $t_i$</li>
+<li>损失函数：让配对的 $(v_i, t_i)$ 余弦相似度高，不配对的低</li>
+<li><strong>关键公式</strong>：InfoNCE 损失 $L = -\log \frac{\exp(v_i \cdot t_i / \tau)}{\sum_j \exp(v_i \cdot t_j / \tau)}$</li>
+<li><strong>为什么厉害</strong>：训练完之后，任意图片和任意文字都可以通过余弦相似度来匹配——这就是「零样本分类」</li>
+</ul>
+<h3>3. 范式二：跨模态注意力（LLaVA / Flamingo）</h3>
+<ul>
+<li><strong>直觉</strong>：CLIP 是「先各自看完再比较」，跨模态注意力是「一边写文字一边看图，随时参考」</li>
+<li><strong>核心机制</strong>：在 LLM 的层间插入视觉交叉注意力</li>
+<li>LLM 的文本 token 生成 Query</li>
+<li>ViT 的视觉 patch 生成 Key 和 Value</li>
+<li>文本 token 通过注意力「查询」视觉信息</li>
+<li><strong>代码对应</strong>：Notebook 中的 <code>cross_attention()</code> 函数</li>
+<li><strong>代表模型</strong>：Flamingo（DeepMind 2022）、LLaVA（2023）、Qwen-VL（2023）</li>
+<li><strong>优势</strong>：不需要从头训练 LLM，在已有 LLM 上插入适配器即可</li>
+</ul>
+<h3>4. 范式三：统一 Token 化（GPT-4V / Gemini）</h3>
+<ul>
+<li><strong>直觉</strong>：把图像也变成「词」——猫的图片经过编码后变成 <code>[IMG_猫_1] [IMG_猫_2] ... [IMG_猫_N]</code> 这些 token，然后和文字 token 一起喂进同一个 Transformer</li>
+<li><strong>核心机制</strong>：</li>
+<li>图像 → ViT → Patch Embedding → 压缩为 N 个视觉 token</li>
+<li>视觉 token + 文本 token → 统一 Transformer → 输出</li>
+<li>端到端联合训练，所有模态共享参数</li>
+<li><strong>代表系统</strong>：GPT-4V（2023）、Gemini（2023）、GPT-4o（2024）</li>
+<li><strong>为什么是终极形态</strong>：不做任何模态间的「桥接」，而是让模型从训练之初就学会处理所有模态</li>
+</ul>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/方法</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLIP 对比损失</td>
+<td>$-\log \frac{\exp(v_i \cdot t_i / \tau)}{\sum_j \exp(v_i \cdot t_j / \tau)}$</td>
+<td>让配对的图文「互相认出对方」</td>
+</tr>
+<tr>
+<td>零样本分类</td>
+<td>$\text{class} = \arg\max_c \cos(v_{img}, t_c)$</td>
+<td>哪个文字描述和图片最配，就是哪一类</td>
+</tr>
+<tr>
+<td>跨模态注意力</td>
+<td>$\text{Attn}(Q_t, K_v, V_v)$</td>
+<td>文本在「问」，视觉在「答」</td>
+</tr>
+<tr>
+<td>视觉 Token 化</td>
+<td>$\text{Image} \to \text{ViT} \to [p_1, ..., p_N]$</td>
+<td>把图片切成小块，每块变成一个「词」</td>
+</tr>
+<tr>
+<td>统一输入</td>
+<td>$[\text{IMG_TOK}] + [\text{TEXT_TOK}] \to \text{Transformer}$</td>
+<td>所有模态一视同仁</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 实现了 CLIP 对比学习的简化版本，可以直观看到训练过程</li>
+<li><code>cross_attention()</code> 函数演示了跨模态注意力的核心计算</li>
+<li>零样本分类示例展示了 CLIP 最强大的应用场景</li>
+<li>架构对比图清晰地展示了三种范式的区别</li>
+<li>注意：真实 CLIP 用 4 亿图文对训练，我们用 6 个模拟对——原理一致</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: CLIP 和传统图像分类有什么本质区别？</strong>
+A: 传统分类：固定类别，每个类别训练一个分类器。CLIP：不固定类别，任何文字描述都可以做分类。本质区别是 CLIP 学的是「图文语义对齐」而非「特定类别映射」。这意味着你可以用自然语言描述任何新类别，模型都能理解。</p>
+<p><strong>Q: 为什么不直接用统一 Token 化（最强范式）？</strong>
+A: 成本。GPT-4V 级别的模型需要海量多模态数据和极端计算资源。CLIP 只需要图文对就能训好，LLaVA 可以在消费级 GPU 上微调。工程选型要看场景——不是所有任务都需要最重的方案。</p>
+<p><strong>Q: 多模态和 Agent 有什么关系？</strong>
+A: 天然互补。Agent 需要「感知环境」才能做决策——多模态就是 Agent 的「眼睛和耳朵」。一个能看图、听音、读文档的 Agent，比纯文本 Agent 强大得多。下一课我们就会看到这两者如何结合。</p>
+<h2>本课总结</h2>
+<ol>
+<li>多模态 AI 让模型同时理解多种数据类型，是从「专家」到「通用」的关键一步</li>
+<li>三种范式递进：CLIP（匹配）→ LLaVA（生成）→ GPT-4V/Gemini（原生多模态）</li>
+<li>CLIP 的对比学习让图文共享语义空间，实现了强大的零样本能力</li>
+<li>统一 Token 化是当前最前沿的方向，但训练成本极高</li>
+<li>多模态是 Agent 感知世界的基础——能「看」的 Agent 才是真正的通用助手</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课将学习<strong>大模型训练与推理工程</strong>——了解大模型从训练到部署的完整工程链路。这将回答一个关键问题：那些千亿参数的模型，到底是怎么训出来的、怎么跑起来的？</p>
+<hr />
+<h2>📍 在总路线中的位置</h2>
+<pre><code>阶段 1: 线性回归 → 逻辑回归 → 模型评估 → 过拟合 ✅
+阶段 2: 决策树 → 随机森林 → SVM → KNN → 聚类 → PCA ✅
+阶段 3: 神经网络 → 优化器 → CNN → RNN/LSTM ✅
+阶段 4: Attention → Transformer → BERT/GPT → 微调 → RAG → Agent ✅
+阶段 5: 多模态 → 训练与推理 → AI 系统 ⏳ ← 你在这里
+</code></pre>

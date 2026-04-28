@@ -1,0 +1,476 @@
+<div class="nb-cell nb-markdown"><h1>第21课：多模态模型范式</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解什么是多模态 AI，为什么它重要</li>
+<li>掌握多模态模型的核心架构范式：编码器融合、跨模态注意力、统一 Transformer</li>
+<li>理解 CLIP 的对比学习原理及其对后续模型的影响</li>
+<li>了解 GPT-4V / Gemini / LLaVA 等代表性系统的设计思路</li>
+<li>动手实现一个简化的「图文匹配」模型核心逻辑</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念：从单模态到多模态</h2>
+<p>前 20 课我们主要处理<strong>文本</strong>（LLM、RAG、Agent）和<strong>图像</strong>（CNN）。但真实世界的信息天然是<strong>多模态</strong>的——你看到一张图，脑海中会同时处理视觉和语言信息。</p>
+<p><strong>多模态 AI 的核心挑战</strong>：如何让模型同时理解和关联不同类型的数据？</p>
+<p>三种主要范式：
+1. <strong>共享嵌入空间</strong>（CLIP）：把图像和文本映射到同一个向量空间
+2. <strong>跨模态注意力</strong>（Flamingo）：在 LLM 中插入视觉交叉注意力层
+3. <strong>统一 Token 化</strong>（GPT-4V / Gemini）：把图像也变成 token，和文本一起喂进同一个 Transformer</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from collections import defaultdict
+
+# 设置中文显示
+plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>范式一：CLIP — 对比学习的力量</h2>
+<p>CLIP（Contrastive Language-Image Pre-training, OpenAI 2021）是多模态领域的里程碑。</p>
+<p><strong>核心思想</strong>：不给模型直接教「什么是猫」，而是让它学会「这张图片和『一只橘色的猫』这段文字很配对」。</p>
+<h3>训练过程</h3>
+<ol>
+<li>图像编码器（ViT/CNN）把图片 → 图像向量 $v_i$</li>
+<li>文本编码器（Transformer）把文字 → 文本向量 $t_i$</li>
+<li>对比损失：让配对的 $(v_i, t_i)$ 距离近，不配对的距离远</li>
+</ol>
+<p><strong>直觉</strong>：就像一个派对上，把互相认识的人安排坐在一起，不认识的人坐得远一些。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 模拟 CLIP 的对比学习过程 ===
+
+def cosine_similarity(a, b):
+    """计算余弦相似度"""
+    dot = np.sum(a * b, axis=-1)
+    norm_a = np.linalg.norm(a, axis=-1)
+    norm_b = np.linalg.norm(b, axis=-1)
+    return dot / (norm_a * norm_b + 1e-8)
+
+def contrastive_loss(image_embeds, text_embeds, temperature=0.07):
+    """
+    CLIP 的对比损失（InfoNCE）
+    对角线上是正样本对，其余是负样本对
+    """
+    # 归一化
+    image_embeds = image_embeds / np.linalg.norm(image_embeds, axis=1, keepdims=True)
+    text_embeds = text_embeds / np.linalg.norm(text_embeds, axis=1, keepdims=True)
+    
+    # 相似度矩阵 [N, N]
+    logits = np.dot(image_embeds, text_embeds.T) / temperature
+    
+    # 对称损失：image→text 和 text→image
+    N = logits.shape[0]
+    labels = np.arange(N)
+    
+    # softmax cross-entropy（手动实现）
+    def softmax_cross_entropy(logits, labels):
+        max_logits = np.max(logits, axis=1, keepdims=True)
+        exp_logits = np.exp(logits - max_logits)
+        log_sum_exp = np.log(np.sum(exp_logits, axis=1))
+        correct_logits = logits[np.arange(len(labels)), labels]
+        loss = -correct_logits + log_sum_exp + np.max(logits, axis=1)
+        return np.mean(loss)
+    
+    loss_i2t = softmax_cross_entropy(logits, labels)      # image → text
+    loss_t2i = softmax_cross_entropy(logits.T, labels)     # text → image
+    
+    return (loss_i2t + loss_t2i) / 2
+
+# 模拟 6 个图文对
+pairs = [
+    ("橘猫在阳光下", "🐱 橘猫"),
+    ("蓝天下的雪山", "🏔️ 雪山"),
+    ("红色跑车在公路上", "🚗 跑车"),
+    ("一碗热气腾腾的拉面", "🍜 拉面"),
+    ("代码编辑器的截图", "💻 代码"),
+    ("海滩上的日落", "🌅 日落"),
+]
+
+# 模拟嵌入（初始随机，维度=64）
+n = len(pairs)
+dim = 64
+np.random.seed(42)
+image_embeds = np.random.randn(n, dim) * 0.5
+text_embeds = np.random.randn(n, dim) * 0.5
+
+# 模拟训练过程：逐步拉近配对、推远非配对
+lr = 0.05
+losses = []
+
+for step in range(200):
+    loss = contrastive_loss(image_embeds, text_embeds)
+    losses.append(loss)
+    
+    # 简化梯度：拉近配对，推远非配对
+    norm_i = image_embeds / np.linalg.norm(image_embeds, axis=1, keepdims=True)
+    norm_t = text_embeds / np.linalg.norm(text_embeds, axis=1, keepdims=True)
+    
+    for i in range(n):
+        # 拉近配对
+        image_embeds[i] += lr * norm_t[i]
+        text_embeds[i] += lr * norm_i[i]
+        # 推远非配对
+        for j in range(n):
+            if j != i:
+                image_embeds[i] -= lr * 0.1 * norm_t[j]
+                text_embeds[i] -= lr * 0.1 * norm_i[j]
+
+print(f"初始 Loss: {losses[0]:.4f}")
+print(f"最终 Loss: {losses[-1]:.4f}")
+print(f"Loss 下降: {losses[0] - losses[-1]:.4f}")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 可视化：训练过程 + 最终相似度矩阵 ===
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# 左图：损失曲线
+axes[0].plot(losses, color='#C96442', linewidth=2)
+axes[0].set_title('CLIP Contrastive Loss (Simulated)', fontsize=14)
+axes[0].set_xlabel('Training Step')
+axes[0].set_ylabel('Loss')
+axes[0].grid(True, alpha=0.3)
+
+# 右图：最终相似度矩阵
+final_norm_i = image_embeds / np.linalg.norm(image_embeds, axis=1, keepdims=True)
+final_norm_t = text_embeds / np.linalg.norm(text_embeds, axis=1, keepdims=True)
+sim_matrix = np.dot(final_norm_i, final_norm_t.T)
+
+im = axes[1].imshow(sim_matrix, cmap='RdYlGn', vmin=-1, vmax=1)
+axes[1].set_title('Image-Text Similarity Matrix (After Training)', fontsize=14)
+axes[1].set_xlabel('Text')
+axes[1].set_ylabel('Image')
+
+# 标注数值
+for i in range(n):
+    for j in range(n):
+        color = 'white' if abs(sim_matrix[i, j]) &gt; 0.5 else 'black'
+        axes[1].text(j, i, f'{sim_matrix[i,j]:.2f}', ha='center', va='center', fontsize=8, color=color)
+
+fig.colorbar(im, ax=axes[1], shrink=0.8)
+plt.tight_layout()
+plt.savefig('clip_contrastive.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+print("\n对角线元素（正确配对的相似度）:", [f'{sim_matrix[i,i]:.3f}' for i in range(n)])
+print("非对角线平均相似度:", f'{(sim_matrix.sum() - np.diag(sim_matrix).sum()) / (n*n - n):.3f}')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>范式二：跨模态注意力（Flamingo / LLaVA）</h2>
+<p><strong>思路</strong>：不改 LLM 的主体，而是在中间插入「视觉适配器」。</p>
+<pre><code>文本 Token → [LLM Layer] → [LLM Layer + 视觉交叉注意力] → [LLM Layer] → 输出
+                        ↑
+              视觉特征（来自 ViT）
+</code></pre>
+<p><strong>关键区别</strong>：
+- CLIP：图像和文本各自编码，最后在嵌入空间对齐
+- 跨模态注意力：LLM 在生成文本的过程中<strong>主动查询</strong>视觉信息</p>
+<p><strong>直觉</strong>：CLIP 像是「先看完图和文字，再判断匹不匹配」；跨模态注意力像是「一边写文字一边看图，随时参考」。</p>
+<h3>代表模型</h3>
+<ul>
+<li><strong>Flamingo</strong>（DeepMind 2022）：在 LLM 中插入 Perceiver Resampler + 交叉注意力</li>
+<li><strong>LLaVA</strong>（2023）：把 ViT 输出映射为 LLM 的「视觉 token」，拼接到文本前面</li>
+<li><strong>Qwen-VL</strong>（2023）：类似 LLaVA，但加了更细粒度的视觉处理</li>
+</ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 模拟跨模态注意力的核心逻辑 ===
+
+def cross_attention(text_features, visual_features, d_k=None):
+    """
+    简化的跨模态注意力
+    text_features: [seq_len, d_model]  — 文本特征
+    visual_features: [n_patches, d_model]  — 视觉特征
+    """
+    seq_len = text_features.shape[0]
+    n_patches = visual_features.shape[0]
+    d_model = text_features.shape[1]
+    if d_k is None:
+        d_k = d_model
+    
+    # 模拟 Q/K/V 投影（简化：用随机矩阵）
+    np.random.seed(123)
+    W_Q = np.random.randn(d_model, d_k) * 0.1
+    W_K = np.random.randn(d_model, d_k) * 0.1
+    W_V = np.random.randn(d_model, d_model) * 0.1
+    
+    Q = text_features @ W_Q       # [seq_len, d_k]   — 文本在「问」
+    K = visual_features @ W_K     # [n_patches, d_k]  — 视觉在「答」
+    V = visual_features @ W_V     # [n_patches, d_model]
+    
+    # 注意力分数
+    scores = Q @ K.T / np.sqrt(d_k)  # [seq_len, n_patches]
+    
+    # Softmax
+    exp_scores = np.exp(scores - np.max(scores, axis=1, keepdims=True))
+    attention = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+    
+    # 加权求和
+    output = attention @ V  # [seq_len, d_model]
+    
+    return output, attention
+
+# 模拟一段文本和一张图像的 patch 特征
+np.random.seed(42)
+text_feat = np.random.randn(8, 64)   # 8 个文本 token
+visual_feat = np.random.randn(16, 64) # 16 个图像 patch
+
+output, attn_weights = cross_attention(text_feat, visual_feat)
+
+print(f"文本特征形状: {text_feat.shape}")
+print(f"视觉特征形状: {visual_feat.shape}")
+print(f"跨模态注意力输出形状: {output.shape}")
+print(f"注意力权重形状: {attn_weights.shape}")
+print(f"\n注意力权重分布:")
+for i in range(min(4, attn_weights.shape[0])):
+    top_patches = np.argsort(attn_weights[i])[-3:][::-1]
+    print(f"  Token {i} 最关注的 3 个视觉 patch: {top_patches} (权重: {attn_weights[i][top_patches].round(3)})")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 可视化：跨模态注意力热力图 ===
+
+fig, ax = plt.subplots(figsize=(12, 5))
+
+text_labels = ['[CLS]', '这', '只', '猫', '的', '毛色', '很', '特别']
+patch_labels = [f'P{i}' for i in range(16)]
+
+im = ax.imshow(attn_weights[:8], cmap='YlOrRd', aspect='auto')
+ax.set_xticks(range(16))
+ax.set_xticklabels(patch_labels, fontsize=8)
+ax.set_yticks(range(8))
+ax.set_yticklabels(text_labels, fontsize=10)
+ax.set_title('Cross-Modal Attention: Which Image Patches Does Each Text Token Look At?', fontsize=13)
+ax.set_xlabel('Visual Patches')
+ax.set_ylabel('Text Tokens')
+
+# 标注数值
+for i in range(8):
+    for j in range(16):
+        color = 'white' if attn_weights[i, j] &gt; 0.12 else 'black'
+        ax.text(j, i, f'{attn_weights[i,j]:.2f}', ha='center', va='center', fontsize=6, color=color)
+
+fig.colorbar(im, ax=ax, shrink=0.8)
+plt.tight_layout()
+plt.savefig('cross_attention.png', dpi=150, bbox_inches='tight')
+plt.show()</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>范式三：统一 Token 化（GPT-4V / Gemini）</h2>
+<p>这是当前最前沿的范式：<strong>一切皆 token</strong>。</p>
+<pre><code>[IMG_TOK_1] [IMG_TOK_2] ... [IMG_TOK_N] [TEXT_TOK_1] [TEXT_TOK_2] ...
+          ↓                                                    ↓
+     统一 Transformer 处理                                 统一 Transformer 处理
+</code></pre>
+<p><strong>关键创新</strong>：
+- 图像通过 ViT 编码后，压缩成若干个「视觉 token」
+- 这些 token 和文本 token <strong>完全平等</strong>地进入同一个 Transformer
+- 模型自然学会了图文之间的关联</p>
+<p><strong>代表系统</strong>：
+- <strong>GPT-4V</strong>（OpenAI 2023）：闭源，能力最强的多模态模型之一
+- <strong>Gemini</strong>（Google 2023）：原生多模态设计，从训练之初就混合图文音视频
+- <strong>GPT-4o</strong>（OpenAI 2024）：统一处理文本、图像、音频</p>
+<h3>架构演进对比</h3>
+<table>
+<thead>
+<tr>
+<th>特征</th>
+<th>CLIP</th>
+<th>Flamingo/LLaVA</th>
+<th>GPT-4V/Gemini</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>核心思路</td>
+<td>对比学习</td>
+<td>跨模态注意力</td>
+<td>统一 Token 化</td>
+</tr>
+<tr>
+<td>训练方式</td>
+<td>双编码器</td>
+<td>冻结 LLM + 适配器</td>
+<td>端到端联合训练</td>
+</tr>
+<tr>
+<td>生成能力</td>
+<td>❌ 只做匹配</td>
+<td>✅ 可以生成文本</td>
+<td>✅ 原生多模态生成</td>
+</tr>
+<tr>
+<td>代表能力</td>
+<td>零样本分类</td>
+<td>图片描述 + VQA</td>
+<td>图片理解 + 推理 + 生成</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 多模态架构演进可视化 ===
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 6))
+
+# --- CLIP 架构 ---
+ax = axes[0]
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 10)
+ax.set_title('CLIP (2021)', fontsize=14, fontweight='bold')
+
+# 图像编码器
+ax.add_patch(mpatches.FancyBboxPatch((1, 6), 3, 2.5, boxstyle="round,pad=0.2", fc='#FFB347', ec='#C96442', lw=2))
+ax.text(2.5, 7.25, 'Image\nEncoder', ha='center', va='center', fontsize=10, fontweight='bold')
+# 文本编码器
+ax.add_patch(mpatches.FancyBboxPatch((6, 6), 3, 2.5, boxstyle="round,pad=0.2", fc='#87CEEB', ec='#4682B4', lw=2))
+ax.text(7.5, 7.25, 'Text\nEncoder', ha='center', va='center', fontsize=10, fontweight='bold')
+# 共享空间
+ax.add_patch(mpatches.FancyBboxPatch((2.5, 2), 5, 2, boxstyle="round,pad=0.2", fc='#98FB98', ec='#2E8B57', lw=2))
+ax.text(5, 3, 'Shared Embedding\nSpace (对比学习)', ha='center', va='center', fontsize=9)
+# 箭头
+ax.annotate('', xy=(5, 4), xytext=(2.5, 6), arrowprops=dict(arrowstyle='-&gt;', color='#C96442', lw=2))
+ax.annotate('', xy=(5, 4), xytext=(7.5, 6), arrowprops=dict(arrowstyle='-&gt;', color='#4682B4', lw=2))
+ax.axis('off')
+
+# --- Flamingo / LLaVA ---
+ax = axes[1]
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 10)
+ax.set_title('Flamingo/LLaVA (2022-23)', fontsize=14, fontweight='bold')
+
+# ViT
+ax.add_patch(mpatches.FancyBboxPatch((0.5, 6), 2.5, 2.5, boxstyle="round,pad=0.2", fc='#FFB347', ec='#C96442', lw=2))
+ax.text(1.75, 7.25, 'ViT', ha='center', va='center', fontsize=11, fontweight='bold')
+# 适配器
+ax.add_patch(mpatches.FancyBboxPatch((3.5, 6), 2.5, 2.5, boxstyle="round,pad=0.2", fc='#DDA0DD', ec='#8B008B', lw=2))
+ax.text(4.75, 7.25, 'Adapter', ha='center', va='center', fontsize=11, fontweight='bold')
+# LLM
+ax.add_patch(mpatches.FancyBboxPatch((3, 2), 4, 2, boxstyle="round,pad=0.2", fc='#87CEEB', ec='#4682B4', lw=2))
+ax.text(5, 3, 'Frozen LLM\n+ Cross Attention', ha='center', va='center', fontsize=10)
+# 箭头
+ax.annotate('', xy=(4.75, 6), xytext=(1.75, 6), arrowprops=dict(arrowstyle='-&gt;', color='#C96442', lw=2))
+ax.annotate('', xy=(5, 4), xytext=(4.75, 6), arrowprops=dict(arrowstyle='-&gt;', color='#8B008B', lw=2))
+ax.axis('off')
+
+# --- GPT-4V / Gemini ---
+ax = axes[2]
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 10)
+ax.set_title('GPT-4V / Gemini (2023-24)', fontsize=14, fontweight='bold')
+
+# 统一 Tokenizer
+ax.add_patch(mpatches.FancyBboxPatch((1, 6), 8, 2.5, boxstyle="round,pad=0.2", fc='#F0E68C', ec='#DAA520', lw=2))
+ax.text(5, 7.25, 'Unified Tokenizer (Image + Text + Audio → Tokens)', ha='center', va='center', fontsize=9, fontweight='bold')
+# 统一 Transformer
+ax.add_patch(mpatches.FancyBboxPatch((1.5, 2), 7, 2, boxstyle="round,pad=0.2", fc='#98FB98', ec='#2E8B57', lw=2))
+ax.text(5, 3, 'Single Transformer\n(End-to-End Training)', ha='center', va='center', fontsize=10)
+# 箭头
+ax.annotate('', xy=(5, 4), xytext=(5, 6), arrowprops=dict(arrowstyle='-&gt;', color='#DAA520', lw=2))
+ax.axis('off')
+
+plt.suptitle('Multimodal Architecture Evolution', fontsize=16, fontweight='bold', y=1.02)
+plt.tight_layout()
+plt.savefig('multimodal_evolution.png', dpi=150, bbox_inches='tight')
+plt.show()</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 实战：用简化 CLIP 做零样本分类 ===
+
+def zero_shot_classify(image_embedding, class_text_embeddings, class_names):
+    """
+    零样本分类：不需要任何训练数据，直接用图文匹配
+    """
+    # 归一化
+    img_norm = image_embedding / np.linalg.norm(image_embedding)
+    txt_norm = class_text_embeddings / np.linalg.norm(class_text_embeddings, axis=1, keepdims=True)
+    
+    # 计算相似度
+    similarities = np.dot(txt_norm, img_norm)
+    
+    # softmax 概率
+    exp_sim = np.exp(similarities * 10)  # temperature scaling
+    probs = exp_sim / np.sum(exp_sim)
+    
+    return probs, similarities
+
+# 模拟：一张「猫」的图片
+np.random.seed(100)
+
+# 类别名称和文本嵌入
+class_names = ["一只猫的照片", "一只狗的照片", "一辆汽车的照片", "一朵花的照片", "一座建筑的照片"]
+
+# 模拟预训练好的嵌入（猫的图片应该和「一只猫的照片」最匹配）
+dim = 64
+image_emb = np.random.randn(dim)
+image_emb[:10] += 1.0  # 模拟猫的图像特征
+
+# 文本嵌入（让「猫」的嵌入和图像最接近）
+text_embs = np.random.randn(len(class_names), dim)
+text_embs[0, :10] += 1.2  # 猫的文本嵌入
+
+probs, sims = zero_shot_classify(image_emb, text_embs, class_names)
+
+print("=== 零样本分类结果 ===")
+print(f"\n输入图像: 一张猫的照片（模拟）")
+print(f"\n各类别概率:")
+for name, prob, sim in sorted(zip(class_names, probs, sims), key=lambda x: -x[1]):
+    bar = '█' * int(prob * 50)
+    print(f"  {name:15s}  P={prob:.3f}  sim={sim:.3f}  {bar}")
+
+print(f"\n✅ 预测类别: {class_names[np.argmax(probs)]}")
+print(f"   这就是 CLIP 零样本分类的威力——不需要任何标注训练数据！")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>三大多模态范式</h3>
+<table>
+<thead>
+<tr>
+<th>范式</th>
+<th>代表</th>
+<th>核心机制</th>
+<th>优势</th>
+<th>局限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>共享嵌入空间</td>
+<td>CLIP</td>
+<td>对比学习，图文在同一空间</td>
+<td>零样本能力强</td>
+<td>不能生成</td>
+</tr>
+<tr>
+<td>跨模态注意力</td>
+<td>LLaVA, Flamingo</td>
+<td>在 LLM 中插入视觉注意力</td>
+<td>可生成，训练成本低</td>
+<td>架构复杂</td>
+</tr>
+<tr>
+<td>统一 Token 化</td>
+<td>GPT-4V, Gemini</td>
+<td>所有模态统一为 token</td>
+<td>原生多模态，最强大</td>
+<td>训练成本极高</td>
+</tr>
+</tbody>
+</table>
+<h3>关键论文</h3>
+<ul>
+<li><strong>CLIP</strong> (Radford et al., 2021) — Learning Transferable Visual Models From Natural Language Supervision</li>
+<li><strong>Flamingo</strong> (Alayrac et al., 2022) — Flamingo: a Visual Language Model for Few-Shot Learning</li>
+<li><strong>LLaVA</strong> (Liu et al., 2023) — Visual Instruction Tuning</li>
+<li><strong>GPT-4V</strong> (OpenAI, 2023) — GPT-4 Technical Report</li>
+<li><strong>Gemini</strong> (Google, 2023) — Gemini: A Family of Highly Capable Multimodal Models</li>
+</ul>
+<h2>课后思考</h2>
+<ol>
+<li>如果你要做一个「看图写商品描述」的应用，会选择哪种范式？为什么？</li>
+<li>CLIP 的对比学习为什么能做到零样本分类？它和传统监督学习有什么本质区别？</li>
+<li>统一 Token 化范式的最大挑战是什么？（提示：想想训练数据和计算成本）</li>
+<li>多模态 Agent 和纯文本 Agent 相比，能力边界在哪里扩展了？</li>
+</ol></div>
