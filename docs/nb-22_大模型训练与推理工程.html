@@ -1,0 +1,383 @@
+<div class="nb-cell nb-markdown"><h1>第22课：大模型训练与推理工程</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解大模型训练的核心工程挑战：内存墙、通信瓶颈、数据并行 vs 模型并行</li>
+<li>掌握分布式训练的三大策略：数据并行（DDP/FSDP）、张量并行、流水线并行</li>
+<li>理解推理优化的关键技术：KV Cache、量化、批处理</li>
+<li>用代码直观理解这些概念，建立工程直觉</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<p>训练一个千亿参数的大模型，单张 GPU 装不下、算不完。训练和推理的核心工程问题是：</p>
+<p><strong>训练侧</strong>：如何把一个超大模型的计算拆分到成百上千张 GPU 上高效完成？
+<strong>推理侧</strong>：如何让一个训练好的模型用最少的资源、最快的速度提供服务？</p>
+<p>这是从「懂算法」到「能落地」的关键一跃。GPT-4 级别的模型据估计有 ~1.8 万亿参数，训练使用了约 25000 张 A100 GPU，历时数月。没有工程化，再好的算法也只是论文。</p>
+<p>在 AI 演进史中，分布式训练工程（2020-）是与模型架构创新并列的关键能力——<strong>能训多大模型，决定了一个组织的技术天花板</strong>。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># ============================================================
+# 1. 模型参数的显存占用估算
+# ============================================================
+# 核心公式：参数量 × bytes_per_param = 显存占用
+# FP32: 4 bytes, FP16/BF16: 2 bytes, INT8: 1 byte, INT4: 0.5 byte
+
+def estimate_memory(num_params_billion, precision='fp16', optimizer_states=True, gradients=True, activations=True):
+    """估算训练一个模型所需的 GPU 显存（GB）"""
+    bytes_per_param = {'fp32': 4, 'fp16': 2, 'bf16': 2, 'int8': 1, 'int4': 0.5}
+    b = bytes_per_param[precision]
+    n = num_params_billion * 1e9
+    
+    model_weights = n * b / 1e9  # GB
+    
+    # Adam 优化器需要 2 个状态（momentum + variance），通常用 FP32
+    optimizer_mem = n * 4 * 2 / 1e9 if optimizer_states else 0  # 2 states × FP32
+    
+    # 梯度和模型参数同精度
+    gradient_mem = n * b / 1e9 if gradients else 0
+    
+    # 激活值（粗略估计：约等于参数量的 1-2 倍，取决于序列长度和 batch size）
+    activation_mem = n * b * 1.5 / 1e9 if activations else 0
+    
+    total = model_weights + optimizer_mem + gradient_mem + activation_mem
+    
+    return {
+        'model_weights': model_weights,
+        'optimizer_states': optimizer_mem,
+        'gradients': gradient_mem,
+        'activations': activation_mem,
+        'total_train': total,
+        'total_infer': model_weights + activation_mem * 0.3  # 推理时激活值更小
+    }
+
+# 典型模型对比
+models = {
+    'GPT-2 (1.5B)': 1.5,
+    'LLaMA-7B': 7,
+    'LLaMA-13B': 13,
+    'LLaMA-70B': 70,
+    'GPT-3 (175B)': 175,
+    'GPT-4 估计 (1.8T)': 1800,
+}
+
+print(f'{"模型":&lt;25} {"参数":&lt;10} {"训练显存(GB)":&lt;15} {"推理显存(GB)":&lt;15} {"需GPU数(80GB)"}')
+print('-' * 80)
+for name, params in models.items():
+    mem = estimate_memory(params)
+    gpus_train = int(np.ceil(mem['total_train'] / 80))
+    gpus_infer = int(np.ceil(mem['total_infer'] / 80))
+    print(f'{name:&lt;25} {str(params)+"B":&lt;10} {mem["total_train"]:&lt;15.1f} {mem["total_infer"]:&lt;15.1f} 训练:{gpus_train} / 推理:{gpus_infer}')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># ============================================================
+# 2. 三种并行策略的可视化对比
+# ============================================================
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+# --- 数据并行 (Data Parallelism) ---
+ax = axes[0]
+ax.set_title('数据并行 (Data Parallelism)', fontsize=13, fontweight='bold')
+for i in range(4):
+    x = 0.5
+    y = 3.5 - i * 0.9
+    # 每张GPU有完整模型副本
+    rect = plt.Rectangle((x-0.4, y-0.3), 0.8, 0.6, fill=True, 
+                          facecolor='#C96442', alpha=0.8, edgecolor='black')
+    ax.add_patch(rect)
+    ax.text(x, y, f'GPU {i}\n完整模型', ha='center', va='center', fontsize=8, color='white')
+    # 不同的数据分片
+    rect2 = plt.Rectangle((1.8, y-0.2), 0.5, 0.4, fill=True, 
+                           facecolor='#4A90D9', alpha=0.6, edgecolor='black')
+    ax.add_patch(rect2)
+    ax.text(2.05, y, f'D{i}', ha='center', va='center', fontsize=9)
+
+# 画梯度同步箭头
+ax.annotate('梯度同步\n(AllReduce)', xy=(1.2, 0.8), fontsize=9, ha='center',
+            color='red', fontweight='bold')
+ax.set_xlim(0, 3)
+ax.set_ylim(0, 4.3)
+ax.axis('off')
+
+# --- 张量并行 (Tensor Parallelism) ---
+ax = axes[1]
+ax.set_title('张量并行 (Tensor Parallelism)', fontsize=13, fontweight='bold')
+colors = ['#C96442', '#4A90D9', '#5BAE5B', '#D4A843']
+for i in range(4):
+    x = 1.5
+    y = 3.5 - i * 0.9
+    # 每张GPU持有同一层的不同部分
+    for j in range(4):
+        rect = plt.Rectangle((x-0.8+j*0.42, y-0.3), 0.38, 0.6, fill=True,
+                              facecolor=colors[j], alpha=0.7, edgecolor='black')
+        ax.add_patch(rect)
+    ax.text(0.3, y, f'GPU {i}', ha='center', va='center', fontsize=9)
+
+ax.text(1.5, 0.6, '每层被切成4份\n(GPU间需同步)', ha='center', fontsize=9,
+        color='red', fontweight='bold')
+ax.set_xlim(0, 3)
+ax.set_ylim(0, 4.3)
+ax.axis('off')
+
+# --- 流水线并行 (Pipeline Parallelism) ---
+ax = axes[2]
+ax.set_title('流水线并行 (Pipeline Parallelism)', fontsize=13, fontweight='bold')
+layer_labels = ['Layer 1-6', 'Layer 7-12', 'Layer 13-18', 'Layer 19-24']
+for i in range(4):
+    x = 0.3 + i * 0.7
+    y_center = 2.2
+    rect = plt.Rectangle((x-0.25, y_center-0.8), 0.5, 1.6, fill=True,
+                          facecolor=colors[i], alpha=0.8, edgecolor='black')
+    ax.add_patch(rect)
+    ax.text(x, y_center, f'GPU {i}\n{layer_labels[i]}', ha='center', va='center', 
+            fontsize=7.5, color='white')
+    if i &lt; 3:
+        ax.annotate('', xy=(x+0.32, y_center), xytext=(x+0.38, y_center),
+                    arrowprops=dict(arrowstyle='-&gt;', color='black', lw=2))
+
+ax.text(1.7, 0.8, '数据像流水线一样\n依次通过各 GPU', ha='center', fontsize=9,
+        color='red', fontweight='bold')
+ax.set_xlim(0, 3.2)
+ax.set_ylim(0, 4.3)
+ax.axis('off')
+
+plt.tight_layout()
+plt.savefig('parallelism_strategies.png', dpi=100, bbox_inches='tight')
+plt.show()
+print('\n图解：三种并行策略的核心区别——数据并行复制模型、张量并行切分层、流水线并行切分深度')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># ============================================================
+# 3. KV Cache 原理演示 — 推理加速的关键
+# ============================================================
+
+def demonstrate_kv_cache():
+    """演示 KV Cache 如何避免重复计算"""
+    
+    # 模拟生成 "人工智能正在改变世界"
+    tokens = ['人工', '智能', '正在', '改变', '世界']
+    n_layers = 4
+    dim = 3  # 简化维度
+    
+    # 模拟每层的 K, V 缓存
+    kv_cache = {}  # {layer_id: (K_matrix, V_matrix)}
+    
+    print('=== 无 KV Cache（每步都重新计算所有 token）===')
+    total_compute_no_cache = 0
+    for step in range(1, len(tokens)+1):
+        compute = step * n_layers  # 每步要计算 step 个 token × n_layers 层
+        total_compute_no_cache += compute
+        print(f'  生成第{step}个token "{tokens[step-1]}": 需计算 {step}×{n_layers}={compute} 次注意力')
+    
+    print(f'\n总计算量: {total_compute_no_cache}')
+    
+    print('\n=== 有 KV Cache（只计算新 token，缓存历史）===')
+    total_compute_with_cache = 0
+    for step in range(1, len(tokens)+1):
+        compute = 1 * n_layers  # 每步只算新 token × n_layers
+        total_compute_with_cache += compute
+        print(f'  生成第{step}个token "{tokens[step-1]}": 只算 1×{n_layers}={compute} 次 (缓存了前{step-1}个token的KV)')
+        # 更新缓存
+        for layer in range(n_layers):
+            new_k = np.random.randn(dim) * 0.1
+            new_v = np.random.randn(dim) * 0.1
+            if layer not in kv_cache:
+                kv_cache[layer] = (new_k.reshape(1,-1), new_v.reshape(1,-1))
+            else:
+                K, V = kv_cache[layer]
+                kv_cache[layer] = (np.vstack([K, new_k]), np.vstack([V, new_v]))
+    
+    print(f'\n总计算量: {total_compute_with_cache}')
+    print(f'\n加速比: {total_compute_no_cache / total_compute_with_cache:.1f}x')
+    print(f'\nKV Cache 内存（模拟）: 每层缓存 {len(tokens)} 个 token 的 K 和 V')
+    for layer in range(n_layers):
+        K, V = kv_cache[layer]
+        print(f'  Layer {layer}: K shape={K.shape}, V shape={V.shape}')
+
+demonstrate_kv_cache()</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># ============================================================
+# 4. 量化 (Quantization) — 用更少的位来存储权重
+# ============================================================
+
+def simulate_quantization(weights_fp16, bits=8):
+    """模拟将 FP16 权重量化到更低位宽"""
+    # FP16 范围: 通常 -65504 ~ 65504
+    w_min, w_max = weights_fp16.min(), weights_fp16.max()
+    
+    if bits == 8:
+        q_min, q_max = -128, 127
+    elif bits == 4:
+        q_min, q_max = -8, 7
+    else:
+        raise ValueError(f'Unsupported bits: {bits}')
+    
+    # 量化: 映射到整数范围
+    scale = (w_max - w_min) / (q_max - q_min)
+    zero_point = q_min - w_min / scale
+    quantized = np.clip(np.round(weights_fp16 / scale + zero_point), q_min, q_max).astype(np.int8)
+    
+    # 反量化: 还原为浮点
+    dequantized = (quantized - zero_point) * scale
+    
+    # 计算误差
+    mse = np.mean((weights_fp16 - dequantized) ** 2)
+    
+    return quantized, dequantized, mse, scale
+
+# 模拟一个权重矩阵
+np.random.seed(42)
+weights = np.random.randn(1000).astype(np.float32) * 0.5
+
+# 测试不同量化级别
+fig, axes = plt.subplots(1, 3, figsize=(16, 4))
+
+bits_configs = [
+    ('FP16 (原始)', None, '#4A90D9'),
+    ('INT8 量化', 8, '#5BAE5B'),
+    ('INT4 量化', 4, '#C96442'),
+]
+
+for ax, (label, bits, color) in zip(axes, bits_configs):
+    if bits is None:
+        ax.hist(weights, bins=50, alpha=0.7, color=color, edgecolor='black')
+        ax.set_title(f'{label}\n大小: {weights.nbytes/1024:.1f} KB', fontsize=11)
+    else:
+        _, deq, mse, scale = simulate_quantization(weights, bits=bits)
+        ax.hist(deq, bins=50, alpha=0.7, color=color, edgecolor='black')
+        size_kb = len(weights) * (bits/8) / 1024
+        ax.set_title(f'{label}\n大小: {size_kb:.2f} KB | MSE: {mse:.6f}', fontsize=11)
+    ax.set_xlabel('权重值')
+    ax.set_ylabel('频次')
+
+plt.tight_layout()
+plt.savefig('quantization_comparison.png', dpi=100, bbox_inches='tight')
+plt.show()
+
+# 显存节省对比
+print('\n量化对 70B 模型的显存影响（推理）:')
+for bits, name in [(16, 'FP16/BF16'), (8, 'INT8'), (4, 'INT4')]:
+    mem_gb = 70 * bits / 8  # GB
+    print(f'  {name}: {mem_gb:.0f} GB', end='')
+    gpus = int(np.ceil(mem_gb / 80))
+    print(f' → 需要 {gpus} 张 A100-80GB' if gpus &gt; 1 else f' → 单卡可部署!')
+
+print('\n关键洞察: INT4 量化让 70B 模型从需要 4 张 A100 降到 1 张——这就是量化的价值')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># ============================================================
+# 5. 分布式训练通信量对比
+# ============================================================
+
+fig, ax = plt.subplots(figsize=(12, 5))
+
+strategies = ['数据并行\n(DDP)', '数据并行\n(FSDP/ZeRO-3)', '张量并行\n(TP=4)', 
+              '流水线并行\n(PP=4)', '3D并行\n(TP+PP+DP)']
+
+# 以 70B 模型、32 GPU 为例的估算
+params_b = 70
+n_gpus = 32
+bytes_per_param = 2  # FP16
+model_size_gb = params_b * bytes_per_param  # 140 GB
+
+# 每步通信量（估算，单位 GB）
+comm_per_step = [
+    model_size_gb * 2,           # DDP: AllReduce 梯度 (模型大小 × 2)
+    model_size_gb * 0.5,         # FSDP/ZeRO-3: 分片通信，大幅减少
+    model_size_gb * 0.25,        # TP: 每层内的 AllReduce
+    model_size_gb * 0.1,         # PP: 只在边界通信
+    model_size_gb * 0.15,        # 3D: 综合
+]
+
+colors = ['#C96442', '#E8A87C', '#4A90D9', '#5BAE5B', '#D4A843']
+bars = ax.bar(strategies, comm_per_step, color=colors, edgecolor='black', alpha=0.85)
+
+# 标注数值
+for bar, val in zip(bars, comm_per_step):
+    ax.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 1,
+            f'{val:.1f} GB', ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+ax.set_ylabel('每步通信量 (GB)', fontsize=12)
+ax.set_title('分布式训练策略通信量对比 (70B 模型, 32 GPU)', fontsize=14, fontweight='bold')
+ax.set_ylim(0, max(comm_per_step) * 1.3)
+
+# 添加注释
+ax.text(0.5, 0.92, '通信量越低 → GPU 利用率越高 → 训练越快', 
+        transform=ax.transAxes, ha='center', fontsize=11, style='italic',
+        bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+plt.tight_layout()
+plt.savefig('communication_comparison.png', dpi=100, bbox_inches='tight')
+plt.show()
+
+print('关键对比:')
+print('  DDP: 最简单，但通信量最大——每张GPU都持有完整模型')
+print('  FSDP/ZeRO-3: 把模型分片到各GPU，通信量降低 4x')
+print('  张量并行: 在节点内（NVLink）效率极高，跨节点通信贵')
+print('  流水线并行: 通信量最小，但有「气泡」(GPU 空闲等待)')
+print('  3D 并行: 工业界标准方案——TP 节点内 + PP 跨节点 + DP 扩规模')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>训练工程要点</h3>
+<ol>
+<li><strong>内存墙</strong>是最大挑战——一个 70B 模型训练需要 ~420GB 显存，远超单卡容量</li>
+<li><strong>数据并行（DDP/FSDP）</strong>：最易上手，FSDP 通过分片降低显存峰值</li>
+<li><strong>张量并行</strong>：节点内最高效，适合 NVLink 连接的 GPU</li>
+<li><strong>流水线并行</strong>：跨节点通信最少，但需要微批处理减少气泡</li>
+<li><strong>3D 并行</strong>（TP+PP+DP）是训练超大模型的工业标准</li>
+</ol>
+<h3>推理工程要点</h3>
+<ol>
+<li><strong>KV Cache</strong>：避免重复计算历史 token 的注意力，是自回归推理的标配</li>
+<li><strong>量化（INT8/INT4）</strong>：几乎无损地将模型大小减半甚至减至 1/4</li>
+<li><strong>显存是推理的硬约束</strong>：量化 + KV Cache 管理是部署的关键</li>
+</ol>
+<h3>关键工程工具</h3>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeepSpeed (ZeRO)</td>
+<td>分片优化器/梯度/参数</td>
+</tr>
+<tr>
+<td>FSDP (PyTorch)</td>
+<td>原生全分片数据并行</td>
+</tr>
+<tr>
+<td>Megatron-LM</td>
+<td>张量并行 + 流水线并行</td>
+</tr>
+<tr>
+<td>vLLM</td>
+<td>高吞吐推理引擎 (PagedAttention)</td>
+</tr>
+<tr>
+<td>TensorRT-LLM</td>
+<td>NVIDIA 推理优化</td>
+</tr>
+</tbody>
+</table>
+<h2>课后思考</h2>
+<ol>
+<li>如果你有一个 7B 模型和一张 A100-80GB，你会选择什么并行策略？</li>
+<li>KV Cache 在长上下文场景（100K tokens）会带来什么新问题？</li>
+<li>为什么 INT4 量化在实践中通常比理论更「安全」？</li>
+</ol></div>

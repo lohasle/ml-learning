@@ -1,0 +1,69 @@
+<h1>大模型训练与推理工程</h1>
+<h2>🎯 核心概念</h2>
+<h3>1. 基础定义</h3>
+<ul>
+<li><strong>类型</strong>：系统工程 / 分布式计算</li>
+<li><strong>适用场景</strong>：训练或部署参数量超过单卡显存容量的模型</li>
+<li><strong>一句话定义</strong>：用分布式策略和压缩技术，让超大模型在多 GPU 上高效训练和推理</li>
+</ul>
+<h3>2. 核心工程挑战</h3>
+<ul>
+<li><strong>训练侧</strong>：显存墙（单卡装不下）+ 通信瓶颈（GPU 间数据传输慢）</li>
+<li><strong>推理侧</strong>：显存带宽瓶颈（模型大 → 每次生成都要读大量权重）+ 延迟/吞吐权衡</li>
+<li><strong>核心公式</strong>：训练显存 ≈ 参数量 × 2B(FP16权重) + 参数量 × 8B(Adam优化器) + 参数量 × 2B(梯度) + 激活值</li>
+</ul>
+<h3>3. 并行策略</h3>
+<ul>
+<li><strong>数据并行（DDP/FSDP）</strong>：每卡持有完整模型或分片，处理不同数据</li>
+<li><strong>张量并行（TP）</strong>：同一层的权重矩阵按列/行切分到多卡</li>
+<li><strong>流水线并行（PP）</strong>：不同层分配到不同卡，数据依次流过</li>
+<li><strong>3D 并行</strong>：TP(节点内) + PP(跨节点) + DP(扩规模)</li>
+</ul>
+<h3>4. 推理优化</h3>
+<ul>
+<li><strong>KV Cache</strong>：缓存历史 token 的 K/V 向量，避免重复计算</li>
+<li><strong>量化（INT8/INT4）</strong>：降低权重精度，减少显存和带宽需求</li>
+<li><strong>Continuous Batching</strong>：动态组批，提高 GPU 利用率</li>
+<li><strong>PagedAttention (vLLM)</strong>：分页管理 KV Cache，避免显存碎片</li>
+</ul>
+<h2>📊 关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>含义</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>训练显存 ≈ 20B × 参数量</td>
+<td>一个参数训练时占 ~20 bytes</td>
+<td>Adam 的 3 个状态各占一些</td>
+</tr>
+<tr>
+<td>KV Cache = 2 × L × d × seq_len × batch × 2B</td>
+<td>推理缓存的显存</td>
+<td>K 和 V 各一份，长序列时很大</td>
+</tr>
+<tr>
+<td>量化后大小 = 原大小 × (原位数/新位数)</td>
+<td>INT4 = FP16 的 1/4</td>
+<td>压缩比就是位数比</td>
+</tr>
+<tr>
+<td>AllReduce 通信 = 2 × 模型大小 × (N-1)/N</td>
+<td>DDP 梯度同步开销</td>
+<td>N 越大，每卡分摊越少</td>
+</tr>
+</tbody>
+</table>
+<h2>🔗 关联概念</h2>
+<ul>
+<li>前置知识：Transformer 架构（第16课）、大模型微调（第18课）</li>
+<li>后续应用：AI 系统设计与部署（第23课）</li>
+<li>同类对比：深度学习基础训练（第11-14课）→ 本文讲的是如何把同样的事做到 1000 倍规模</li>
+</ul>
+<h2>💡 记忆技巧</h2>
+<p>训练 = 「搬箱子」——太大搬不动就拆开（TP）、分批运（PP）、叫更多人帮忙（DP）。
+推理 = 「读笔记」——不用每次重读全部历史（KV Cache），也不用逐字精读（量化）。</p>
