@@ -42,3 +42,11 @@
 ## 大模型时代（2020-）
 
 ## 多模态（2023-）
+
+## MLOps 与 AI 系统工程（2015-）
+- **2015: Hidden Technical Debt in ML Systems** — Sculley et al. 揭示 ML 系统中 ML 代码只是冰山一角
+- **2018: MLflow** — Databricks 开源 MLOps 平台，实验跟踪 + 模型管理
+- **2020: Kubeflow** — Kubernetes 原生 ML 管线
+- **2022: vLLM** — 高性能 LLM 推理引擎，PagedAttention
+- **2023: AI 工程化浪潮** — RAG、Agent、Prompt Engineering 成为工程焦点
+- **2024-2025: AI 系统工程成熟** — 量化、蒸馏、缓存、弹性伸缩成为标配

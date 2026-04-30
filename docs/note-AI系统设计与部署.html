@@ -1,0 +1,86 @@
+<h1>AI 系统设计与部署</h1>
+<h2>🎯 核心概念</h2>
+<h3>1. 基础定义</h3>
+<ul>
+<li><strong>类型</strong>：系统工程 / MLOps / 基础设施</li>
+<li><strong>适用场景</strong>：将训练好的 AI 模型部署为可靠的线上服务</li>
+<li><strong>一句话定义</strong>：AI 系统不只是模型 + API，而是包含模型服务、版本管理、A/B 测试、监控告警、漂移检测、安全防护的完整工程体系</li>
+</ul>
+<h3>2. 核心架构模式</h3>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>延迟</th>
+<th>吞吐量</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>在线推理</td>
+<td>&lt; 200ms</td>
+<td>中-高</td>
+<td>搜索排序、实时推荐</td>
+</tr>
+<tr>
+<td>异步推理</td>
+<td>秒级-分钟级</td>
+<td>高</td>
+<td>LLM 生成、视频处理</td>
+</tr>
+<tr>
+<td>边缘部署</td>
+<td>&lt; 50ms</td>
+<td>低</td>
+<td>IoT、移动端、离线场景</td>
+</tr>
+</tbody>
+</table>
+<h3>3. 实践要点</h3>
+<ul>
+<li><strong>监控四层模型</strong>：系统层（延迟/QPS）→ 模型层（准确率/置信度）→ 数据层（漂移/PSI）→ 业务层（转化率）</li>
+<li><strong>PSI 漂移检测</strong>：&lt; 0.1 稳定，0.1-0.25 关注，&gt; 0.25 重训练</li>
+<li><strong>成本优化组合</strong>：量化 + 缓存 + 弹性伸缩 + 蒸馏</li>
+<li><strong>安全纵深防御</strong>：输入过滤 + 模型安全 + 输出校验 + 监控告警</li>
+</ul>
+<h2>📊 关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>含义</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PSI = Σ(p_act - p_exp) × ln(p_act / p_exp)</td>
+<td>分布差异度</td>
+<td>越大越危险，&gt; 0.25 必须重训练</td>
+</tr>
+<tr>
+<td>N ≈ (Z_α + Z_β)² × 2p(1-p) / Δ²</td>
+<td>A/B 测试样本量</td>
+<td>想检测更小的差异需要更多样本</td>
+</tr>
+<tr>
+<td>缓存节省 = 命中率 × 单次成本 × 请求量</td>
+<td>缓存收益</td>
+<td>70% 命中率 = 省 70% 推理成本</td>
+</tr>
+<tr>
+<td>P99 = Percentile(99%)</td>
+<td>长尾延迟</td>
+<td>100 个请求中最慢的 1 个</td>
+</tr>
+</tbody>
+</table>
+<h2>🔗 关联概念</h2>
+<ul>
+<li>前置知识：大模型训练与推理工程（第22课）、Agent（第20课）、RAG（第19课）</li>
+<li>后续应用：实际 AI 项目落地、LLM 应用开发</li>
+<li>同类对比：DevOps vs MLOps（多了数据和模型维度）</li>
+</ul>
+<h2>💡 记忆技巧</h2>
+<p>AI 系统工程 = 模型服务（怎么跑）+ 版本管理（怎么迭代）+ 监控（怎么知道出问题了）+ 安全（怎么防攻击）。就像运营一个餐厅——厨房（推理）、菜单管理（版本）、顾客反馈（监控）、食品安全（安全）。</p>
