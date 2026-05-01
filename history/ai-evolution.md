@@ -50,3 +50,12 @@
 - **2022: vLLM** — 高性能 LLM 推理引擎，PagedAttention
 - **2023: AI 工程化浪潮** — RAG、Agent、Prompt Engineering 成为工程焦点
 - **2024-2025: AI 系统工程成熟** — 量化、蒸馏、缓存、弹性伸缩成为标配
+
+## 推理模型与 Test-Time Compute（2024-）
+- **2022: Chain-of-Thought Prompting** — Wei et al. 发现分步推理能大幅提升 LLM 推理准确率
+- **2022: Let's Think Step by Step** — Kojima et al. 发现 Zero-shot CoT，无需示例即可触发推理
+- **2023: Tree of Thoughts** — Yao et al. 提出树状推理搜索，探索多条推理路径
+- **2024: OpenAI o1** — 第一个商业化推理模型，通过 RL 训练获得内化推理能力
+- **2025: DeepSeek-R1** — 开源推理模型，发现 RL 训练中的 Aha Moment（推理能力自发涌现）
+- **2025: Qwen-QwQ** — 阿里开源推理模型
+- **2025: Test-Time Compute Scaling** — 推理时扩展成为新范式，比训练时堆参数更灵活高效

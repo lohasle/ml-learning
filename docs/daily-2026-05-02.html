@@ -1,0 +1,122 @@
+<h1>2026年5月2日 - 第24课：推理模型与思维链</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解 Chain-of-Thought (CoT) 推理如何让大模型从「直觉反应」进化到「逐步思考」，以及 2024-2025 年推理模型（o1/o3、DeepSeek-R1）的核心机制——通过强化学习让模型自发学会深度推理。</strong></p>
+<h2>为什么学这个？</h2>
+<p>前 23 课我们完成了从经典 ML 到 AI 系统工程的完整学习路线。但 AI 领域在 2024-2025 年发生了一个重要范式转变：<strong>推理能力的突破</strong>。</p>
+<p>OpenAI o1 的发布标志着 AI 从"更大=更强"转向"思考更多=更强"。DeepSeek-R1 更是展示了 RL 训练如何让模型自发涌现推理能力。这不是提示词技巧，而是模型能力的根本性提升。</p>
+<p>作为架构师，理解推理模型的工作原理，能帮你做出更好的技术选型——什么时候该用推理模型，什么时候用普通 LLM + CoT 就够了。</p>
+<p><strong>在 AI 演进中的位置</strong>：推理模型是 2024-2025 年最重要的技术突破。它标志着 LLM 从"快思考"（System 1）向"慢思考"（System 2）的跨越，是从 Transformer 架构出发的一次推理能力质变。类比人类认知：GPT-4 就像一个博学但容易出错的聪明人，而 o1/R1 更像一个会认真验算的数学家。</p>
+<h2>核心概念解释</h2>
+<h3>1. System 1 vs System 2：两种思考模式</h3>
+<ul>
+<li><strong>直觉</strong>：你问一个人"2+3=?"，他立刻说"5"（System 1）。你问他"137×24=?"，他需要拿出纸笔逐步算（System 2）。</li>
+<li>传统 LLM 本质上是 System 1：模式匹配，快速输出，直觉驱动</li>
+<li>CoT 和推理模型让 LLM 进入 System 2：逐步推理，显式化中间步骤，可验证可纠错</li>
+<li><strong>关键洞察</strong>：System 1 擅长快速响应（聊天、翻译），System 2 擅长深度推理（数学、编程、科学分析）</li>
+</ul>
+<h3>2. Chain-of-Thought (CoT) 推理</h3>
+<ul>
+<li><strong>直觉</strong>：就像数学考试要求"写出演算过程"而不是只写答案。写过程的好处是：1）更容易发现错误 2）老师可以给部分分 3）复杂问题不可能一步到位</li>
+<li><strong>Zero-shot CoT</strong>：在提示词末尾加"Let's think step by step"，模型就会自动分步推理。2022 年 Kojima 等人发现这个简单的技巧能大幅提升推理准确率</li>
+<li><strong>Few-shot CoT</strong>：给模型几个"带推理过程的示例"，让它学会怎么推理</li>
+<li><strong>Self-Consistency</strong>：多次运行 CoT，取出现次数最多的答案（投票制）</li>
+<li><strong>代码对应</strong>：Notebook 中模拟了 CoT 推理的逐步计算过程</li>
+</ul>
+<h3>3. 推理模型（Reasoning Models）</h3>
+<ul>
+<li><strong>直觉</strong>：CoT 是教模型"你应该这样思考"（提示词）。推理模型是让模型自己学会"我该怎么思考"（内化能力）。区别就像：跟着菜谱做菜（CoT）vs 成为厨师（推理模型）</li>
+<li><strong>核心训练流程</strong>：</li>
+<li>预训练：和普通 LLM 一样学语言和知识</li>
+<li>RL 训练：用答案对错作为奖励信号，训练推理能力</li>
+<li>涌现行为：模型自发学会回溯、验证、多路径探索</li>
+<li><strong>DeepSeek-R1 的 Aha Moment</strong>：RL 训练中，模型突然开始生成"wait, let me reconsider"这样的内容。没有人教它这么做，是训练过程自然涌现的</li>
+<li><strong>代码对应</strong>：Notebook 中模拟了 RL 训练过程中推理链长度和准确率的关系</li>
+</ul>
+<h3>4. Test-Time Compute Scaling</h3>
+<ul>
+<li><strong>直觉</strong>：传统思路是"训练时花更多钱 = 更强的模型"。新范式是"推理时花更多钱 = 更好的回答"。就像考试——准备更久不一定考得更好（训练时扩展），但考试时给你更多时间仔细检查，成绩通常会提高（推理时扩展）</li>
+<li><strong>两种扩展对比</strong>：</li>
+<li>训练时：模型 7B→70B→700B，成本指数增长，边际收益递减</li>
+<li>推理时：思考 100→1000→10000 tokens，成本线性增长，边际收益递减更慢</li>
+<li><strong>关键意义</strong>：意味着你可以用中等大小的模型，通过更多推理来达到大模型的效果。这是成本效率的重大突破</li>
+</ul>
+<h3>5. Process Reward Model (PRM)</h3>
+<ul>
+<li><strong>直觉</strong>：传统 RLHF 是给整个回答打分（"这个回答好不好"）。PRM 是给推理的每一步打分（"这一步对不对"）。就像老师批改数学题，不只看最终答案，还看每一步的演算过程</li>
+<li><strong>核心公式</strong>：PRM(step_i) = P(这一步推理是正确的)</li>
+<li><strong>好处</strong>：不需要人工标注每一步，只要最终答案可自动验证（如数学题有标准答案），就能通过 RL 训练出推理能力</li>
+</ul>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/方法</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CoT 准确率</td>
+<td>P(正确) = ∏ P(step_i 正确)</td>
+<td>每步都对才全对，步数越多越难全对</td>
+</tr>
+<tr>
+<td>推理 token 收益</td>
+<td>Accuracy ∝ log(thinking_tokens)</td>
+<td>思考量翻倍，准确率增加固定量</td>
+</tr>
+<tr>
+<td>PRM 奖励</td>
+<td>R = Σ PRM(step_i)</td>
+<td>每步推理都有一个正确性分数</td>
+</tr>
+<tr>
+<td>Self-Consistency</td>
+<td>answer = mode({cot_1, ..., cot_n})</td>
+<td>n 次推理投票，取众数</td>
+</tr>
+<tr>
+<td>Test-time scaling</td>
+<td>cost ∝ tokens × price_per_token</td>
+<td>推理成本 = 思考量 × 单价</td>
+</tr>
+<tr>
+<td>Aha Moment</td>
+<td>突然出现 "wait..." tokens</td>
+<td>RL 训练中推理能力自发涌现</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li><strong>准确率 vs 复杂度图</strong>：直观展示为什么 CoT 在复杂问题上优势显著——直接回答的准确率随步数指数衰减</li>
+<li><strong>方法对比实验</strong>：模拟 Direct / CoT / 带验证 CoT 三种推理模式，用多步算术题验证</li>
+<li><strong>RL 训练模拟</strong>：可视化推理模型训练过程中推理链增长和准确率跃升</li>
+<li><strong>工程决策矩阵</strong>：根据任务复杂度和延迟要求选择合适的模型方案</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: CoT 和推理模型有什么区别？</strong>
+A: CoT 是一种提示词技巧——你在提示词中教模型分步推理。推理模型是通过 RL 训练获得了内化的推理能力。关键区别：CoT 依赖提示词质量，推理模型自动学会思考。打个比方：CoT 像给一个学生提供答题模板，推理模型像训练出一个会独立思考的学生。</p>
+<p><strong>Q: 推理模型适合所有场景吗？</strong>
+A: 绝对不。推理模型的代价是：延迟更高（秒级 vs 毫秒级）、成本更高（50x+ token 消耗）、不适合实时对话和简单任务。选择原则：简单任务用快速模型，复杂推理用推理模型，中间地带用 CoT 提示词。</p>
+<p><strong>Q: DeepSeek-R1 和 OpenAI o1 的主要区别？</strong>
+A: 核心机制类似（RL 训练推理能力），但 R1 是开源的，训练细节更透明。R1 的论文展示了 RL 训练中的 Aha Moment 现象——模型自发涌现"停下来重新思考"的行为，这是非常值得关注的发现。</p>
+<p><strong>Q: Test-Time Compute 意味着不需要更大的模型了吗？</strong>
+A: 不完全是。Test-Time Compute 是一个补充维度，不是替代。更大的基础模型 + 更多推理时间 = 最好效果。但对于资源有限的团队，用中等模型 + 更多推理时间可以达到接近大模型的效果，这是成本效率的重要突破。</p>
+<h2>本课总结</h2>
+<ol>
+<li><strong>CoT 是 System 2 的触发器</strong>：让模型从直觉反应转变为逐步推理，在复杂任务上准确率大幅提升</li>
+<li><strong>推理模型 = RL 内化的推理能力</strong>：不只是提示词技巧，而是模型真正学会了怎么思考</li>
+<li><strong>Test-Time Compute 是新范式</strong>：推理时扩展比训练时扩展更灵活、边际收益更高</li>
+<li><strong>Aha Moment 是 RL 的奇迹</strong>：模型自发涌现推理行为，证明推理能力可以被学习</li>
+<li><strong>工程选择看场景</strong>：简单任务用快速模型，复杂推理用推理模型，中间用 CoT</li>
+</ol>
+<h2>📍 在总路线中的位置</h2>
+<pre><code>阶段 1-5: 经典ML → 深度学习 → Transformer → LLM → 多模态/系统工程 ✅ (第1-23课)
+阶段 6: 前沿专题 ──────────────────────────────────────── 进行中
+         ├─ 第24课: 推理模型与思维链 ← 今天
+         └─ 第25课: AI 评估与基准测试 (预告)
+</code></pre>
+<h2>下一步</h2>
+<p>下一课将学习 <strong>AI 评估与基准测试（Evaluation &amp; Benchmarking）</strong>：如何科学地衡量 AI 模型的能力？从 MMLU、HumanEval 到 Arena Elo，理解评估体系的演进和实际意义。</p>

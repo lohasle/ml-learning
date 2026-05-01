@@ -1,0 +1,595 @@
+<div class="nb-cell nb-markdown"><h1>第 24 课：推理模型与思维链（Reasoning Models &amp; Chain-of-Thought）</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 Chain-of-Thought (CoT) 推理的原理，以及它为什么能显著提升 LLM 的推理能力</li>
+<li>掌握推理模型（OpenAI o1/o3、DeepSeek-R1 等）的核心机制：慢思考、奖励模型、强化学习</li>
+<li>动手实现一个简化版 CoT 推理流程，直观感受「分步推理」vs「直接回答」的效果差异</li>
+<li>理解推理模型在实际工程中的应用场景与局限</li>
+</ul>
+<h2>在学习路线中的位置</h2>
+<pre><code>阶段 1-5: 经典ML → 深度学习 → Transformer → LLM → 多模态/系统工程 ✅
+阶段 6: 前沿专题 ──────────────────────────────────────── 你在这里
+         └─ 第24课: 推理模型与思维链 ← AI 推理范式的最新跃迁
+</code></pre>
+<p>前一课（AI系统设计与部署）我们学会了如何把模型部署成可靠服务。
+这一课聚焦一个更根本的问题：<strong>如何让模型本身变得更聪明？</strong>
+答案是——不只是堆参数量，而是让模型学会「思考」。</p></div>
+<div class="nb-cell nb-markdown"><h2>核心概念：从「快思考」到「慢思考」</h2>
+<p>人类有两种思维方式（Daniel Kahneman《快思考与慢思考》）：
+- <strong>System 1（快思考）</strong>：直觉反应，2+3=? → 5，毫不费力
+- <strong>System 2（慢思考）</strong>：逐步推理，137 × 24 = ? → 需要分步计算</p>
+<p>传统的 LLM（GPT-3/4、Claude 等）本质上是 <strong>System 1</strong>：
+- 输入 → 直接输出答案（one-shot）
+- 擅长模式匹配和快速生成
+- 不擅长多步推理、数学证明、复杂规划</p>
+<p><strong>Chain-of-Thought (CoT)</strong> 让 LLM 学会 System 2：
+- 不直接给答案，而是先写出思考过程
+- 每一步推理都显式化，可验证、可纠错
+- 推理 token 越多，复杂任务的准确率越高</p>
+<p>2024-2025 年的推理模型（o1、o3、DeepSeek-R1、Qwen-QwQ 等）
+把这个范式推到了极致：<strong>模型自动学会何时需要更多思考，以及怎么思考。</strong></p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from collections import Counter
+import time
+
+plt.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+print('✅ 库导入成功')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>1. CoT vs 直接回答：直观对比</h2>
+<p>用一个简单实验来感受差异。</p>
+<p><strong>问题</strong>：小明有 5 个苹果，给了小红 2 个，又买了 3 个，吃掉 1 个，还剩几个？</p>
+<ul>
+<li>直接回答：5 - 2 + 3 - 1 = 5 ✅</li>
+<li>但如果问题更复杂（10 步以上），直接回答很容易出错</li>
+<li>CoT 把每一步都显式化：</li>
+<li>初始：5 个苹果</li>
+<li>给小红 2 个 → 5 - 2 = 3</li>
+<li>买了 3 个 → 3 + 3 = 6</li>
+<li>吃掉 1 个 → 6 - 1 = 5</li>
+<li>答案：5 个</li>
+</ul>
+<p><strong>关键洞察</strong>：CoT 的价值不在于简单问题，而在于复杂问题。
+当推理链条越长，CoT 的优势越明显。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟 CoT vs 直接回答在不同推理步数下的准确率
+np.random.seed(42)
+
+steps = np.arange(1, 21)  # 推理步数 1~20
+
+# 直接回答：每步正确概率 p，n步全对的概率 = p^n
+p_direct = 0.95  # 每步正确率很高
+acc_direct = p_direct ** steps
+
+# CoT：每步正确概率更高（因为可以参考前一步），且有自纠错机制
+p_cot = 0.995  # 显式推理降低出错率
+acc_cot = p_cot ** steps
+
+# 推理模型（o1-style）：可以回溯和修正
+p_reasoning = 0.998  # 额外有验证和回溯
+acc_reasoning = p_reasoning ** steps
+
+fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+
+ax.plot(steps, acc_direct * 100, 'o-', color='#C96442', linewidth=2.5, markersize=5, label='直接回答 (Direct)')
+ax.plot(steps, acc_cot * 100, 's-', color='#4A90D9', linewidth=2.5, markersize=5, label='CoT (思维链)')
+ax.plot(steps, acc_reasoning * 100, '^-', color='#2ECC71', linewidth=2.5, markersize=5, label='推理模型 (Reasoning)')
+
+ax.fill_between(steps, acc_direct * 100, acc_reasoning * 100, alpha=0.1, color='#2ECC71')
+
+ax.set_xlabel('推理步数', fontsize=13)
+ax.set_ylabel('准确率 (%)', fontsize=13)
+ax.set_title('推理准确率 vs 复杂度：直接回答 vs CoT vs 推理模型', fontsize=14, fontweight='bold')
+ax.legend(fontsize=12, loc='lower left')
+ax.grid(True, alpha=0.3)
+ax.set_ylim(0, 105)
+
+# 标注关键差异
+ax.annotate('差距随复杂度\n指数级扩大', xy=(15, acc_direct[14]*100),
+            xytext=(12, 30), fontsize=11, color='#C96442',
+            arrowprops=dict(arrowstyle='-&gt;', color='#C96442', lw=1.5))
+
+plt.tight_layout()
+plt.savefig('docs/cot-accuracy-vs-complexity.png', dpi=150, bbox_inches='tight')
+plt.show()
+print(f'📊 20步推理准确率 - 直接: {acc_direct[19]*100:.1f}%, CoT: {acc_cot[19]*100:.1f}%, 推理模型: {acc_reasoning[19]*100:.1f}%')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>2. CoT 技术演进：从提示工程到推理模型</h2>
+<p>CoT 的发展经历了几个阶段：</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>方法</th>
+<th>代表</th>
+<th>核心思想</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Zero-shot CoT</td>
+<td>提示词加「Let's think step by step」</td>
+<td>Kojima et al. 2022</td>
+<td>不需要示例，只靠提示</td>
+</tr>
+<tr>
+<td>2. Few-shot CoT</td>
+<td>给几个带推理过程的示例</td>
+<td>Wei et al. 2022</td>
+<td>用示例教模型怎么推理</td>
+</tr>
+<tr>
+<td>3. Self-Consistency</td>
+<td>多次采样 CoT，取多数票</td>
+<td>Wang et al. 2022</td>
+<td>投票提升鲁棒性</td>
+</tr>
+<tr>
+<td>4. Tree-of-Thought</td>
+<td>树状搜索多条推理路径</td>
+<td>Yao et al. 2023</td>
+<td>探索+回溯</td>
+</tr>
+<tr>
+<td>5. 推理模型</td>
+<td>RL 训练出的自动推理能力</td>
+<td>o1/o3, DeepSeek-R1</td>
+<td>模型自动学会思考</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键跃迁</strong>：前 4 阶段是「外部技巧」，阶段 5 是「内生能力」。
+推理模型不是靠提示词来激发 CoT，而是通过强化学习训练出了推理能力。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟不同 CoT 方法在数学推理任务上的准确率和计算成本
+methods = {
+    'Direct\n(直接回答)': {
+        'accuracy': [20, 25, 30, 35],  # GSM8K, MATH, AIME, Olympiad
+        'compute': 1.0,  # 相对计算量
+        'color': '#C96442'
+    },
+    'Zero-shot CoT\n(提示词触发)': {
+        'accuracy': [55, 40, 15, 10],
+        'compute': 3.0,
+        'color': '#E67E22'
+    },
+    'Few-shot CoT\n(示例驱动)': {
+        'accuracy': [60, 45, 20, 12],
+        'compute': 5.0,
+        'color': '#F1C40F'
+    },
+    'Self-Consistency\n(多次采样)': {
+        'accuracy': [75, 55, 30, 18],
+        'compute': 15.0,
+        'color': '#4A90D9'
+    },
+    'Reasoning Model\n(o1/R1-style)': {
+        'accuracy': [95, 85, 75, 55],
+        'compute': 50.0,
+        'color': '#2ECC71'
+    }
+}
+
+tasks = ['GSM8K\n(小学数学)', 'MATH\n(竞赛数学)', 'AIME\n(高竞赛)', 'Olympiad\n(奥数)']
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# 左图：各方法在不同任务上的准确率
+x = np.arange(len(tasks))
+width = 0.15
+for i, (name, data) in enumerate(methods.items()):
+    bars = ax1.bar(x + i * width, data['accuracy'], width, label=name.replace('\n', ' '),
+                   color=data['color'], alpha=0.85, edgecolor='white', linewidth=0.5)
+
+ax1.set_ylabel('准确率 (%)', fontsize=12)
+ax1.set_title('不同 CoT 方法的推理准确率', fontsize=13, fontweight='bold')
+ax1.set_xticks(x + width * 2)
+ax1.set_xticklabels(tasks, fontsize=10)
+ax1.legend(fontsize=9, loc='upper right')
+ax1.grid(True, alpha=0.2, axis='y')
+
+# 右图：准确率 vs 计算成本（trade-off）
+for name, data in methods.items():
+    avg_acc = np.mean(data['accuracy'])
+    ax2.scatter(data['compute'], avg_acc, s=200, color=data['color'], 
+               edgecolors='black', linewidth=1, zorder=5)
+    ax2.annotate(name.replace('\n', ' '), xy=(data['compute'], avg_acc),
+                xytext=(10, 5), textcoords='offset points', fontsize=9)
+
+ax2.set_xlabel('相对计算成本 (log scale)', fontsize=12)
+ax2.set_ylabel('平均准确率 (%)', fontsize=12)
+ax2.set_title('准确率 vs 计算成本权衡', fontsize=13, fontweight='bold')
+ax2.set_xscale('log')
+ax2.grid(True, alpha=0.2)
+
+plt.tight_layout()
+plt.savefig('docs/cot-methods-comparison.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('📊 核心洞察：推理模型用 ~50x 计算量换取了 ~4x 准确率提升，在难题上尤为显著')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>3. 推理模型的核心机制</h2>
+<p>推理模型（如 OpenAI o1、DeepSeek-R1）的训练流程：</p>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│  Stage 1: 基础预训练 (Pre-training)                     │
+│  → 和普通 LLM 一样，学语言和世界知识                      │
+├─────────────────────────────────────────────────────────┤
+│  Stage 2: 推理强化学习 (Reasoning RL)                    │
+│  → 关键差异！用 RL 训练「思考能力」                        │
+│  → 奖励信号：最终答案是否正确                              │
+│  → 模型自己发现：写更多推理步骤 → 更高正确率               │
+├─────────────────────────────────────────────────────────┤
+│  Stage 3: 推理时搜索 (Inference-time Search)             │
+│  → 推理时可以生成多条路径，选最好的                        │
+│  → 可以回溯、修正、验证自己的推理                          │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>核心公式直觉</h3>
+<p><strong>奖励模型（Process Reward Model, PRM）</strong>：
+- 对推理的每一步打分，而不是只看最终结果
+- PRM(step_i) = P(这一步是正确的)
+- 总奖励 = Σ PRM(step_i) 或 最终结果奖励</p>
+<p><strong>关键创新</strong>：
+- 传统 RLHF：人类偏好 → 奖励模型 → RL
+- 推理 RL：答案对错 → 规则化奖励 → RL
+- 好处：不需要人工标注每一步，只要最终答案可验证即可</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟推理模型的 RL 训练过程：推理长度 vs 准确率的关系
+np.random.seed(42)
+
+# 模拟训练过程中，模型学会生成更长的推理链
+training_steps = np.arange(0, 1001, 50)
+
+# 推理 token 数（模型学会思考得更多）
+reasoning_tokens = 50 + 450 * (1 - np.exp(-training_steps / 300))
+
+# 准确率（GSM8K 数据集）
+accuracy_gsm8k = 30 + 65 * (1 - np.exp(-training_steps / 250))
+
+# 准确率（MATH 数据集，更难）
+accuracy_math = 15 + 70 * (1 - np.exp(-training_steps / 350))
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# 左图：训练过程中推理 token 增长
+ax1.plot(training_steps, reasoning_tokens, '-', color='#4A90D9', linewidth=2.5)
+ax1.fill_between(training_steps, 0, reasoning_tokens, alpha=0.15, color='#4A90D9')
+ax1.set_xlabel('RL 训练步数', fontsize=12)
+ax1.set_ylabel('平均推理 Token 数', fontsize=12)
+ax1.set_title('推理模型 RL 训练：推理链自动增长', fontsize=13, fontweight='bold')
+ax1.grid(True, alpha=0.2)
+ax1.annotate('模型发现：多想几步\n= 更高正确率', xy=(400, reasoning_tokens[8]),
+            xytext=(100, 400), fontsize=11, color='#4A90D9',
+            arrowprops=dict(arrowstyle='-&gt;', color='#4A90D9', lw=1.5))
+
+# 右图：训练过程中准确率提升
+ax2.plot(training_steps, accuracy_gsm8k, '-', color='#2ECC71', linewidth=2.5, label='GSM8K (小学数学)')
+ax2.plot(training_steps, accuracy_math, '-', color='#E67E22', linewidth=2.5, label='MATH (竞赛数学)')
+ax2.fill_between(training_steps, accuracy_math, accuracy_gsm8k, alpha=0.1, color='#2ECC71')
+ax2.set_xlabel('RL 训练步数', fontsize=12)
+ax2.set_ylabel('准确率 (%)', fontsize=12)
+ax2.set_title('推理模型 RL 训练：准确率跃升', fontsize=13, fontweight='bold')
+ax2.legend(fontsize=11)
+ax2.grid(True, alpha=0.2)
+ax2.annotate('难题的提升空间更大', xy=(600, accuracy_math[12]),
+            xytext=(300, 30), fontsize=11, color='#E67E22',
+            arrowprops=dict(arrowstyle='-&gt;', color='#E67E22', lw=1.5))
+
+plt.tight_layout()
+plt.savefig('docs/cot-rl-training.png', dpi=150, bbox_inches='tight')
+plt.show()
+print(f'📊 RL 训练后 - GSM8K: {accuracy_gsm8k[-1]:.1f}%, MATH: {accuracy_math[-1]:.1f}%')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>4. 测试时计算扩展（Test-Time Compute Scaling）</h2>
+<p>这是 2024-2025 年最重要的范式转变之一：</p>
+<p><strong>传统思路</strong>：模型越大越聪明（训练时投入更多计算）
+<strong>新范式</strong>：推理时投入更多计算 = 更聪明的回答</p>
+<h3>两种扩展方式对比</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>训练时扩展 (Scaling Up)</th>
+<th>推理时扩展 (Thinking More)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>成本</td>
+<td>一次性巨额投入</td>
+<td>按需弹性消耗</td>
+</tr>
+<tr>
+<td>灵活性</td>
+<td>固定模型能力</td>
+<td>难题多想、简单题少想</td>
+</tr>
+<tr>
+<td>效果上限</td>
+<td>受模型架构限制</td>
+<td>理论上无上限（更长的推理链）</td>
+</tr>
+<tr>
+<td>边际收益</td>
+<td>递减（7B→70B 提升大，70B→700B 提升小）</td>
+<td>递减但更慢</td>
+</tr>
+</tbody>
+</table>
+<h3>DeepSeek-R1 的关键发现</h3>
+<ul>
+<li><strong>Aha Moment（顿悟时刻）</strong>：RL 训练中，模型会自发出现「wait, let me reconsider」行为</li>
+<li>模型自己学会了：遇到不确定的地方 → 停下来重新思考</li>
+<li>这不是人类教的，而是 RL 训练自然涌现出的行为！</li>
+</ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 可视化：训练时扩展 vs 推理时扩展的成本-效果对比
+np.random.seed(42)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# 左图：训练时扩展（模型大小 vs 准确率）
+model_sizes = [7, 13, 34, 70, 200, 600]  # 参数量（B）
+acc_by_size = [35, 50, 62, 72, 78, 82]  # MATH 准确率
+training_cost = [s * 10 for s in model_sizes]  # 相对训练成本
+
+ax1.scatter(training_cost, acc_by_size, s=150, c='#C96442', edgecolors='black', linewidth=1, zorder=5)
+ax1.plot(training_cost, acc_by_size, '--', color='#C96442', alpha=0.5)
+for i, sz in enumerate(model_sizes):
+    label = f'{sz}B'
+    ax1.annotate(label, xy=(training_cost[i], acc_by_size[i]),
+                xytext=(8, 5), textcoords='offset points', fontsize=10)
+
+ax1.set_xlabel('训练成本 (相对单位)', fontsize=12)
+ax1.set_ylabel('MATH 准确率 (%)', fontsize=12)
+ax1.set_title('训练时扩展：模型越大越强\n但边际收益递减', fontsize=13, fontweight='bold')
+ax1.grid(True, alpha=0.2)
+ax1.annotate('边际收益递减', xy=(training_cost[4], acc_by_size[4]),
+            xytext=(2000, 55), fontsize=11, color='#C96442',
+            arrowprops=dict(arrowstyle='-&gt;', color='#C96442', lw=1.5))
+
+# 右图：推理时扩展（推理 token 数 vs 准确率）
+inference_tokens = [100, 500, 1000, 2000, 5000, 10000, 20000]
+acc_by_tokens = [55, 68, 75, 80, 86, 90, 93]
+
+ax2.scatter(inference_tokens, acc_by_tokens, s=150, c='#2ECC71', edgecolors='black', linewidth=1, zorder=5)
+ax2.plot(inference_tokens, acc_by_tokens, '--', color='#2ECC71', alpha=0.5)
+
+ax2.set_xlabel('推理 Token 数 (思考量)', fontsize=12)
+ax2.set_ylabel('MATH 准确率 (%)', fontsize=12)
+ax2.set_title('推理时扩展：想得越多越准\n边际收益递减更慢', fontsize=13, fontweight='bold')
+ax2.set_xscale('log')
+ax2.grid(True, alpha=0.2)
+ax2.annotate('额外思考仍有\n显著收益', xy=(10000, 90),
+            xytext=(500, 60), fontsize=11, color='#2ECC71',
+            arrowprops=dict(arrowstyle='-&gt;', color='#2ECC71', lw=1.5))
+
+plt.tight_layout()
+plt.savefig('docs/cot-test-time-scaling.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('📊 核心洞察：推理时扩展的边际收益递减更慢，且可以按需弹性使用')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>5. 动手实践：模拟 CoT 推理过程</h2>
+<p>下面我们用一个简化的数学推理模拟器，对比三种模式：
+1. <strong>直接回答</strong>：一步到位
+2. <strong>CoT 推理</strong>：分步计算
+3. <strong>带验证的推理</strong>：分步 + 自检</p>
+<p>虽然这里是模拟（不是真正的 LLM），但能直观展示 CoT 的核心价值。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟三种推理模式在多步算术题上的表现
+np.random.seed(42)
+
+def generate_multi_step_problem(n_steps):
+    """生成 n_steps 步的连算题"""
+    value = np.random.randint(10, 100)
+    steps = [f'起始值: {value}']
+    ops = []
+    for _ in range(n_steps):
+        op = np.random.choice(['+', '-', '×'])
+        num = np.random.randint(2, 20)
+        ops.append((op, num))
+        if op == '+':
+            value += num
+            steps.append(f'+ {num} → {value}')
+        elif op == '-':
+            value -= num
+            steps.append(f'- {num} → {value}')
+        else:
+            value *= num
+            steps.append(f'× {num} → {value}')
+    return value, steps, ops
+
+def simulate_direct(ops, error_rate_per_step=0.08):
+    """直接回答：整体计算，每步有一定概率出错"""
+    value = np.random.randint(10, 100)  # 假设记错初始值
+    for op, num in ops:
+        if np.random.random() &lt; error_rate_per_step:
+            # 出错：结果偏差
+            if op == '+': value += num + np.random.randint(-5, 6)
+            elif op == '-': value -= num + np.random.randint(-5, 6)
+            else: value *= num + np.random.randint(-2, 3)
+        else:
+            if op == '+': value += num
+            elif op == '-': value -= num
+            else: value *= num
+    return value
+
+def simulate_cot(ops, error_rate_per_step=0.03):
+    """CoT：逐步计算，出错率更低（显式化降低失误）"""
+    value = np.random.randint(10, 100)
+    for op, num in ops:
+        if np.random.random() &lt; error_rate_per_step:
+            if op == '+': value += num + np.random.randint(-3, 4)
+            elif op == '-': value -= num + np.random.randint(-3, 4)
+            else: value *= num + np.random.randint(-1, 2)
+        else:
+            if op == '+': value += num
+            elif op == '-': value -= num
+            else: value *= num
+    return value
+
+def simulate_verified_cot(ops, error_rate_per_step=0.03, verify_rate=0.7):
+    """带验证的 CoT：每步有概率自检并修正"""
+    value = np.random.randint(10, 100)
+    for op, num in ops:
+        if np.random.random() &lt; error_rate_per_step:
+            if np.random.random() &lt; verify_rate:
+                # 验证发现错误并修正
+                pass  # 正确计算
+            else:
+                if op == '+': value += num + np.random.randint(-3, 4)
+                elif op == '-': value -= num + np.random.randint(-3, 4)
+                else: value *= num + np.random.randint(-1, 2)
+                continue
+        if op == '+': value += num
+        elif op == '-': value -= num
+        else: value *= num
+    return value
+
+# 实验：不同步数下三种方法的准确率
+n_trials = 500
+step_range = range(2, 16)
+results = {'direct': [], 'cot': [], 'verified_cot': []}
+
+for n_steps in step_range:
+    correct_direct = 0
+    correct_cot = 0
+    correct_verified = 0
+    
+    for _ in range(n_trials):
+        answer, steps, ops = generate_multi_step_problem(n_steps)
+        pred_direct = simulate_direct(ops)
+        pred_cot = simulate_cot(ops)
+        pred_verified = simulate_verified_cot(ops)
+        
+        if pred_direct == answer: correct_direct += 1
+        if pred_cot == answer: correct_cot += 1
+        if pred_verified == answer: correct_verified += 1
+    
+    results['direct'].append(correct_direct / n_trials * 100)
+    results['cot'].append(correct_cot / n_trials * 100)
+    results['verified_cot'].append(correct_verified / n_trials * 100)
+
+fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+
+ax.plot(list(step_range), results['direct'], 'o-', color='#C96442', linewidth=2, label='直接回答', markersize=5)
+ax.plot(list(step_range), results['cot'], 's-', color='#4A90D9', linewidth=2, label='CoT 推理', markersize=5)
+ax.plot(list(step_range), results['verified_cot'], '^-', color='#2ECC71', linewidth=2, label='带验证的 CoT', markersize=5)
+
+ax.set_xlabel('推理步数', fontsize=12)
+ax.set_ylabel('准确率 (%)', fontsize=12)
+ax.set_title('模拟实验：三种推理模式的准确率对比', fontsize=14, fontweight='bold')
+ax.legend(fontsize=12)
+ax.grid(True, alpha=0.2)
+
+plt.tight_layout()
+plt.savefig('docs/cot-simulation.png', dpi=150, bbox_inches='tight')
+plt.show()
+print(f'📊 15步时准确率 - 直接: {results["direct"][-1]:.1f}%, CoT: {results["cot"][-1]:.1f}%, 带验证CoT: {results["verified_cot"][-1]:.1f}%')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>6. 工程实践：推理模型的适用场景</h2>
+<h3>适合用推理模型的场景</h3>
+<ol>
+<li><strong>数学/代码推理</strong>：需要多步逻辑验证的任务</li>
+<li><strong>科学分析</strong>：需要假设-验证的研究问题</li>
+<li><strong>复杂规划</strong>：多步骤、多约束的决策</li>
+<li><strong>安全审查</strong>：需要仔细检查每个环节</li>
+</ol>
+<h3>不适合用推理模型的场景</h3>
+<ol>
+<li><strong>简单问答</strong>：杀鸡用牛刀，浪费 token 和时间</li>
+<li><strong>创意生成</strong>：创意不需要严格推理，快思考更好</li>
+<li><strong>实时对话</strong>：推理模型的延迟太高（秒级 vs 毫秒级）</li>
+<li><strong>批量处理</strong>：成本敏感的离线任务</li>
+</ol>
+<h3>工程决策框架</h3>
+<pre><code>任务复杂度低 + 实时性要求高 → 普通LLM (GPT-4o/Claude)
+任务复杂度高 + 实时性要求低 → 推理模型 (o1/R1)
+任务复杂度中等 → 普通LLM + CoT 提示词
+</code></pre>
+<h3>关键论文和项目</h3>
+<ul>
+<li><strong>Chain-of-Thought Prompting</strong> (Wei et al., 2022) — 开山之作</li>
+<li><strong>Let's Think Step by Step</strong> (Kojima et al., 2022) — Zero-shot CoT</li>
+<li><strong>Tree of Thoughts</strong> (Yao et al., 2023) — 树状推理搜索</li>
+<li><strong>OpenAI o1</strong> (2024) — 第一个商业化推理模型</li>
+<li><strong>DeepSeek-R1</strong> (2025) — 开源推理模型，展示了 RL 训练涌现 CoT</li>
+<li><strong>Qwen-QwQ</strong> (2025) — 阿里开源推理模型</li>
+</ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 工程决策可视化：任务复杂度 × 模型选择
+fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+
+# 定义不同场景
+scenarios = {
+    '简单问答': {'complexity': 2, 'latency': 0.3, 'cost': 0.01, 'rec': '普通LLM'},
+    '创意写作': {'complexity': 3, 'latency': 0.5, 'cost': 0.02, 'rec': '普通LLM'},
+    '代码补全': {'complexity': 5, 'latency': 0.8, 'cost': 0.03, 'rec': '普通LLM+CoT'},
+    '数据分析': {'complexity': 6, 'latency': 1.0, 'cost': 0.05, 'rec': '普通LLM+CoT'},
+    '数学证明': {'complexity': 8, 'latency': 5.0, 'cost': 0.15, 'rec': '推理模型'},
+    '竞赛编程': {'complexity': 9, 'latency': 8.0, 'cost': 0.20, 'rec': '推理模型'},
+    '科学推理': {'complexity': 9.5, 'latency': 10.0, 'cost': 0.25, 'rec': '推理模型'},
+}
+
+color_map = {'普通LLM': '#4A90D9', '普通LLM+CoT': '#E67E22', '推理模型': '#2ECC71'}
+
+for name, s in scenarios.items():
+    color = color_map[s['rec']]
+    size = s['cost'] * 3000 + 100
+    ax.scatter(s['complexity'], s['latency'], s=size, c=color, 
+              edgecolors='black', linewidth=1, alpha=0.8, zorder=5)
+    ax.annotate(f"{name}\n({s['rec']})", 
+               xy=(s['complexity'], s['latency']),
+               xytext=(8, 5), textcoords='offset points', fontsize=9)
+
+# 画区域分割
+ax.axvline(x=4.5, color='gray', linestyle='--', alpha=0.5)
+ax.axvline(x=7, color='gray', linestyle='--', alpha=0.5)
+
+ax.text(2.5, 8, '普通 LLM\n(快速+便宜)', fontsize=13, ha='center', 
+       color='#4A90D9', fontweight='bold', alpha=0.7)
+ax.text(5.5, 8, 'LLM + CoT\n(提示词技巧)', fontsize=13, ha='center',
+       color='#E67E22', fontweight='bold', alpha=0.7)
+ax.text(8.5, 8, '推理模型\n(深度思考)', fontsize=13, ha='center',
+       color='#2ECC71', fontweight='bold', alpha=0.7)
+
+ax.set_xlabel('任务复杂度', fontsize=13)
+ax.set_ylabel('延迟 (秒)', fontsize=13)
+ax.set_title('工程决策矩阵：什么时候用推理模型？', fontsize=14, fontweight='bold')
+ax.set_yscale('log')
+ax.grid(True, alpha=0.2)
+ax.set_xlim(0, 11)
+
+plt.tight_layout()
+plt.savefig('docs/cot-engineering-decision.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('📊 选择原则：简单任务用快速模型，复杂推理用推理模型，中间地带用 CoT 提示词')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>本课核心要点</h3>
+<ol>
+<li><strong>CoT 的本质是 System 2 思考</strong>：让模型从「直觉反应」进化到「逐步推理」，在复杂任务上准确率大幅提升</li>
+<li><strong>推理模型 = RL 训练出的推理能力</strong>：不是提示词技巧，而是模型通过强化学习内化了「怎么思考」</li>
+<li><strong>Test-Time Compute 是新范式</strong>：推理时投入更多计算（更长思考），比训练时堆参数量更灵活、边际收益更高</li>
+<li><strong>DeepSeek-R1 的 Aha Moment</strong>：RL 训练中自然涌现出「停下来重新思考」的行为，证明推理能力可以自发习得</li>
+<li><strong>工程选择看场景</strong>：简单任务用快速模型，复杂推理用推理模型，中间地带用 CoT 提示词</li>
+<li><strong>推理模型的代价</strong>：更高延迟（秒级）、更高成本（50x+ token）、不适合实时场景</li>
+</ol>
+<h3>课后思考</h3>
+<ol>
+<li>如果推理模型可以无限思考，理论上能解决所有问题吗？瓶颈在哪里？</li>
+<li>推理模型和 Agent（第20课）有什么关系？推理能力如何增强 Agent 的规划能力？</li>
+<li>如果你要设计一个数学辅导 AI，会用推理模型还是普通 LLM + CoT？为什么？</li>
+</ol>
+<h3>下一课预告</h3>
+<p>第 25 课将探索 <strong>AI 评估与基准测试（Evaluation &amp; Benchmarking）</strong>：如何科学地衡量一个 AI 模型的能力？从 MMLU 到 Arena Elo，理解评估体系的演进。</p></div>

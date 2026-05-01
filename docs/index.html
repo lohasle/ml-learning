@@ -24,9 +24,9 @@
   <div class="container">
     <!-- Hero -->
     <div class="hero">
-      <div class="hero-badge"><span class="dot" style="background:#5B8C5A;"></span> 🎉 全部课程完结</div>
+      <div class="hero-badge"><span class="dot" style="background:#4A90D9;"></span> 🔄 阶段 6 进行中</div>
       <h1>AI / 机器学习 系统学习</h1>
-      <p>从经典 ML 到大模型的渐进式学习旅程</p>
+      <p>从经典 ML 到大模型与前沿专题的渐进式学习旅程</p>
     </div>
 
     <!-- 进度总览 -->
@@ -34,21 +34,21 @@
       <div class="progress-overview" style="background: linear-gradient(135deg, var(--primary), var(--accent)); border: none; color: white; padding: 32px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
           <div>
-            <div style="font-weight: 700; font-size: 1.15rem; color: white;">📍 当前：多模态与现代 AI 系统</div>
-            <div style="font-size: 0.88rem; opacity: 0.85; margin-top: 4px;">阶段 5 / 5 · 已完成 22 课 · 连续 17 天</div>
+            <div style="font-weight: 700; font-size: 1.15rem; color: white;">📍 当前：前沿专题（阶段 6）</div>
+            <div style="font-size: 0.88rem; opacity: 0.85; margin-top: 4px;">阶段 6 / 6 · 已完成 24 课 · 连续 19 天</div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 2.2rem; font-weight: 800; color: white; line-height: 1;">73%</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: white; line-height: 1;">80%</div>
             <div style="font-size: 0.75rem; opacity: 0.7;">总进度</div>
           </div>
         </div>
         <div class="progress-bar" style="background: rgba(255,255,255,0.2); height: 6px;">
-          <div class="progress-fill" style="width: 73%; background: white;"></div>
+          <div class="progress-fill" style="width: 80%; background: white;"></div>
         </div>
         <div style="display: flex; gap: 24px; margin-top: 16px; font-size: 0.82rem; opacity: 0.85;">
-          <span>✅ 22 课已完成</span>
-          <span>💡 20 知识笔记</span>
-          <span>📓 22 个 Notebook</span>
+          <span>✅ 24 课已完成</span>
+          <span>💡 21 知识笔记</span>
+          <span>📓 24 个 Notebook</span>
         </div>
       </div>
     </div>
@@ -331,10 +331,28 @@
         </div>
       </div>
 
-      <!-- 完结标记 -->
-      <div class="stage-block" style="border-left: 4px solid #5B8C5A; background: linear-gradient(135deg, rgba(91,140,90,0.08), rgba(91,140,90,0.02));">
-        <div class="stage-label" style="color: #5B8C5A;">🎉 全部课程完结</div>
-        <div style="padding: 12px 20px; color: var(--text-muted); font-size: 0.85rem;">23 课学习路线已全部完成！从经典 ML 到 AI 系统设计与部署的完整闭环。</div>
+      <!-- 阶段 6：前沿专题 -->
+      <div class="stage-block active">
+        <div class="stage-label current">🔄 阶段 6：前沿专题</div>
+        <div class="lesson-list">
+          <a href="notes-lab.html" class="lesson-row" onclick="localStorage.setItem('activeNote','daily-2026-05-02');localStorage.setItem('activeNb','nb-24_推理模型与思维链');localStorage.setItem('activeTitle','第 24 课：推理模型与思维链');">
+            <div class="lesson-num">24</div>
+            <div class="lesson-info">
+              <div class="lesson-title">推理模型与思维链</div>
+              <div class="lesson-tags"><span class="tag">CoT</span><span class="tag">Reasoning</span><span class="tag">o1/R1</span><span class="tag">RL</span><span class="tag">Test-Time Compute</span></div>
+            </div>
+            <div class="lesson-links">
+              <span class="link-badge" onclick="event.stopPropagation();window.open('https://github.com/lohasle/ml-learning/blob/main/daily/2026-05-02.md','_blank')">📄 课程</span>
+              <span class="link-badge nb" onclick="event.stopPropagation();window.open('https://github.com/lohasle/ml-learning/blob/main/lessons/24_%E6%8E%A8%E7%90%86%E6%A8%A1%E5%9E%8B%E4%B8%8E%E6%80%9D%E7%BB%B4%E9%93%BE.ipynb','_blank')">📓 Notebook</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- 继续学习 -->
+      <div class="stage-block" style="border-left: 4px solid #4A90D9; background: linear-gradient(135deg, rgba(74,144,217,0.08), rgba(74,144,217,0.02));">
+        <div class="stage-label" style="color: #4A90D9;">🚀 阶段 6 进行中</div>
+        <div style="padding: 12px 20px; color: var(--text-muted); font-size: 0.85rem;">前沿专题持续更新中！推理模型 → AI 评估 → 更多新主题 ...</div>
       </div>
     </div>
 

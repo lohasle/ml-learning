@@ -1,0 +1,22 @@
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L8] Assistant: 好，Skill 已读取。按 5 个 Phase 严格执行。 ## Phase 1: 健康检查 先同步远端代码，然后运行 validate.py。
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L12] Assistant: Phase 1 通过，无缺口。已到第 22 课。 ## Phase 3: 确定今日课程主题 查看路线图，确认当前进度和下一课：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L16] Assistant: 当前到第 22 课，下一课是 **第 23 课：AI 系统设计与部署**——路线图阶段 5 的最后一课。查看最后一课内容和模板：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L22] Assistant: 现在搜索相关资料来丰富第 23 课内容：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L26] Assistant: Web search 不可用，不过没关系——这个主题我有足够的专业知识。让我检查一下上一课的 Notebook 和相关文件，以确保内容衔接：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L30] Assistant: 现在检查 docs 目录中现有文件格式作为参考：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L36] Assistant: 好，现在看看 docs/daily.html 和 docs/index.html 的结构：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L48] Assistant: 好，所有结构已清楚。今天是 2026-05-01，第 23 课主题：**AI 系统设计与部署**。 现在生成所有需要的文件。先创建 Notebook：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L50] Assistant: Notebook 完成（14 cells，含 6 个代码 cell，6 个 markdown cell）。现在生成 Daily MD：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L52] Assistant: 现在生成知识笔记：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L54] Assistant: 现在渲染 HTML 片段。用 Python 脚本来做：
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L58] Assistant: ## Phase 4: 级联同步 现在更新所有关联文件。 ### 4.1 更新 README.md
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L62] Assistant: ### 4.2 更新 docs/index.html
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L70] Assistant: ### 4.3 更新 docs/notes-lab.html — 添加第23课 tree-item 和概念笔记
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L72] Assistant: ### 4.4 更新 docs/daily.html — 添加第23课时间线条目
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L74] Assistant: ### 4.5 更新 roadmap.md — 标记阶段5完成
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L76] Assistant: ### 4.6 更新 history/ai-evolution.md
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L80] Assistant: ## Phase 5: 最终验证
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L82] Assistant: ✅ validate 通过！23 notebooks，23 dailies，无 gaps。 ## Git 操作
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L88] Assistant: Git push 成功！🎉 --- ## 执行报告 ### validate 结果 - Phase 1: ✅ 通过（22 notebooks, 22 dailies, 0 gaps） - Phase 2: 无需修复 - Phase 5: ✅ 通过（23 notebooks, 23 dailies, 0 gaps） ### 今日新增 - **第 23 课：AI 系统设计与部署** 🎉 完结课 - 新增文件： - `lessons/23_AI系统设计与部署.ipynb`（14 cells，6 代码 cell，
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L88] Assistant: --- ## 🎉 今日学习简报 ### 📍 第 23 课：AI 系统设计与部署（完结课） **为什么今天学这个？** 前 22 课学了从线性回归到推理工程的全部知识，但「能跑的模型 ≠ 能用的产品」。本课是从「懂模型」到「能建系统」的最后一跃。 **核心要点速览：** 1. **三种服务模式**：在线推理（低延迟）、异步推理（高吞吐）、边缘部署（离线/隐私） 2. **MLOps ≠ DevOps**：多了「数据漂移」和「模型退化」两个维度，需要持续训练（CT） 3. **A/B 测试是科学迭代**：小流
+[ml-learning-coach/sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl#L88] Assistant: 产品不只是模型——它是一个包含数据管线、训练管线、模型服务、监控、版本管理和安全防护的完整系统。作为架构师，你的核心能力不只是理解算法，而是设计这个系统。 **下一步建议：** 选择一个实际项目练手——RAG 应用、Agent 开发、或模型微调，把 23 课学到的知识串起来，真正落地。
