@@ -1,0 +1,462 @@
+<div class="nb-cell nb-markdown"><h1>第 25 课：AI 评估与基准测试（Evaluation &amp; Benchmarking）</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 AI 评估的核心挑战：为什么评估一个模型这么难？</li>
+<li>掌握主要评估基准：MMLU、HumanEval、Chatbot Arena、SWE-bench</li>
+<li>动手实现 Elo 评分模拟、Pass@k 计算、多基准雷达图</li>
+<li>建立「评估思维」：做技术选型时能看懂数据、判断适用性</li>
+</ul>
+<h2>在学习路线中的位置</h2>
+<pre><code>阶段 1-5: 经典ML → 深度学习 → Transformer → LLM → 多模态/系统工程 ✅
+阶段 6: 前沿专题 ──────────────────────────────────────── 你在这里
+         ├─ 第24课: 推理模型与思维链 ✅
+         └─ 第25课: AI 评估与基准测试 ← 怎么知道模型好不好？
+</code></pre>
+<p>前 24 课学了从线性回归到推理模型的完整技术栈。
+这一课回答一个最基本的问题：<strong>怎么衡量模型的能力？</strong>
+这不仅是学术问题——做技术选型时，你必须能读懂排行榜。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from collections import defaultdict
+import random
+
+plt.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+print('✅ 库导入成功')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>1. MMLU 模拟：知识广度评估</h2>
+<p><strong>MMLU</strong>（Massive Multitask Language Understanding）是 LLM 评估的「高考综合卷」：
+- 57 个学科，每个学科 100-1000 道选择题（4 选 1）
+- 从初等数学到专业法律、医学、哲学
+- 用准确率（accuracy）衡量模型的通用知识水平</p>
+<p><strong>直觉理解</strong>：就像一个学生参加 57 门考试，最终取平均分。
+如果你只考数学好但历史不及格，总分不会太高。
+MMLU 衡量的是「博学程度」。</p>
+<p>我们用模拟数据来展示评估流程。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟 MMLU 评估
+np.random.seed(42)
+
+# 模拟 5 个模型在 10 个学科上的准确率
+subjects = ['数学', '物理', '化学', '生物', '历史', '法律', '医学', '计算机', '经济学', '哲学']
+models = ['GPT-4', 'Claude-3.5', 'Gemini-Pro', 'Llama-3-70B', 'Mistral-Large']
+
+# 每个模型有不同的能力分布
+model_scores = {
+    'GPT-4':       np.clip(np.random.normal(0.88, 0.05, len(subjects)), 0.5, 1.0),
+    'Claude-3.5':  np.clip(np.random.normal(0.86, 0.06, len(subjects)), 0.45, 1.0),
+    'Gemini-Pro':  np.clip(np.random.normal(0.84, 0.07, len(subjects)), 0.4, 1.0),
+    'Llama-3-70B': np.clip(np.random.normal(0.80, 0.08, len(subjects)), 0.35, 1.0),
+    'Mistral-Large': np.clip(np.random.normal(0.79, 0.09, len(subjects)), 0.3, 1.0),
+}
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+# 左图：各科准确率对比
+x = np.arange(len(subjects))
+width = 0.15
+colors = ['#C96442', '#4A90D9', '#50C878', '#9B59B6', '#F4D03F']
+
+for i, model in enumerate(models):
+    axes[0].bar(x + i * width, model_scores[model], width, label=model, color=colors[i], alpha=0.85)
+
+axes[0].set_xlabel('学科')
+axes[0].set_ylabel('准确率')
+axes[0].set_title('MMLU 模拟：各科准确率对比', fontsize=14, fontweight='bold')
+axes[0].set_xticks(x + width * 2)
+axes[0].set_xticklabels(subjects, rotation=30, ha='right')
+axes[0].legend(fontsize=8)
+axes[0].set_ylim(0.4, 1.05)
+axes[0].grid(axis='y', alpha=0.3)
+
+# 右图：平均分排名
+avg_scores = {m: np.mean(s) for m, s in model_scores.items()}
+sorted_models = sorted(avg_scores.items(), key=lambda x: x[1], reverse=True)
+names = [m[0] for m in sorted_models]
+scores = [m[1] for m in sorted_models]
+
+bars = axes[1].barh(range(len(names)), scores, color=[colors[models.index(n)] for n in names], alpha=0.85)
+axes[1].set_yticks(range(len(names)))
+axes[1].set_yticklabels(names)
+axes[1].set_xlabel('MMLU 平均准确率')
+axes[1].set_title('MMLU 综合排名（模拟）', fontsize=14, fontweight='bold')
+axes[1].set_xlim(0.6, 1.0)
+axes[1].grid(axis='x', alpha=0.3)
+
+for i, (bar, score) in enumerate(zip(bars, scores)):
+    axes[1].text(score + 0.005, i, f'{score:.1%}', va='center', fontsize=10, fontweight='bold')
+
+plt.tight_layout()
+plt.savefig('mmlu_simulation.png', dpi=120, bbox_inches='tight')
+plt.show()
+
+print('\n📊 MMLU 评估要点：')
+print(f'  - 平均分差异：{(scores[0]-scores[-1])*100:.1f}%（第一 vs 最后）')
+print(f'  - 但各科差异可能更大：{max(np.max(list(model_scores.values()))-np.min(list(model_scores.values())))*100:.1f}%')
+print('  - 单看平均分会掩盖具体学科的优劣势')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>2. Pass@k：代码能力的概率视角</h2>
+<p><strong>HumanEval</strong> 测的是代码能力——给定函数签名和文档，写出正确实现。</p>
+<p>但有个问题：LLM 生成的代码有随机性。同一个题目，跑 10 次可能 7 次对、3 次错。
+所以我们需要 <strong>Pass@k</strong>：采样 k 次，至少通过一次的概率。</p>
+<p><strong>公式</strong>：Pass@k = 1 - C(n-c, k) / C(n, k)
+- n = 总采样次数
+- c = 通过次数
+- k = 取前 k 次采样</p>
+<p><strong>直觉</strong>：Pass@1 是「一次写对」的概率（最严格），
+Pass@10 是「试 10 次至少对一次」的概率（很宽松）。
+好的模型 Pass@1 就很高，差的模型需要 Pass@10 才能追上。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>from math import comb
+
+def pass_at_k(n, c, k):
+    """计算 Pass@k
+    n: 总采样次数
+    c: 正确次数
+    k: 取 k 次
+    """
+    if n - c &lt; k:
+        return 1.0
+    return 1.0 - comb(n - c, k) / comb(n, k)
+
+# 模拟不同模型的 Pass@k
+n_samples = 20  # 每题采样 20 次
+k_values = [1, 2, 5, 10, 20]
+
+# 假设不同模型的平均正确率
+model_pass_rates = {
+    'GPT-4': 0.85,    # 85% 题目一次就对了
+    'Claude-3.5': 0.82,
+    'Llama-3-70B': 0.70,
+    'Mistral-7B': 0.50,
+}
+
+fig, ax = plt.subplots(figsize=(10, 6))
+colors_k = ['#C96442', '#4A90D9', '#50C878', '#9B59B6']
+
+for i, (model, base_rate) in enumerate(model_pass_rates.items()):
+    pass_scores = []
+    for k in k_values:
+        # 用期望正确次数来模拟
+        expected_correct = int(base_rate * n_samples)
+        pk = pass_at_k(n_samples, expected_correct, k)
+        pass_scores.append(pk)
+    ax.plot(k_values, pass_scores, 'o-', label=model, color=colors_k[i], linewidth=2, markersize=8)
+    # 标注 Pass@1 值
+    ax.annotate(f'{pass_scores[0]:.0%}', (k_values[0], pass_scores[0]), 
+                textcoords='offset points', xytext=(-30, 5), fontsize=9)
+
+ax.set_xlabel('k 值（采样次数）', fontsize=12)
+ax.set_ylabel('Pass@k（至少通过一次的概率）', fontsize=12)
+ax.set_title('Pass@k 分析：不同模型的代码能力', fontsize=14, fontweight='bold')
+ax.set_xticks(k_values)
+ax.set_xticklabels([f'Pass@{k}' for k in k_values])
+ax.legend()
+ax.grid(alpha=0.3)
+ax.set_ylim(0.4, 1.05)
+
+plt.tight_layout()
+plt.savefig('pass_at_k.png', dpi=120, bbox_inches='tight')
+plt.show()
+
+print('\n📊 Pass@k 关键洞察：')
+print('  - Pass@1 最能反映模型真实水平（一次写对）')
+print('  - Pass@10 几乎所有模型都能到 90%+，区分度下降')
+print('  - GPT-4 和 Mistral-7B 的 Pass@1 差距巨大，但 Pass@20 差距缩小')
+print('  - 工程上：好模型省钱省时间（不需要反复采样）')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>3. Elo 评分模拟：Chatbot Arena 的核心机制</h2>
+<p><strong>Chatbot Arena</strong> 是目前最权威的 LLM 评估方式：
+- 用户输入问题
+- 两个匿名模型同时回答
+- 用户选择更好的那个（盲测）
+- 用 Elo 评分系统计算排名</p>
+<p><strong>Elo 公式</strong>（和象棋、电竞一样）：
+- 对战前，根据双方分数计算期望胜率
+- 对战后，根据实际结果更新分数
+- 赢了比自己强的对手 → 加分多
+- 赢了比自己弱的对手 → 加分少</p>
+<p>我们模拟一个简化版 Arena 来理解这个过程。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>class EloRating:
+    """简化版 Elo 评分系统"""
+    def __init__(self, models, initial_rating=1000):
+        self.ratings = {m: initial_rating for m in models}
+        self.history = {m: [initial_rating] for m in models}
+        self.K = 32  # K 因子：每场比赛的分数变化幅度
+    
+    def expected_score(self, rating_a, rating_b):
+        """计算 A 对 B 的期望得分"""
+        return 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
+    
+    def update(self, model_a, model_b, result):
+        """更新 Elo 分数
+        result: 1 = A 赢, 0 = B 赢, 0.5 = 平局
+        """
+        ra = self.ratings[model_a]
+        rb = self.ratings[model_b]
+        ea = self.expected_score(ra, rb)
+        eb = self.expected_score(rb, ra)
+        
+        self.ratings[model_a] += self.K * (result - ea)
+        self.ratings[model_b] += self.K * ((1 - result) - eb)
+        
+        for m in self.ratings:
+            self.history[m].append(self.ratings[m])
+
+# 真实实力（隐藏的，决定对战胜率）
+true_skill = {
+    'GPT-4': 0.90,
+    'Claude-3.5': 0.87,
+    'Gemini-Pro': 0.84,
+    'Llama-3-70B': 0.78,
+    'Mistral-7B': 0.65
+}
+
+arena = EloRating(list(true_skill.keys()))
+model_list = list(true_skill.keys())
+
+# 模拟 1000 场对战
+np.random.seed(42)
+n_battles = 1000
+
+for _ in range(n_battles):
+    # 随机选两个模型对战
+    a, b = np.random.choice(model_list, 2, replace=False)
+    
+    # 根据真实实力决定胜负（加随机噪声）
+    skill_a = true_skill[a]
+    skill_b = true_skill[b]
+    
+    # 胜率与实力差成正比
+    win_prob_a = skill_a / (skill_a + skill_b)
+    
+    if np.random.random() &lt; win_prob_a:
+        arena.update(a, b, 1)  # A 赢
+    elif np.random.random() &lt; 0.5:
+        arena.update(a, b, 0)  # B 赢
+    else:
+        arena.update(a, b, 0.5)  # 平局
+
+# 可视化 Elo 变化过程
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+colors = ['#C96442', '#4A90D9', '#50C878', '#9B59B6', '#F4D03F']
+
+# 左图：Elo 分数变化曲线
+for i, model in enumerate(model_list):
+    axes[0].plot(arena.history[model], label=model, color=colors[i], alpha=0.8, linewidth=1.5)
+
+axes[0].set_xlabel('对战场次', fontsize=12)
+axes[0].set_ylabel('Elo 评分', fontsize=12)
+axes[0].set_title(f'Elo 评分收敛过程（{n_battles} 场对战）', fontsize=14, fontweight='bold')
+axes[0].legend(fontsize=9)
+axes[0].grid(alpha=0.3)
+
+# 右图：最终排名
+final_ratings = sorted(arena.ratings.items(), key=lambda x: x[1], reverse=True)
+names = [m[0] for m in final_ratings]
+ratings = [m[1] for m in final_ratings]
+
+bars = axes[1].barh(range(len(names)), ratings, color=[colors[model_list.index(n)] for n in names], alpha=0.85)
+axes[1].set_yticks(range(len(names)))
+axes[1].set_yticklabels(names)
+axes[1].set_xlabel('Elo 评分', fontsize=12)
+axes[1].set_title('Arena 最终排名（模拟）', fontsize=14, fontweight='bold')
+axes[1].grid(axis='x', alpha=0.3)
+
+for i, (bar, rating) in enumerate(zip(bars, ratings)):
+    axes[1].text(rating + 3, i, f'{rating:.0f}', va='center', fontsize=10, fontweight='bold')
+
+plt.tight_layout()
+plt.savefig('elo_simulation.png', dpi=120, bbox_inches='tight')
+plt.show()
+
+print('\n📊 Elo 评分关键洞察：')
+print('  - 前 100 场波动大（数据不足）')
+print('  - 约 500 场后趋于稳定（收敛）')
+print('  - 真实实力差异大的模型更容易区分')
+print('  - 实际 Arena 有数十万场对战，排名非常稳定')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>4. 多维评估雷达图：没有万能模型</h2>
+<p>现实中没有在所有维度都最优的模型。雷达图能直观展示各模型的优劣势。</p>
+<p>关键评估维度：
+- <strong>知识广度</strong>（MMLU）：通用知识覆盖
+- <strong>推理能力</strong>（GPQA/MATH）：复杂推理
+- <strong>代码能力</strong>（HumanEval/SWE-bench）：编程
+- <strong>人类偏好</strong>（Arena Elo）：实际体验
+- <strong>性价比</strong>：同等效果下的成本
+- <strong>推理速度</strong>：延迟和吞吐</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 多维评估雷达图
+categories = ['知识广度\n(MMLU)', '推理能力\n(GPQA)', '代码能力\n(HumanEval)', 
+              '人类偏好\n(Arena)', '性价比', '推理速度']
+n_cats = len(categories)
+
+# 模拟各模型的归一化得分 (0-1)
+model_dims = {
+    'GPT-4':       [0.92, 0.90, 0.88, 0.91, 0.40, 0.55],
+    'Claude-3.5':  [0.90, 0.88, 0.92, 0.93, 0.45, 0.60],
+    'Gemini-Pro':  [0.87, 0.85, 0.83, 0.85, 0.60, 0.70],
+    'Llama-3-70B': [0.82, 0.75, 0.78, 0.77, 0.85, 0.80],
+    'Mistral-7B':  [0.68, 0.58, 0.62, 0.60, 0.95, 0.95],
+}
+
+fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+angles = np.linspace(0, 2 * np.pi, n_cats, endpoint=False).tolist()
+angles += angles[:1]  # 闭合
+
+for i, (model, scores) in enumerate(model_dims.items()):
+    values = scores + scores[:1]
+    ax.plot(angles, values, 'o-', label=model, color=colors[i], linewidth=2, markersize=6)
+    ax.fill(angles, values, alpha=0.1, color=colors[i])
+
+ax.set_xticks(angles[:-1])
+ax.set_xticklabels(categories, fontsize=11)
+ax.set_ylim(0, 1)
+ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
+ax.set_yticklabels(['20%', '40%', '60%', '80%', '100%'])
+ax.set_title('多维评估雷达图：没有万能模型', fontsize=16, fontweight='bold', pad=20)
+ax.legend(loc='lower right', bbox_to_anchor=(1.15, -0.05), fontsize=10)
+
+plt.tight_layout()
+plt.savefig('radar_chart.png', dpi=120, bbox_inches='tight')
+plt.show()
+
+print('\n📊 多维评估关键洞察：')
+print('  - GPT-4/Claude 在能力维度领先，但性价比和速度不占优')
+print('  - 开源模型（Llama、Mistral）在性价比和速度上优势明显')
+print('  - Mistral-7B 面积最小（能力弱），但性价比最高')
+print('  - 技术选型 = 在雷达图上找到最适合你需求的模型')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>5. Goodhart 效应：当指标成为目标</h2>
+<p><strong>Goodhart 定律</strong>："当一个指标成为目标，它就不再是一个好指标。"</p>
+<p>AI 领域的典型表现：
+- 模型专门针对基准题目训练（刷分）
+- 基准分数飙升，但实际使用体验没怎么提升
+- 这就像学生「刷题」能考高分，但不代表真正理解了</p>
+<p><strong>数据污染</strong>是更严重的问题：
+- 训练数据中包含了基准的题目和答案
+- 模型不是「学会了解题」，而是「记住了答案」
+- 就像考试前泄露了试卷</p>
+<p>我们来模拟 Goodhart 效应。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟 Goodhart 效应
+np.random.seed(42)
+
+# 模拟一个模型在不同训练阶段的表现
+epochs = np.arange(1, 51)
+
+# 场景 1：正常训练（基准和实际能力同步提升）
+benchmark_normal = 0.50 + 0.30 * (1 - np.exp(-epochs / 15)) + np.random.normal(0, 0.01, len(epochs))
+real_normal = 0.50 + 0.25 * (1 - np.exp(-epochs / 20)) + np.random.normal(0, 0.015, len(epochs))
+
+# 场景 2：刷分训练（基准飙升，实际提升少）
+benchmark_goodhart = 0.50 + 0.40 * (1 - np.exp(-epochs / 10)) + np.random.normal(0, 0.01, len(epochs))
+real_goodhart = 0.50 + 0.15 * (1 - np.exp(-epochs / 25)) + np.random.normal(0, 0.015, len(epochs))
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+# 左图：正常训练
+axes[0].plot(epochs, benchmark_normal, '-', label='基准分数 (MMLU)', color='#4A90D9', linewidth=2)
+axes[0].plot(epochs, real_normal, '-', label='实际能力', color='#C96442', linewidth=2)
+axes[0].fill_between(epochs, benchmark_normal, real_normal, alpha=0.15, color='#888888')
+axes[0].set_xlabel('训练进度', fontsize=12)
+axes[0].set_ylabel('表现分数', fontsize=12)
+axes[0].set_title('✅ 正常训练：基准与实际同步', fontsize=14, fontweight='bold')
+axes[0].legend(fontsize=11)
+axes[0].grid(alpha=0.3)
+axes[0].set_ylim(0.4, 1.0)
+
+# 右图：刷分训练（Goodhart）
+axes[1].plot(epochs, benchmark_goodhart, '-', label='基准分数 (MMLU)', color='#4A90D9', linewidth=2)
+axes[1].plot(epochs, real_goodhart, '-', label='实际能力', color='#C96442', linewidth=2)
+axes[1].fill_between(epochs, benchmark_goodhart, real_goodhart, alpha=0.2, color='#FF6B6B')
+axes[1].set_xlabel('训练进度', fontsize=12)
+axes[1].set_ylabel('表现分数', fontsize=12)
+axes[1].set_title('⚠️ Goodhart 效应：刷分 ≠ 真实力', fontsize=14, fontweight='bold')
+axes[1].legend(fontsize=11)
+axes[1].grid(alpha=0.3)
+axes[1].set_ylim(0.4, 1.0)
+
+# 标注差距
+gap = benchmark_goodhart[-1] - real_goodhart[-1]
+axes[1].annotate(f'虚高 {gap:.0%}', 
+                 xy=(epochs[-1], (benchmark_goodhart[-1] + real_goodhart[-1])/2),
+                 fontsize=12, fontweight='bold', color='#FF0000',
+                 arrowprops=dict(arrowstyle='-&gt;', color='#FF0000'),
+                 xytext=(epochs[-1]-15, 0.95))
+
+plt.tight_layout()
+plt.savefig('goodhart_effect.png', dpi=120, bbox_inches='tight')
+plt.show()
+
+print('\n📊 Goodhart 效应关键洞察：')
+print('  - 正常训练：基准分数和实际能力几乎同步增长')
+print(f'  - 刷分训练：基准分数虚高 {gap:.0%}，但实际能力提升有限')
+print('  - 这就是为什么单一基准排名不可靠')
+print('  - Chatbot Arena 之所以可信，正是因为人类偏好不容易被刷分')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>📋 本课总结</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>一句话</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MMLU</strong></td>
+<td>57 科综合考试</td>
+<td>衡量通用知识广度</td>
+</tr>
+<tr>
+<td><strong>HumanEval</strong></td>
+<td>编程函数实现</td>
+<td>衡量代码基础能力</td>
+</tr>
+<tr>
+<td><strong>SWE-bench</strong></td>
+<td>真实 Bug 修复</td>
+<td>衡量实际开发能力</td>
+</tr>
+<tr>
+<td><strong>Chatbot Arena</strong></td>
+<td>盲测 A/B 投票</td>
+<td>衡量人类偏好体验</td>
+</tr>
+<tr>
+<td><strong>Pass@k</strong></td>
+<td>试 k 次至少对 1 次</td>
+<td>代码生成的概率评估</td>
+</tr>
+<tr>
+<td><strong>Elo</strong></td>
+<td>累积对战胜率</td>
+<td>跨模型统一排名</td>
+</tr>
+<tr>
+<td><strong>Goodhart</strong></td>
+<td>指标≠目标</td>
+<td>警惕刷分陷阱</td>
+</tr>
+</tbody>
+</table>
+<h3>记住这三个原则</h3>
+<ol>
+<li><strong>没有万能基准</strong>——每个基准只测一个维度，多维度交叉评估才可靠</li>
+<li><strong>看过程不看数字</strong>——分数背后的评估方法比分数本身更重要</li>
+<li><strong>自己动手评估</strong>——最了解你场景的是你自己，别只看排行榜</li>
+</ol>
+<h3>下一课预告</h3>
+<p>继续探索 AI 前沿专题，可能方向：AI 安全与对齐、开源 LLM 生态、Agent 工程化实践。</p></div>

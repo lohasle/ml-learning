@@ -1,0 +1,141 @@
+<h1>AI 评估与基准测试（Evaluation &amp; Benchmarking）</h1>
+<h2>概念概要</h2>
+<p>AI 评估是衡量模型能力的系统方法。从 MMLU 的知识广度测试到 Chatbot Arena 的人类偏好盲测，不同基准从不同维度回答「模型好不好」这个根本问题。</p>
+<h2>为什么评估这么难？</h2>
+<ul>
+<li><strong>泛化性</strong>：基准上表现好 ≠ 实际场景好用</li>
+<li><strong>覆盖率</strong>：单一基准无法覆盖所有能力维度</li>
+<li><strong>动态性</strong>：模型在进化，基准也在过时</li>
+<li><strong>数据污染</strong>：训练数据可能包含基准题目</li>
+<li><strong>主观性</strong>：很多任务没有标准答案</li>
+</ul>
+<h2>关键基准一览</h2>
+<h3>知识与推理</h3>
+<table>
+<thead>
+<tr>
+<th>基准</th>
+<th>测试内容</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MMLU</td>
+<td>57 学科选择题</td>
+<td>通用知识标配</td>
+</tr>
+<tr>
+<td>GPQA</td>
+<td>研究生级专家题</td>
+<td>PhD 级难度</td>
+</tr>
+<tr>
+<td>ARC</td>
+<td>科学推理</td>
+<td>多难度等级</td>
+</tr>
+<tr>
+<td>HellaSwag</td>
+<td>常识推理</td>
+<td>表面简单实际难</td>
+</tr>
+</tbody>
+</table>
+<h3>代码能力</h3>
+<table>
+<thead>
+<tr>
+<th>基准</th>
+<th>测试内容</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HumanEval</td>
+<td>164 道 Python 题</td>
+<td>代码能力标配</td>
+</tr>
+<tr>
+<td>SWE-bench</td>
+<td>真实 GitHub Bug 修复</td>
+<td>最接近实际开发</td>
+</tr>
+<tr>
+<td>LiveCodeBench</td>
+<td>实时竞赛题</td>
+<td>防数据污染</td>
+</tr>
+</tbody>
+</table>
+<h3>人类偏好</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>机制</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chatbot Arena</td>
+<td>盲测 A/B + 人类投票</td>
+<td>最可信排名</td>
+</tr>
+<tr>
+<td>MT-Bench</td>
+<td>多轮对话 + GPT 打分</td>
+<td>自动化</td>
+</tr>
+</tbody>
+</table>
+<h2>关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Elo 期望</td>
+<td>E = 1/(1+10^((Rb-Ra)/400))</td>
+<td>分差越大，弱者越难赢</td>
+</tr>
+<tr>
+<td>Pass@k</td>
+<td>1 - C(n-c,k)/C(n,k)</td>
+<td>k 次尝试至少对一次</td>
+</tr>
+<tr>
+<td>MMLU 分数</td>
+<td>correct/total × 100%</td>
+<td>4 选 1 准确率</td>
+</tr>
+</tbody>
+</table>
+<h2>Goodhart 定律</h2>
+<blockquote>
+<p>当一个指标成为目标，它就不再是一个好指标。</p>
+</blockquote>
+<ul>
+<li>针对基准优化（刷分）≠ 真正能力提升</li>
+<li>数据污染让分数虚高</li>
+<li>多维评估 + 人类偏好是对抗 Goodhart 的最佳方式</li>
+</ul>
+<h2>三条原则</h2>
+<ol>
+<li><strong>没有万能基准</strong>——多维度交叉评估才可靠</li>
+<li><strong>看过程不看数字</strong>——评估方法比分数本身重要</li>
+<li><strong>自己动手评估</strong>——最了解你场景的是你自己</li>
+</ol>
+<h2>关联概念</h2>
+<ul>
+<li>[[模型评估与交叉验证]]（第 3 课）</li>
+<li>[[大模型训练与推理工程]]（第 22 课）</li>
+<li>[[推理模型与思维链]]（第 24 课）</li>
+</ul>

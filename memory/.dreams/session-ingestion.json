@@ -29,6 +29,20 @@
       "lineCount": 0,
       "lastContentLine": 0
     },
+    "ml-learning-coach:sessions/58bd9a28-9195-42d3-8c50-ab7a8c8a4fb2.jsonl": {
+      "mtimeMs": 1777669899843,
+      "size": 218360,
+      "contentHash": "7154c6f29fed2490562cfcc1e825e0d66aa2617d96bc3dfd7ae55d5291e7a5ab",
+      "lineCount": 24,
+      "lastContentLine": 24
+    },
+    "ml-learning-coach:sessions/58bd9a28-9195-42d3-8c50-ab7a8c8a4fb2.trajectory.jsonl": {
+      "mtimeMs": 1777669899909,
+      "size": 389908,
+      "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+      "lineCount": 0,
+      "lastContentLine": 0
+    },
     "ml-learning-coach:sessions/5f779c0b-1f33-4f93-8512-d7cefeb52658.jsonl": {
       "mtimeMs": 1777151100596,
       "size": 4352,
@@ -302,6 +316,32 @@
       "9ebe953e69aec9fadff150eefa84ce417d1f15c3",
       "54c03ee546c9afc0b898521d290119e237efcb85"
     ],
-    "ml-learning-coach:e34db751-0bf2-4fb8-b318-557d3b8777a9.trajectory": []
+    "ml-learning-coach:58bd9a28-9195-42d3-8c50-ab7a8c8a4fb2": [
+      "4ea65b5f31f3a9f1c3e1a7bc544088d9a8d12a2a",
+      "0e2173d540ad4f6eb639f735483a8250c68063e9",
+      "907e4da28a6a1de9b7dc55c485dba494110e4483",
+      "5b0de5b652532d0175a802c4e3ef6167f31b3165",
+      "2b57195cc1f72acfa367cc851ab64e716ab6d688",
+      "5e176c118ee18e337df5f13a962eac1e7681d665",
+      "5d9c07a9564771d3844c6d90ef0300792425ee5c",
+      "34b3b933e47f2143c39eafc1c2cc581d086b4489",
+      "7a1588454f9a45e602f6d93fb287f16189838fc3",
+      "cfd7010dbbc7661d7c61e6c8b9eda155818addbe",
+      "d27953ef52a33800993cd908e60b5e450395f6e0",
+      "6926aed8fece563324e24d513e1033c920948436",
+      "6bc79fa03aa40c3c66674deda69d7c13f89e720a",
+      "8d6bcb485aef440d92d275044c13db14611523ea",
+      "23af7cc101aa1616ac32641a93058f9fb078481e",
+      "80081491bcd21cfe5d0286d0205df9979632a465",
+      "79b80c400c2fd9fa99f214ae486e0752ead480a7",
+      "2c3de977bb35799f9e94d1b47f4127310f827d6a",
+      "dcf91f5384a669131e4111c63111ff0ce1921067",
+      "b3276f10cfb2e64cfc2db9f6e3d20ccd0ee53907",
+      "554261367acdcf9a1e61d10d141d82eba412d45e",
+      "975bebf8fff457b193b0d56c84fd27bec5162ff8",
+      "ef4c4b93d102e4fbd0bb4711a6c226bba62b4230",
+      "3e97a177ec9a9b2659407aaf3fd6524d9e0a40f0"
+    ],
+    "ml-learning-coach:58bd9a28-9195-42d3-8c50-ab7a8c8a4fb2.trajectory": []
   }
 }
