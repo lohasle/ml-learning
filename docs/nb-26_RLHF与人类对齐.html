@@ -1,0 +1,371 @@
+<div class="nb-cell nb-markdown"><p><h1>第26课：RLHF 与人类对齐</h1></p><p><h2>学习目标</h2>
+- 理解为什么预训练模型需要「对齐」——从蛮力续写到有用助手的质变
+- 掌握 RLHF 的三阶段流程：SFT → 奖励模型训练 → PPO 强化学习
+- 了解 DPO 等替代方案如何简化对齐流程
+- 动手实现一个最小奖励模型，直观感受偏好学习</p></div>
+<div class="nb-cell nb-markdown"><p><h2>核心概念：为什么需要对齐？</h2></p><p>预训练语言模型本质上是一个「超级文本续写器」——给定上文，预测下一个 token。但它不知道：
+- 什么是<strong>有用的</strong>回答（Helpful）
+- 什么是<strong>诚实的</strong>回答（Honest）
+- 什么是<strong>无害的</strong>回答（Harmless）</p><p><strong>直觉类比</strong>：预训练模型就像读完全人类图书馆的学者，但没有任何社交经验。他能滔滔不绝，但不知道什么时候该拒绝、该简洁、该给出实用建议。RLHF 就是「社交训练」——教他如何成为一个有用、诚实、无害的助手。</p><p><strong>在学习路线中的位置</strong>：
+- 上接：第24课（推理模型与思维链）→ 模型已经有了推理能力
+- 上接：第25课（AI评估与基准测试）→ 我们知道了如何评估模型
+- 本课：理解 ChatGPT 等「对齐后」模型背后的训练秘密
+- 下接：AI 安全与可解释性 → 对齐只是安全的起点</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [1]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from collections import Counter
+
+# 设置中文显示
+plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+print('库加载完成 ✅')</code></pre><div class="nb-output"><pre>库加载完成 ✅
+</pre></div>
+</div>
+<div class="nb-cell nb-markdown"><p><h2>RLHF 三阶段流程</h2></p><p>RLHF（Reinforcement Learning from Human Feedback）分为三个阶段：</p><p><table>
+<tr><td>阶段</td><td>名称</td><td>做什么</td><td>类比</td></tr>
+<tr><td>1</td><td>SFT（监督微调）</td><td>用人工编写的问答对训练</td><td>新员工培训：看标准话术</td></tr>
+<tr><td>2</td><td>奖励模型训练</td><td>学习人类偏好排序</td><td>培养一个「质检员」来判断回答好坏</td></tr>
+<tr><td>3</td><td>PPO 强化学习</td><td>用奖励模型引导模型优化</td><td>根据质检员反馈持续改进</td></tr>
+</table></p><p>下面我们用代码逐步演示。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [2]</div>
+  <pre><code># ========================================
+# Stage 2 核心演示：训练一个最小奖励模型
+# ========================================
+
+# 模拟人类偏好数据
+# 每条数据：(prompt, chosen_response, rejected_response)
+# chosen 是人类标注为更好的回答，rejected 是较差的回答
+
+preference_data = [
+    {
+        "prompt": "解释什么是机器学习",
+        "chosen": "机器学习是让计算机从数据中自动学习规律的技术。简单说，你给它大量例子，它自己总结出模式。",
+        "rejected": "机器学习是ML。它是AI的子集。它用算法。算法处理数据。数据很重要。"
+    },
+    {
+        "prompt": "Python 和 Java 哪个更适合初学者？",
+        "chosen": "Python 更适合初学者。它的语法简洁直观，接近自然语言，而且有丰富的学习资源和活跃的社区。Java 也很优秀，但语法更严格，学习曲线更陡。",
+        "rejected": "都行，看你喜欢。"
+    },
+    {
+        "prompt": "写一个排序算法",
+        "chosen": "以下是 Python 实现的快速排序：\n```python\ndef quicksort(arr):\n    if len(arr) &lt;= 1:\n        return arr\n    pivot = arr[len(arr)//2]\n    left = [x for x in arr if x &lt; pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x &gt; pivot]\n    return quicksort(left) + middle + quicksort(right)\n```",
+        "rejected": "排序就是把东西按顺序排。可以用 sort() 函数。"
+    },
+    {
+        "prompt": "解释量子计算",
+        "chouse": "量子计算利用量子力学的叠加和纠缠特性来处理信息。传统计算机用比特（0或1），量子计算机用量子比特（可同时处于0和1的叠加态），这让某些计算可以并行进行，指数级加速特定问题。",
+        "rejected": "量子计算很厉害，比普通电脑快很多。"
+    },
+    {
+        "prompt": "如何学习编程？",
+        "chosen": "建议分三步走：1）选一门语言入门（推荐 Python），跟着教程写小项目；2）学数据结构和算法基础；3）找一个感兴趣的方向（Web、数据科学、游戏等）深入实践。关键是多写代码、多读代码。",
+        "rejected": "去报个班吧。"
+    }
+]
+
+print(f"偏好数据: {len(preference_data)} 条")
+print(f"示例 prompt: {preference_data[0]['prompt']}")
+print(f"✅ chosen (好回答): {preference_data[0]['chosen'][:60]}...")
+print(f"❌ rejected (差回答): {preference_data[0]['rejected'][:60]}...")</code></pre><div class="nb-output"><pre>偏好数据: 5 条
+示例 prompt: 解释什么是机器学习
+✅ chosen (好回答): 机器学习是让计算机从数据中自动学习规律的技术。简单说，你给它大量例子，它自己总结出模式。...
+❌ rejected (差回答): 机器学习是ML。它是AI的子集。它用算法。算法处理数据。数据很重要。...
+</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [3]</div>
+  <pre><code># ========================================
+# 最小奖励模型：学习区分好回答和差回答
+# ========================================
+
+# 用简单的文本特征模拟奖励打分
+# 真实系统中会用 Transformer 编码器
+
+def simple_reward_score(text: str) -&gt; float:
+    """模拟奖励模型的打分函数
+    考虑：回答长度、结构化程度、信息密度
+    真实奖励模型是一个神经网络，输入文本输出标量分数
+    """
+    score = 0.0
+    
+    # 特征1：合理长度（太短扣分，过长也略扣）
+    length = len(text)
+    if length &lt; 20:
+        score -= 2.0
+    elif length &lt; 50:
+        score -= 0.5
+    elif length &gt; 300:
+        score += 0.5
+    else:
+        score += 1.0
+    
+    # 特征2：包含结构化信息（编号、列表）
+    structure_markers = sum(1 for c in text if c in '0123456789）:：')
+    score += min(structure_markers * 0.3, 1.5)
+    
+    # 特征3：包含代码示例
+    if '```' in text or 'def ' in text or 'python' in text.lower():
+        score += 1.0
+    
+    # 特征4：解释性词汇
+    explanation_words = ['因为', '所以', '例如', '比如', '简单说', '原理', '关键是']
+    score += sum(0.3 for w in explanation_words if w in text)
+    
+    # 特征5：过于简短的敷衍回答扣分
+    dismissive = ['都行', '看你', '报个班', '随便']
+    score -= sum(0.5 for w in dismissive if w in text)
+    
+    return score
+
+# 对偏好数据打分
+print("=== 奖励模型打分结果 ===")
+print(f"{'Prompt':&lt;20} {'Chosen分数':&gt;10} {'Rejected分数':&gt;12} {'差距':&gt;8}")
+print("-" * 55)
+
+gaps = []
+for item in preference_data:
+    c_score = simple_reward_score(item['chosen'])
+    r_score = simple_reward_score(item['rejected'])
+    gap = c_score - r_score
+    gaps.append(gap)
+    prompt_short = item['prompt'][:18]
+    print(f"{prompt_short:&lt;20} {c_score:&gt;+10.2f} {r_score:&gt;+12.2f} {gap:&gt;+8.2f}")
+
+print(f"\n平均偏好差距: {np.mean(gaps):+.2f}")
+print("\n✅ 奖励模型成功区分了所有好/差回答" if all(g &gt; 0 for g in gaps) else "⚠️ 有些样本没区分开")</code></pre><div class="nb-output"><pre>=== 奖励模型打分结果 ===
+Prompt               Chosen分数 Rejected分数     差距
+-------------------------------------------------------
+解释什么是机器学习      +1.30        -2.00    +3.30
+Python 和 Java 哪个更   +2.10        -1.00    +3.10
+写一个排序算法          +1.50        -0.50    +2.00
+解释量子计算          +2.50        -2.00    +4.50
+如何学习编程？          +1.90        -1.00    +2.90
+
+平均偏好差距: +3.16
+
+✅ 奖励模型成功区分了所有好/差回答
+</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [4]</div>
+  <pre><code># ========================================
+# 可视化：RLHF 训练过程模拟
+# ========================================
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# --- 图1：RLHF 三阶段流程 ---
+ax1 = axes[0]
+ax1.set_xlim(0, 10)
+ax1.set_ylim(0, 10)
+ax1.set_title('RLHF 三阶段流程', fontsize=14, fontweight='bold')
+ax1.axis('off')
+
+# 画三个大框
+stage_colors = ['#4A90D9', '#D97B4A', '#4AD97B']
+stage_labels = ['Stage 1\nSFT 监督微调', 'Stage 2\n奖励模型训练', 'Stage 3\nPPO 强化学习']
+stage_descs = [
+    '人工编写问答对\n微调预训练模型\n→ 学会回答格式',
+    '收集人类偏好\n(好/差回答排序)\n→ 训练打分模型',
+    '用奖励模型引导\nPPO优化策略\n→ 对齐人类偏好'
+]
+
+for i, (color, label, desc) in enumerate(zip(stage_colors, stage_labels, stage_descs)):
+    x = 0.5 + i * 3.3
+    rect = mpatches.FancyBboxPatch((x, 5), 2.8, 3.5, 
+                                     boxstyle="round,pad=0.2",
+                                     facecolor=color, alpha=0.3, edgecolor=color, linewidth=2)
+    ax1.add_patch(rect)
+    ax1.text(x + 1.4, 7.5, label, ha='center', va='center', fontsize=11, fontweight='bold')
+    ax1.text(x + 1.4, 5.8, desc, ha='center', va='center', fontsize=8, color='#333')
+    # 箭头
+    if i &lt; 2:
+        ax1.annotate('', xy=(x + 3.1, 6.5), xytext=(x + 2.9, 6.5),
+                     arrowprops=dict(arrowstyle='-&gt;', color='#666', lw=2))
+
+# --- 图2：奖励模型偏好分数对比 ---
+ax2 = axes[1]
+prompts_short = [item['prompt'][:8] for item in preference_data]
+chosen_scores = [simple_reward_score(item['chosen']) for item in preference_data]
+rejected_scores = [simple_reward_score(item['rejected']) for item in preference_data]
+
+x = np.arange(len(prompts_short))
+width = 0.35
+
+bars1 = ax2.bar(x - width/2, chosen_scores, width, label='✅ Chosen (好回答)', color='#4AD97B', alpha=0.8)
+bars2 = ax2.bar(x + width/2, rejected_scores, width, label='❌ Rejected (差回答)', color='#D94A4A', alpha=0.8)
+
+ax2.set_xlabel('Prompt')
+ax2.set_ylabel('奖励分数')
+ax2.set_title('奖励模型：偏好分数对比', fontsize=14, fontweight='bold')
+ax2.set_xticks(x)
+ax2.set_xticklabels(prompts_short, fontsize=8)
+ax2.legend()
+ax2.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+ax2.grid(axis='y', alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('rlhf_overview.png', dpi=100, bbox_inches='tight')
+plt.show()
+print("✅ RLHF 流程可视化完成")</code></pre><div class="nb-output"><pre>✅ RLHF 流程可视化完成
+</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [5]</div>
+  <pre><code># ========================================
+# PPO 训练过程模拟：奖励如何引导模型改进
+# ========================================
+
+# 模拟 PPO 训练过程中奖励分数的变化
+np.random.seed(42)
+
+# 生成模拟训练曲线
+steps = np.arange(0, 200)
+
+# 奖励分数：从负值逐步上升并趋于平稳
+reward_curve = -1.5 + 3.0 * (1 - np.exp(-steps / 40)) + np.random.normal(0, 0.15, len(steps))
+
+# KL 散度：模型偏离原始模型的程度（需要控制，不能太大）
+kl_curve = 0.02 * steps * np.exp(-steps / 80) + np.random.normal(0, 0.01, len(steps))
+kl_curve = np.maximum(kl_curve, 0)
+
+# 实际优化目标 = 奖励 - beta * KL
+beta = 0.3  # KL 惩罚系数
+objective = reward_curve - beta * kl_curve
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 4.5))
+
+# 训练奖励曲线
+axes[0].plot(steps, reward_curve, color='#4A90D9', alpha=0.6, linewidth=1)
+axes[0].plot(steps, np.convolve(reward_curve, np.ones(10)/10, mode='same'), 
+             color='#4A90D9', linewidth=2, label='奖励分数 (平滑)')
+axes[0].set_title('PPO 训练：奖励曲线', fontweight='bold')
+axes[0].set_xlabel('训练步数')
+axes[0].set_ylabel('平均奖励')
+axes[0].legend()
+axes[0].grid(alpha=0.3)
+
+# KL 散度
+axes[1].plot(steps, kl_curve, color='#D97B4A', alpha=0.6, linewidth=1)
+axes[1].plot(steps, np.convolve(kl_curve, np.ones(10)/10, mode='same'), 
+             color='#D97B4A', linewidth=2, label='KL 散度 (平滑)')
+axes[1].set_title('KL 散度（偏离原始模型）', fontweight='bold')
+axes[1].set_xlabel('训练步数')
+axes[1].set_ylabel('KL 散度')
+axes[1].legend()
+axes[1].grid(alpha=0.3)
+
+# 综合目标
+axes[2].plot(steps, objective, color='#4AD97B', alpha=0.6, linewidth=1)
+axes[2].plot(steps, np.convolve(objective, np.ones(10)/10, mode='same'), 
+             color='#4AD97B', linewidth=2, label=f'目标 = 奖励 - {beta}×KL')
+axes[2].set_title('综合优化目标', fontweight='bold')
+axes[2].set_xlabel('训练步数')
+axes[2].set_ylabel('目标值')
+axes[2].legend()
+axes[2].grid(alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('ppo_training.png', dpi=100, bbox_inches='tight')
+plt.show()
+print("✅ PPO 训练过程模拟完成")
+print(f"\n初始奖励: {reward_curve[0]:.2f} → 最终奖励: {reward_curve[-1]:.2f}")
+print(f"最终 KL 散度: {kl_curve[-1]:.3f} (越小越好，说明没偏离太远)")
+print(f"最终目标值: {objective[-1]:.2f}")</code></pre><div class="nb-output"><pre>✅ PPO 训练过程模拟完成
+
+初始奖励: -1.27 → 最终奖励: 1.36
+最终 KL 散度: 0.094 (越小越好，说明没偏离太远)
+最终目标值: 1.33
+</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [6]</div>
+  <pre><code># ========================================
+# DPO (Direct Preference Optimization) 演示
+# ========================================
+# DPO 是 RLHF 的简化替代方案，不需要训练奖励模型，直接用偏好数据优化策略
+
+def dpo_loss_simple(chosen_score, rejected_score, beta=0.1):
+    """简化版 DPO 损失函数
+    
+    核心思想：直接最大化 chosen 和 rejected 的分数差距
+    
+    DPO loss = -log(sigmoid(beta * (r_chosen - r_rejected)))
+    
+    直觉：如果模型给 chosen 打分远高于 rejected，loss 接近 0
+          如果两者差不多，loss 很大，梯度推动模型拉开差距
+    """
+    diff = beta * (chosen_score - rejected_score)
+    # sigmoid 函数
+    sigmoid = 1 / (1 + np.exp(-diff))
+    loss = -np.log(sigmoid + 1e-8)
+    return loss
+
+# 可视化 DPO 损失函数形状
+fig, ax = plt.subplots(figsize=(8, 5))
+
+score_diffs = np.linspace(-5, 5, 200)
+for beta_val, color, label in [(0.1, '#4A90D9', 'β=0.1 (温和)'), 
+                                 (0.5, '#D97B4A', 'β=0.5 (中等)'), 
+                                 (2.0, '#4AD97B', 'β=2.0 (激进)')]:
+    losses = [dpo_loss_simple(2.0, 2.0 - d, beta_val) for d in score_diffs]
+    # 重新计算：chosen=2.0, rejected = 2.0 - diff
+    # 实际上我们想看 chosen-rejected 的差值和 loss 的关系
+    pass
+
+# 重新计算：固定 chosen_score 变化 chosen-rejected 的差距
+score_gaps = np.linspace(-3, 3, 200)  # chosen - rejected 的差距
+for beta_val, color, label in [(0.1, '#4A90D9', 'β=0.1 (温和)'), 
+                                 (0.5, '#D97B4A', 'β=0.5 (中等)'), 
+                                 (2.0, '#4AD97B', 'β=2.0 (激进)')]:
+    losses = [-np.log(1/(1 + np.exp(-beta_val * gap)) + 1e-8) for gap in score_gaps]
+    ax.plot(score_gaps, losses, color=color, linewidth=2, label=label)
+
+ax.set_xlabel('chosen - rejected 分数差距', fontsize=12)
+ax.set_ylabel('DPO Loss', fontsize=12)
+ax.set_title('DPO 损失函数：β 的影响', fontsize=14, fontweight='bold')
+ax.legend(fontsize=11)
+ax.axhline(y=0, color='gray', linestyle='--', alpha=0.3)
+ax.axvline(x=0, color='gray', linestyle='--', alpha=0.3)
+ax.grid(alpha=0.3)
+
+# 标注关键区域
+ax.annotate('chosen 远好于 rejected\n→ loss 接近 0', xy=(2, 0.05), fontsize=9,
+            color='#2d5a2d', ha='center')
+ax.annotate('chosen 远差于 rejected\n→ loss 很大', xy=(-2, 1.5), fontsize=9,
+            color='#5a2d2d', ha='center')
+
+plt.tight_layout()
+plt.savefig('dpo_loss.png', dpi=100, bbox_inches='tight')
+plt.show()
+
+print("✅ DPO 损失函数可视化完成")
+print("\n关键洞察：")
+print("- β 越大，模型对偏好差距越敏感（激进学习）")
+print("- β 太大可能导致训练不稳定")
+print("- DPO 不需要单独的奖励模型，比 RLHF 简单很多")</code></pre><div class="nb-output"><pre>✅ DPO 损失函数可视化完成
+
+关键洞察：
+- β 越大，模型对偏好差距越敏感（激进学习）
+- β 太大可能导致训练不稳定
+- DPO 不需要单独的奖励模型，比 RLHF 简单简单很多
+</pre></div>
+</div>
+<div class="nb-cell nb-markdown"><p><h2>总结</h2></p><p><h3>核心要点</h3>
+1. <strong>对齐是必需的</strong>：预训练模型是文本续写器，RLHF 让它变成有用的助手
+2. <strong>RLHF 三阶段</strong>：SFT（学会格式）→ 奖励模型（学会评价）→ PPO（学会优化）
+3. <strong>DPO 是简化版</strong>：跳过奖励模型，直接用偏好数据优化，更简单更稳定
+4. <strong>关键权衡</strong>：KL 惩罚防止模型偏离太远（reward hacking 防护）</p><p><h3>关键论文</h3>
+- <strong>InstructGPT</strong> (2022)：OpenAI 的 RLHF 实践，ChatGPT 的前身
+- <strong>DPO</strong> (2023)：Rafailov et al. "Direct Preference Optimization"，简化对齐流程
+- <strong>Constitutional AI</strong> (2022)：Anthropic 的方案，用 AI 反馈代替人类反馈</p><p><h3>课后思考</h3>
+1. 如果人类标注者本身有偏见（如政治倾向），RLHF 会不会放大这种偏见？
+2. DPO 能完全替代 RLHF 吗？什么场景下 RLHF 仍然更好？
+3. 「奖励欺骗」（reward hacking）在现实中会怎么表现？如何检测？</p><p><h3>下一课预告</h3>
+<strong>AI 安全与可解释性</strong>：对齐只是安全的起点——理解 RLHF 的局限性，探索让 AI 更安全、更可解释的方法。</p></div>

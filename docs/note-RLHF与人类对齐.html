@@ -1,0 +1,23 @@
+<h1>RLHF 与人类对齐</h1></p><p><h2>🎯 核心概念</h2></p><p><h3>1. 基础定义</h3>
+- <strong>类型</strong>：训练方法 / 对齐技术
+- <strong>适用场景</strong>：让预训练大模型从「续写器」变成「有用助手」的最后一步训练
+- <strong>一句话定义</strong>：用人类偏好反馈训练奖励模型，再用强化学习优化语言模型，使其输出更符合人类期望</p><p><h3>2. 数学原理</h3></p><p><strong>奖励模型训练</strong>（Bradley-Terry 模型）：</p><p><span class="math">$$P(y_c \succ y_r | x) = \sigma(r(x, y_c) - r(x, y_r))$</span>$</p><p>直觉：好回答的奖励分数高于差回答的概率。</p><p><strong>PPO 目标函数</strong>：</p><p><span class="math">$$\max_\theta \mathbb{E}[r(x, y) - \beta \cdot D_{KL}(\pi_\theta \| \pi_{\text{ref}})]$</span>$</p><p>直觉：最大化奖励，但用 KL 散度约束不要偏离原始模型太远。</p><p><strong>DPO 损失</strong>：</p><p><span class="math">$$\mathcal{L}_{\text{DPO}} = -\mathbb{E}\left[\log\sigma\left(\beta\left[\log\frac{\pi_\theta(y_c|x)}{\pi_{\text{ref}}(y_c|x)} - \log\frac{\pi_\theta(y_r|x)}{\pi_{\text{ref}}(y_r|x)}\right]\right)\right]$</span>$</p><p>直觉：直接最大化模型在好回答上的概率、最小化在差回答上的概率。</p><p><h3>3. 实践要点</h3>
+- <strong>数据质量是关键</strong>：偏好标注的一致性决定对齐质量
+- <strong>KL 惩罚系数 β</strong>：通常 0.1-0.5，太大限制创新、太小容易 reward hacking
+- <strong>标注者多样性</strong>：不同背景的标注者减少偏见放大
+- <strong>迭代式对齐</strong>：收集反馈 → 训练 → 部署 → 收集更多反馈，循环改进</p><p><h2>📊 关键公式</h2></p><p><table class="md-table">
+<tr><td>公式</td><td>含义</td><td>直觉</td></tr>
+<tr><td><span class="math">$r(x, y)$</span></td><td>奖励函数</td><td>给 (问题, 回答) 打分</td></tr>
+<tr><td><span class="math">$-\log\sigma(r_c - r_r)$</span></td><td>奖励模型损失</td><td>好回答分数要高于差回答</td></tr>
+<tr><td><span class="math">$r - \beta \cdot D_{KL}$</span></td><td>PPO 目标</td><td>高分但别跑太远</td></tr>
+<tr><td><span class="math">$\log\frac{\pi_\theta}{\pi_{\text{ref}}}$</span></td><td>对数概率比</td><td>新模型相对原始模型的变化</td></tr>
+<tr><td>DPO loss</td><td>直接偏好损失</td><td>拉开好/差回答的概率差距</td></tr>
+</table></p><p><h2>🔗 关联概念</h2>
+- <strong>前置知识</strong>：预训练语言模型（第17课）、大模型微调（第18课）、强化学习基础
+- <strong>后续应用</strong>：AI 安全与可解释性、Agent（第20课）、AI 系统设计（第23课）
+- <strong>同类对比</strong>：SFT（监督微调）→ 只模仿不评价；RLHF → 有反馈的优化；DPO → 简化版的 RLHF</p><p><h2>💡 记忆技巧</h2>
+<strong>RLHF = 培训新员工的三步曲</strong>：看话术（SFT）→ 找个质检员（奖励模型）→ 根据反馈持续改进（PPO）。DPO 是省掉质检员，直接让老员工带新员工。</p><p><h2>关键论文</h2>
+- <strong>InstructGPT</strong> (Ouyang et al., 2022) — RLHF 在 GPT 系列的首次大规模实践
+- <strong>DPO</strong> (Rafailov et al., 2023) — 直接偏好优化，简化对齐流程
+- <strong>Constitutional AI</strong> (Bai et al., 2022) — Anthropic 用 AI 反馈替代部分人类反馈
+- <strong>Llama 2 技术报告</strong> (Touvron et al., 2023) — 开源模型的 RLHF 实践细节

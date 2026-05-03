@@ -1,0 +1,55 @@
+<h1>2026年5月4日 - 第26课：RLHF 与人类对齐</h1></p><p><h2>今日学习主题</h2>
+<strong>理解 ChatGPT 背后的秘密武器——RLHF（基于人类反馈的强化学习），掌握从「蛮力续写器」到「有用助手」的对齐流程。</strong></p><p><h2>为什么学这个？</h2>
+上节课我们学了 AI 评估——知道了如何衡量模型好不好。但有个更根本的问题：<strong>怎么让模型变好？</strong></p><p>你用过的 ChatGPT、Claude、Gemini，它们之所以能像「智能助手」一样工作，而不是像续写器一样胡说八道，核心秘密就是 RLHF。它不是锦上添花，而是从「能用」到「好用」的关键一跃。</p><p>作为架构师，理解 RLHF 帮助你：
+- 理解为什么不同模型的「风格」不同（对齐数据不同）
+- 评估一个模型是否做了充分对齐（安全性检查）
+- 理解 RAG、Agent 等应用为何需要在对齐模型之上构建</p><p><strong>在 AI 演进中的位置</strong>：2017 年 OpenAI 发表 DRL 研究开始探索 RL + 语言模型的结合，2020 年 GPT-3 展示了 scale 的力量但仍是续写器，2022 年 InstructGPT 论文正式确立 RLHF 流程，2022 年底 ChatGPT 引爆全球——RLHF 是大模型从「研究玩具」到「生产力工具」的分水岭。</p><p><strong>与前课的关系</strong>：
+- 上接第24课（推理模型）→ 模型有了推理能力
+- 上接第25课（AI评估）→ 知道如何衡量效果
+- 本课 → 理解训练过程的最后一公里：人类对齐</p><p><h2>核心概念解释</h2></p><p><h3>1. 为什么需要对齐？</h3></p><p>预训练语言模型本质上是一个条件概率模型：P(next_token | context)。它预测的是「下一个最可能的 token」，而不是「最有用的回答」。</p><p><strong>直觉类比</strong>：一个读完全人类图书馆的天才，但没有社交经验。他能背出所有知识，但不知道：
+- 什么时候该简洁回答，什么时候该详细解释
+- 什么请求应该拒绝（制造武器、诈骗教程）
+- 如何组织回答让读者快速理解</p><p>对齐就是教这个天才如何「沟通」。</p><p><h3>2. RLHF 三阶段流程</h3></p><p><table class="md-table">
+<tr><td>阶段</td><td>做什么</td><td>输入</td><td>输出</td><td>类比</td></tr>
+<tr><td><strong>SFT</strong></td><td>监督微调</td><td>(prompt, 理想回答) 对</td><td>能回答格式正确的模型</td><td>新员工培训手册</td></tr>
+<tr><td><strong>奖励模型</strong></td><td>训练偏好模型</td><td>(prompt, chosen, rejected) 三元组</td><td>打分函数 r(prompt, response)</td><td>培养质检员</td></tr>
+<tr><td><strong>PPO</strong></td><td>强化学习优化</td><td>模型 + 奖励模型</td><td>对齐后的最终模型</td><td>根据反馈持续改进</td></tr>
+</table></p><p><strong>关键机制</strong>：
+- SFT 让模型学会「怎么回答」
+- 奖励模型学会「什么回答好」
+- PPO 让模型朝着「更好的回答」优化</p><p><h3>3. 奖励模型（Reward Model）</h3></p><p>奖励模型是一个回归模型，输入 (prompt, response) 对，输出一个标量分数。</p><p>训练数据来自人类标注：给标注者看同一个 prompt 下的两个回答，让他们选哪个更好。</p><p><strong>训练目标</strong>：学习人类偏好排序</p><p><span class="math">$$\text{loss} = -\mathbb{E}\left[\log\sigma(r(x, y_c) - r(x, y_r))\right]$</span>$</p><p>其中 <span class="math">$y_c$</span> 是 chosen（好的回答），<span class="math">$y_r$</span> 是 rejected（差的回答），<span class="math">$\sigma$</span> 是 sigmoid。</p><p>直觉：让好回答的分数尽可能高于差回答的分数。</p><p><h3>4. PPO 优化</h3></p><p>有了奖励模型后，用它作为 reward signal 来做强化学习：</p><p><span class="math">$$\text{objective} = \mathbb{E}_{x \sim \text{prompt}, y \sim \pi_\theta}\left[r(x, y) - \beta \cdot D_{KL}(\pi_\theta \| \pi_{\text{ref}})\right]$</span>$</p><p>- <span class="math">$r(x, y)$</span>：奖励模型给分
+- <span class="math">$D_{KL}$</span>：KL 散度惩罚，防止模型偏离原始模型太远
+- <span class="math">$\beta$</span>：惩罚系数</p><p><strong>为什么要 KL 惩罚？</strong> 防止 reward hacking——模型可能找到「钻空子」的方式获得高分，但实际回答质量下降。比如在回答末尾加一堆「完美」「excellent」之类的词来骗奖励模型。</p><p><h3>5. DPO（Direct Preference Optimization）</h3></p><p>2023 年提出的重要改进，<strong>跳过奖励模型训练和 PPO</strong>，直接用偏好数据优化策略模型：</p><p><span class="math">$$\mathcal{L}_{\text{DPO}} = -\mathbb{E}\left[\log\sigma\left(\beta \left[\log\frac{\pi_\theta(y_c|x)}{\pi_{\text{ref}}(y_c|x)} - \log\frac{\pi_\theta(y_r|x)}{\pi_{\text{ref}}(y_r|x)}\right]\right)\right]$</span>$</p><p><strong>直觉</strong>：直接让模型在好回答上概率增大、差回答上概率减小，无需中间的奖励模型。</p><p><strong>DPO vs RLHF 对比</strong>：</p><p><table class="md-table">
+<tr><td>维度</td><td>RLHF</td><td>DPO</td></tr>
+<tr><td>步骤</td><td>SFT → RM → PPO (3步)</td><td>SFT → DPO (2步)</td></tr>
+<tr><td>训练稳定性</td><td>需要调 PPO 超参</td><td>更稳定</td></tr>
+<tr><td>计算成本</td><td>较高（要跑 RL）</td><td>较低</td></tr>
+<tr><td>效果上限</td><td>理论更高</td><td>实践接近</td></tr>
+<tr><td>工业界采用</td><td>ChatGPT, Claude 早期</td><td>越来越多采用</td></tr>
+</table></p><p><h2>关键公式直觉</h2></p><p><table class="md-table">
+<tr><td>概念</td><td>公式</td><td>直觉解释</td></tr>
+<tr><td>奖励模型损失</td><td><span class="math">$-\log\sigma(r_c - r_r)$</span></td><td>好回答分数高于差回答 → loss 小</td></tr>
+<tr><td>PPO 目标</td><td><span class="math">$r - \beta \cdot KL$</span></td><td>获得高分，但不偏离原始模型太远</td></tr>
+<tr><td>KL 散度</td><td><span class="math">$D_{KL}(P \Vert Q)$</span></td><td>两个分布的「距离」，衡量偏离程度</td></tr>
+<tr><td>DPO 损失</td><td><span class="math">$-\log\sigma(\beta(\Delta_c - \Delta_r))$</span></td><td>直接拉开好/差回答的概率差距</td></tr>
+<tr><td>SFT 损失</td><td><span class="math">$-\sum \log P(y_i \vert x)$</span></td><td>标准语言模型损失，学会模仿理想回答</td></tr>
+</table></p><p><h2>动手实践要点</h2>
+- Notebook 中用简单文本特征模拟了奖励模型的打分逻辑
+- 真实奖励模型是 Transformer 编码器 + 线性头
+- PPO 训练曲线展示奖励上升 + KL 散度控制
+- DPO 损失函数中 β 参数的控制效果直观可见
+- 参数选择：β 通常在 0.1-0.5 之间，KL 惩罚系数需要根据模型大小调整</p><p><h2>常见问题</h2></p><p><strong>Q: RLHF 和微调有什么区别？</strong>
+A: 微调（SFT）是让模型学会「怎么回答」——模仿示例。RLHF 进一步让模型学会「什么是好回答」——根据人类偏好优化。微调是「看示例学习」，RLHF 是「根据反馈改进」。</p><p><strong>Q: DPO 会完全替代 RLHF 吗？</strong>
+A: 短期内不会完全替代。对于需要在线学习和迭代优化的场景，RLHF 仍然更灵活。但 DPO 因为简单稳定，在开源社区越来越受欢迎。很多现代模型（如 Llama 3）采用混合策略。</p><p><strong>Q: 如果人类标注者有偏见怎么办？</strong>
+A: 这是 RLHF 的核心挑战之一。解决方案包括：多样化标注者群体、明确标注指南、多轮标注交叉验证、Constitutional AI（用 AI 辅助评价）等。偏见问题没有完美解决方案，只能持续改进。</p><p><strong>Q: 什么是 reward hacking？</strong>
+A: 模型找到了「骗」奖励模型的方法，获得高分但实际回答变差。比如回答中加大量格式标记（列表、加粗）来获得高分，但内容空洞。KL 惩罚和人工抽检是主要防御手段。</p><p><h2>本课总结</h2>
+1. <strong>对齐是必需的</strong>：预训练模型是续写器，RLHF 让它变成助手——这是 ChatGPT 爆火的核心秘密
+2. <strong>三阶段流程</strong>：SFT（学会格式）→ 奖励模型（学会评价）→ PPO（学会优化）
+3. <strong>DPO 是简化版</strong>：跳过奖励模型，直接优化偏好，更简单更稳定
+4. <strong>关键挑战</strong>：人类偏见、reward hacking、标注成本</p><p><h2>关键论文与项目</h2>
+- <strong>InstructGPT</strong> (2022)：OpenAI RLHF 实践论文，ChatGPT 的前身
+- <strong>DPO</strong> (2023)：Rafailov et al.，直接偏好优化的里程碑论文
+- <strong>Constitutional AI</strong> (2022)：Anthropic 提出用 AI 反馈辅助对齐
+- <strong>RLHF + Llama</strong>：Meta 在 Llama 2/3 中大量采用 RLHF/DPO 对齐
+- <strong>OpenAssistant</strong>：开源社区的 RLHF 数据集和训练实践</p><p><h2>下一步</h2>
+下一课我们将进入 <strong>AI 安全与可解释性</strong>——对齐只是安全的起点，理解模型的局限性和潜在风险，探索让 AI 更安全、更可理解的方法。从 RLHF 的「教模型做好事」到「理解模型为什么这么做」，是从训练到治理的关键跨越。

@@ -1,0 +1,18 @@
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L8] Assistant: 好，SKILL.md 已读完。按 5 个 Phase 严格执行。先进入 **Phase 1: 健康检查**。
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L11] Assistant: **Phase 1 通过** ✅ — 无缺口，24 课已完成。直接进入 **Phase 3: 确定今日新课程**。 先看当前路线图和最近一次课程，确定第 25 课主题。
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L21] Assistant: 好，现在已确认：路线图第 25 课是 **AI 评估与基准测试**。先搜索一些相关资料来辅助内容生成。
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L24] Assistant: 搜索不可用，用我自己的知识来生成高质量内容。现在开始创建第 25 课的全部文件。 先看一下模板格式：
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L27] Assistant: 好，格式清晰。现在开始生成第 25 课的全部文件。先看 README 和现有 HTML 文件结构，确保级联同步准确。
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L37] Assistant: 现在我对结构很清楚了。看下 daily.html 的完整尾部和 index.html 的结构，然后开始批量生成。
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L42] Assistant: 现在我掌握了完整的结构。开始生成所有文件。
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L44] Assistant: Daily MD 已创建（3618 bytes > 1000 ✅）。现在创建 Notebook：
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L46] Assistant: Notebook 创建完成（18622 bytes，12 个 cell，含 5 个代码 cell + 7 个 markdown cell ✅）。现在创建知识笔记并渲染所有 HTML 片段。
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L48] Assistant: 知识笔记已创建（1220 bytes > 500 ✅）。现在渲染 HTML 片段——nb HTML、daily HTML、note HTML：
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L50] Assistant: HTML 片段全部生成完毕。现在进入 **Phase 4: 级联同步**，更新 README.md、index.html、notes-lab.html、daily.html。
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L52] Assistant: 现在更新 index.html、notes-lab.html 和 daily.html：
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L56] Assistant: 现在更新 daily.html，添加第 25 课的时间线条目：
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L58] Assistant: 级联同步完成。更新路线图：
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L60] Assistant: 所有文件已更新。进入 **Phase 5: 最终验证**：
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L62] Assistant: **Phase 5 验证通过** ✅ — 25 notebooks, 25 dailies, 0 gaps。执行 git 操作：
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L68] Assistant: Git push 成功 ✅ --- ## 📋 执行报告 ### validate 结果 - **Phase 1**: ✅ 通过（0 错误，24 notebooks 已完成） - **Phase 2**: 无需修复（无缺口） - **Phase 5**: ✅ 通过（25 notebooks，25 dailies，0 gaps） ### 今日新增 - **第 25 课：AI 评估与基准测试** - 新增文件： - `lessons/25_AI评估与基准测试.ipynb`（18622 bytes，12 cells
+[ml-learning-coach/sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl#L68] Assistant: 评估的核心方法论——MMLU、HumanEval、Chatbot Arena 等基准背后的机制，以及如何科学衡量模型能力。 ### 为什么学这个？ 作为架构师做技术选型时，你必须能看懂排行榜的数字意味着什么、哪些基准和你相关、哪些是刷分虚高。 ### 核心收获 1. **MMLU** = AI 的「高考综合卷」，测 57 科知识广度 2. **HumanEval/SWE-bench** = 代码能力测试，后者更接近真实开发 3. **Chatbot Arena + Elo** = 最可信的排名，盲测+人类投票

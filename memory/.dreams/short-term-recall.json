@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-02T19:02:13.967Z",
+  "updatedAt": "2026-05-03T19:00:14.355Z",
   "entries": {
     "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1": {
       "key": "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1",
@@ -7476,6 +7476,568 @@
         "chain",
         "thought",
         "阶段"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:1:1": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:1:1",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 1,
+      "endLine": 1,
+      "source": "memory",
+      "snippet": "Assistant: 好，SKILL.md 已读完。按 5 个 Phase 严格执行。先进入 **Phase 1: 健康检查**。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "skill.md",
+        "phase",
+        "严格",
+        "执行",
+        "进入",
+        "健康",
+        "检查"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:2:2": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:2:2",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 2,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "Assistant: **Phase 1 通过** ✅ — 无缺口，24 课已完成。直接进入 **Phase 3: 确定今日新课程**。 先看当前路线图和最近一次课程，确定第 25 课主题。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "phase",
+        "通过",
+        "缺口",
+        "完成",
+        "直接",
+        "进入",
+        "确定",
+        "今日"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:3:3": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:3:3",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 3,
+      "endLine": 3,
+      "source": "memory",
+      "snippet": "Assistant: 好，现在已确认：路线图第 25 课是 **AI 评估与基准测试**。先搜索一些相关资料来辅助内容生成。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "现在",
+        "确认",
+        "路线图",
+        "评估",
+        "基准",
+        "测试",
+        "搜索",
+        "一些"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:4:4": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:4:4",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 4,
+      "endLine": 4,
+      "source": "memory",
+      "snippet": "Assistant: 搜索不可用，用我自己的知识来生成高质量内容。现在开始创建第 25 课的全部文件。 先看一下模板格式：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "搜索",
+        "不可",
+        "自己",
+        "知识",
+        "生成",
+        "质量",
+        "内容",
+        "现在"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:5:5": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:5:5",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 5,
+      "endLine": 5,
+      "source": "memory",
+      "snippet": "Assistant: 好，格式清晰。现在开始生成第 25 课的全部文件。先看 README 和现有 HTML 文件结构，确保级联同步准确。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "格式",
+        "清晰",
+        "现在",
+        "开始",
+        "生成",
+        "全部",
+        "文件",
+        "先看"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:6:6": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:6:6",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 6,
+      "endLine": 6,
+      "source": "memory",
+      "snippet": "Assistant: 现在我对结构很清楚了。看下 daily.html 的完整尾部和 index.html 的结构，然后开始批量生成。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "daily.html",
+        "index.html",
+        "现在",
+        "结构",
+        "清楚",
+        "完整",
+        "尾部",
+        "然后"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:7:7": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:7:7",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 7,
+      "endLine": 7,
+      "source": "memory",
+      "snippet": "Assistant: 现在我掌握了完整的结构。开始生成所有文件。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "现在",
+        "掌握",
+        "完整",
+        "结构",
+        "开始",
+        "生成",
+        "所有",
+        "文件"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:8:8": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:8:8",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 8,
+      "endLine": 8,
+      "source": "memory",
+      "snippet": "Assistant: Daily MD 已创建（3618 bytes > 1000 ✅）。现在创建 Notebook：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "创建",
+        "bytes",
+        "现在",
+        "notebook"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:9:9": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:9:9",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 9,
+      "endLine": 9,
+      "source": "memory",
+      "snippet": "Assistant: Notebook 创建完成（18622 bytes，12 个 cell，含 5 个代码 cell + 7 个 markdown cell ✅）。现在创建知识笔记并渲染所有 HTML 片段。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "notebook",
+        "创建",
+        "完成",
+        "bytes",
+        "cell",
+        "代码",
+        "markdown",
+        "现在"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:10:10": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:10:10",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 10,
+      "endLine": 10,
+      "source": "memory",
+      "snippet": "Assistant: 知识笔记已创建（1220 bytes > 500 ✅）。现在渲染 HTML 片段——nb HTML、daily HTML、note HTML：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "知识",
+        "笔记",
+        "创建",
+        "bytes",
+        "现在",
+        "渲染",
+        "html",
+        "片段"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:11:11": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:11:11",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 11,
+      "endLine": 11,
+      "source": "memory",
+      "snippet": "Assistant: HTML 片段全部生成完毕。现在进入 **Phase 4: 级联同步**，更新 README.md、index.html、notes-lab.html、daily.html。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "readme.md",
+        "index.html",
+        "notes-lab.html",
+        "daily.html",
+        "html",
+        "片段",
+        "全部",
+        "生成"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:12:12": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:12:12",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 12,
+      "endLine": 12,
+      "source": "memory",
+      "snippet": "Assistant: 现在更新 index.html、notes-lab.html 和 daily.html：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "index.html",
+        "notes-lab.html",
+        "daily.html",
+        "现在",
+        "更新",
+        "lab.html"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:13:13": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:13:13",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 13,
+      "endLine": 13,
+      "source": "memory",
+      "snippet": "Assistant: 现在更新 daily.html，添加第 25 课的时间线条目：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "daily.html",
+        "现在",
+        "更新",
+        "添加",
+        "时间",
+        "线条"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:14:14": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:14:14",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 14,
+      "endLine": 14,
+      "source": "memory",
+      "snippet": "Assistant: 级联同步完成。更新路线图：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "同步",
+        "完成",
+        "更新",
+        "路线图"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:15:15": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:15:15",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 15,
+      "endLine": 15,
+      "source": "memory",
+      "snippet": "Assistant: 所有文件已更新。进入 **Phase 5: 最终验证**：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "所有",
+        "文件",
+        "更新",
+        "进入",
+        "phase",
+        "最终",
+        "验证"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:16:16": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:16:16",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 16,
+      "endLine": 16,
+      "source": "memory",
+      "snippet": "Assistant: **Phase 5 验证通过** ✅ — 25 notebooks, 25 dailies, 0 gaps。执行 git 操作：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "phase",
+        "验证",
+        "通过",
+        "notebooks",
+        "dailies",
+        "gaps",
+        "执行",
+        "git"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:17:17": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:17:17",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 17,
+      "endLine": 17,
+      "source": "memory",
+      "snippet": "Assistant: Git push 成功 ✅ --- ## 📋 执行报告 ### validate 结果 - **Phase 1**: ✅ 通过（0 错误，24 notebooks 已完成） - **Phase 2**: 无需修复（无缺口） - **Phase 5**: ✅ 通过（25 notebooks，25 dailies，0 gaps） ### 今日新增 - **第 25 课：AI 评估与基准测试** - 新增文件： - `lessons/25_AI评估与基准测试.ipynb`（18622 bytes，12 cells：5 code + 7",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "lessons/25-ai评估与基准测试.ipynb",
+        "git",
+        "push",
+        "成功",
+        "执行",
+        "报告",
+        "validate",
+        "结果"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-03.txt:18:18": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-03.txt:18:18",
+      "path": "memory/.dreams/session-corpus/2026-05-03.txt",
+      "startLine": 18,
+      "endLine": 18,
+      "source": "memory",
+      "snippet": "Assistant: 评估的核心方法论——MMLU、HumanEval、Chatbot Arena 等基准背后的机制，以及如何科学衡量模型能力。 ### 为什么学这个？ 作为架构师做技术选型时，你必须能看懂排行榜的数字意味着什么、哪些基准和你相关、哪些是刷分虚高。 ### 核心收获 1. **MMLU** = AI 的「高考综合卷」，测 57 科知识广度 2. **HumanEval/SWE-bench** = 代码能力测试，后者更接近真实开发 3. **Chatbot Arena + Elo** = 最可信的排名，盲测+人类投票 4. **Pass@k",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-03T19:00:12.047Z",
+      "lastRecalledAt": "2026-05-03T19:00:12.047Z",
+      "queryHashes": [
+        "b2bd51325196"
+      ],
+      "recallDays": [
+        "2026-05-04",
+        "2026-05-03"
+      ],
+      "conceptTags": [
+        "humaneval/swe-bench",
+        "评估",
+        "核心",
+        "方法",
+        "mmlu",
+        "humaneval",
+        "chatbot",
+        "arena"
       ]
     }
   }

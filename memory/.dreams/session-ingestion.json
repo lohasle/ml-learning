@@ -50,6 +50,20 @@
       "lineCount": 2,
       "lastContentLine": 2
     },
+    "ml-learning-coach:sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl": {
+      "mtimeMs": 1777756238172,
+      "size": 151652,
+      "contentHash": "07bc24463612e8108fab04badb6c6d9e1592d8409fd1c70132bca439a298bdfe",
+      "lineCount": 18,
+      "lastContentLine": 18
+    },
+    "ml-learning-coach:sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.trajectory.jsonl": {
+      "mtimeMs": 1777756238219,
+      "size": 322090,
+      "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+      "lineCount": 0,
+      "lastContentLine": 0
+    },
     "ml-learning-coach:sessions/dd1a119c-f397-434e-9125-4f228c5a3a61.trajectory.jsonl": {
       "mtimeMs": 1777324395132,
       "size": 348384,
@@ -342,6 +356,26 @@
       "ef4c4b93d102e4fbd0bb4711a6c226bba62b4230",
       "3e97a177ec9a9b2659407aaf3fd6524d9e0a40f0"
     ],
-    "ml-learning-coach:58bd9a28-9195-42d3-8c50-ab7a8c8a4fb2.trajectory": []
+    "ml-learning-coach:dc972118-a4a6-49c3-acf1-db3c043732c5": [
+      "771fdc843668d8674def1578695834e92b8575f3",
+      "109e5445d17feb8fb595cc116eefc0c6cb36e79d",
+      "db8b1a31ecbfd91862be881220f1a2a805616ea6",
+      "69ff5683b8978c05032906f74410cd9845467a97",
+      "e1a6cfcfd6b56605363e1239a2e64d75cc18a976",
+      "f74fe166b101e6a579c32bd4aafd037d55cdea21",
+      "6a9323a3c75f99e08e384b41a44cf82b090f79fd",
+      "fe18fef033e4797e8de37282b49f89e080e5c8c7",
+      "f8124b26e713b359cdd015aecda133babae561d0",
+      "e45a0193d6d88a01d2615ddab23c6808bce2dc10",
+      "0f2044c2bd675d086ca79ca0782f70998f9236b8",
+      "6827aa8e879b7315685483331d7f1f0724d41bc6",
+      "e5993c8328f09262392d7d77dbdf2d8e9174b458",
+      "b142ac320862bbed3ca447e7c43777334ba83ecf",
+      "33a8eb211cfe0c30e7e05b82231960b7dd802ad3",
+      "91de32ae0b6d7a8e896d0b36cbcd6c6578773833",
+      "e62a1eba9f9aa1f2af8bfe09514785080787e110",
+      "d724f846cc14431826b48e314ad709118a12fa86"
+    ],
+    "ml-learning-coach:dc972118-a4a6-49c3-acf1-db3c043732c5.trajectory": []
   }
 }
