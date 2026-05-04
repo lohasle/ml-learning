@@ -1,0 +1,220 @@
+<h1>2026年5月5日 - 第27课：高效微调技术（LoRA / QLoRA / DPO）</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解如何用最少的资源微调大模型——LoRA 的低秩分解、QLoRA 的量化压缩、DPO 的直接偏好优化。</strong></p>
+<h2>为什么今天学这个？</h2>
+<p>上节课学了 RLHF，知道了大模型对齐的三阶段流程。但有个现实问题：<strong>全量微调一个 7B 模型需要 80GB+ 显存，大多数开发者根本跑不起。</strong></p>
+<p>LoRA/QLoRA/DPO 这三个技术，让「微调大模型」从实验室走向了普通开发者的桌面。理解它们，你就理解了 2023-2025 年大模型应用爆发的工程基础。</p>
+<p><strong>在 AI 演进中的位置</strong>：
+- 2021 年 LoRA 论文提出低秩适配，ICLR 2022 发表
+- 2023 年 QLoRA 让 16GB 显存就能微调 7B 模型
+- 2023 年 DPO 简化了 RLHF 流程，去掉奖励模型和 RL 训练
+- 这三项技术是「大模型微调民主化」的核心推动力</p>
+<p><strong>与前课的关系</strong>：
+- 上接第26课（RLHF）→ 对齐流程完整了
+- 上接第22课（训练与推理工程）→ 本课是其工程实践的延伸
+- 本课 → 解决「普通人如何微调大模型」的现实问题</p>
+<h2>核心概念解释</h2>
+<h3>1. 为什么全量微调太贵？</h3>
+<p>大模型参数量巨大，训练需要同时存储：模型权重 + 梯度 + 优化器状态。</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>参数量</th>
+<th>全量微调显存</th>
+<th>仅权重 (FP16)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLaMA-7B</td>
+<td>7B</td>
+<td>~80GB</td>
+<td>~14GB</td>
+</tr>
+<tr>
+<td>LLaMA-13B</td>
+<td>13B</td>
+<td>~160GB</td>
+<td>~26GB</td>
+</tr>
+<tr>
+<td>LLaMA-70B</td>
+<td>70B</td>
+<td>~800GB</td>
+<td>~140GB</td>
+</tr>
+</tbody>
+</table>
+<p><strong>直觉类比</strong>：翻新一栋 100 层大楼。全量微调 = 每层都拆了重建。LoRA = 只在关键楼层加装模块。</p>
+<h3>2. LoRA：低秩矩阵分解</h3>
+<p>核心洞察：微调时权重的变化 ΔW 具有低「内在秩」。</p>
+<p>$$h = Wx + \frac{\alpha}{r} BAx$$</p>
+<p>其中：
+- $W$：冻结的原始权重（不更新）
+- $B \in \mathbb{R}^{d \times r}$, $A \in \mathbb{R}^{r \times d}$：可训练的低秩矩阵（$r \ll d$）
+- $\alpha$：缩放因子</p>
+<p><strong>参数量对比</strong>：
+- 原始：$d \times d = 4096 \times 4096 = 16.7M$ 参数
+- LoRA ($r=8$)：$2 \times 8 \times 4096 = 65K$ 参数 → <strong>压缩 256 倍</strong></p>
+<h3>3. QLoRA：量化 + LoRA</h3>
+<p>在 LoRA 基础上引入 4-bit 量化：</p>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4-bit NormalFloat</td>
+<td>专为正态分布权重设计的量化格式</td>
+</tr>
+<tr>
+<td>双重量化</td>
+<td>对量化常数本身再量化</td>
+</tr>
+<tr>
+<td>分页优化器</td>
+<td>GPU → CPU 内存自动切换</td>
+</tr>
+</tbody>
+</table>
+<p>效果：<strong>7B 模型微调从 80GB 降到 16GB</strong>。</p>
+<h3>4. DPO：直接偏好优化</h3>
+<p>RLHF 需要：训练奖励模型 → 用 PPO 做强化学习。</p>
+<p>DPO 的洞察：可以<strong>直接</strong>用偏好数据优化策略模型，跳过奖励模型。</p>
+<p>$$\mathcal{L}<em>{\text{DPO}} = -\mathbb{E}\left[\log \sigma\left(\beta \left(\log \frac{\pi</em>\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right)\right)\right]$$</p>
+<p>其中 $y_w$ 是优选回答，$y_l$ 是拒绝回答。</p>
+<h2>直觉理解</h2>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>一句话理解</th>
+<th>类比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LoRA</td>
+<td>只改很少参数就能微调</td>
+<td>大楼只在关键楼层加装模块</td>
+</tr>
+<tr>
+<td>QLoRA</td>
+<td>压缩精度省显存</td>
+<td>用草图而非高清图来设计改装方案</td>
+</tr>
+<tr>
+<td>DPO</td>
+<td>不需要奖励模型</td>
+<td>不用请评委，直接看 A/B 测试结果改进</td>
+</tr>
+</tbody>
+</table>
+<h2>关键机制</h2>
+<h3>LoRA 的关键设计选择</h3>
+<ol>
+<li><strong>秩 r 的选择</strong>：通常 4~64，r 越大效果越好但参数越多</li>
+<li><strong>应用位置</strong>：通常只对 Q/K/V/O 线性层加 LoRA</li>
+<li><strong>α/r 缩放</strong>：控制 LoRA 更新的强度</li>
+<li><strong>可合并性</strong>：训练后 BA 可合并进 W，推理零开销</li>
+</ol>
+<h3>DPO vs PPO</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>PPO</th>
+<th>DPO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>是否需要奖励模型</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>是否需要 RL 训练</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>训练稳定性</td>
+<td>较难调</td>
+<td>简单</td>
+</tr>
+<tr>
+<td>数据需求</td>
+<td>prompt + RM标注</td>
+<td>prompt + 偏好对</td>
+</tr>
+<tr>
+<td>效果上限</td>
+<td>理论更高</td>
+<td>实际接近</td>
+</tr>
+</tbody>
+</table>
+<h2>实践建议</h2>
+<h3>如何选择方法？</h3>
+<pre><code>显存 &lt; 24GB → QLoRA + LoRA (r=8~16)
+显存 24~48GB → LoRA (FP16, r=16~64)  
+显存 80GB+ → 全量微调或大 LoRA
+</code></pre>
+<h3>推荐工具链</h3>
+<ul>
+<li><strong>PEFT</strong> (HuggingFace)：LoRA/QLoRA 实现</li>
+<li><strong>TRL</strong> (HuggingFace)：DPO/PPO 训练</li>
+<li><strong>unsloth</strong>：2x 训练速度加速</li>
+</ul>
+<h2>关键项目 / 论文</h2>
+<table>
+<thead>
+<tr>
+<th>项目/论文</th>
+<th>年份</th>
+<th>贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LoRA (Hu et al.)</td>
+<td>2021/2022</td>
+<td>低秩适配，PEFT 里程碑</td>
+</tr>
+<tr>
+<td>QLoRA (Dettmers et al.)</td>
+<td>2023</td>
+<td>4-bit 量化微调</td>
+</tr>
+<tr>
+<td>DPO (Rafailov et al.)</td>
+<td>2023</td>
+<td>直接偏好优化</td>
+</tr>
+<tr>
+<td>HuggingFace PEFT</td>
+<td>持续更新</td>
+<td>LoRA/Adapter 工具库</td>
+</tr>
+<tr>
+<td>unsloth</td>
+<td>2024+</td>
+<td>LoRA 训练加速</td>
+</tr>
+</tbody>
+</table>
+<h2>今天学完后你应该记住什么</h2>
+<ol>
+<li><strong>LoRA = 低秩分解</strong>：ΔW = BA，只训练两个小矩阵</li>
+<li><strong>QLoRA = 量化 + LoRA</strong>：16GB 显存微调 7B 模型</li>
+<li><strong>DPO = 简化版 RLHF</strong>：跳过奖励模型，直接用偏好数据</li>
+<li><strong>选择看资源</strong>：显存决定方法</li>
+<li><strong>LoRA 可合并</strong>：训练后零推理开销</li>
+</ol>
+<h2>下一步预告</h2>
+<p>第28课：<strong>AI 安全与可解释性</strong>——大模型为什么会产生幻觉？如何让 AI 系统更可信、更安全？</p>

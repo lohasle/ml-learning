@@ -1,0 +1,75 @@
+<h1>高效微调技术（LoRA / QLoRA / DPO）</h1>
+<h2>概念摘要</h2>
+<p>全量微调大模型的显存需求极大（7B 模型需 80GB+），催生了一系列参数高效微调（PEFT）方法，其中 LoRA、QLoRA 和 DPO 最为重要。</p>
+<h2>核心公式</h2>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>h = Wx + (α/r)BAx</td>
+<td>LoRA 前向传播，W 冻结，只训练 B 和 A</td>
+</tr>
+<tr>
+<td>ΔW = B·A</td>
+<td>LoRA 权重更新，B∈R^(d×r), A∈R^(r×d)，r≪d</td>
+</tr>
+<tr>
+<td>L_DPO = -E[log σ(β(log π_θ(y_w)/π_ref(y_w) - log π_θ(y_l)/π_ref(y_l)))]</td>
+<td>DPO 损失，直接用偏好数据优化</td>
+</tr>
+</tbody>
+</table>
+<h2>关键数据</h2>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>可训练参数</th>
+<th>7B 模型显存</th>
+<th>推理开销</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full Fine-tune</td>
+<td>100%</td>
+<td>~80GB</td>
+<td>无</td>
+</tr>
+<tr>
+<td>LoRA</td>
+<td>~0.1%</td>
+<td>~32GB</td>
+<td>可合并，无</td>
+</tr>
+<tr>
+<td>QLoRA</td>
+<td>~0.1%</td>
+<td>~16GB</td>
+<td>需反量化</td>
+</tr>
+<tr>
+<td>DPO</td>
+<td>~0.1%</td>
+<td>同 LoRA</td>
+<td>同 LoRA</td>
+</tr>
+</tbody>
+</table>
+<h2>关联概念</h2>
+<ul>
+<li><strong>RLHF</strong>（第26课）：LoRA/DPO 是 RLHF 流程的工程优化</li>
+<li><strong>大模型训练与推理</strong>（第22课）：微调介于训练和推理之间</li>
+<li><strong>Transformer</strong>（第14课）：LoRA 通常应用于 Q/K/V/O 线性层</li>
+</ul>
+<h2>关键论文</h2>
+<ul>
+<li>LoRA: Hu et al., "LoRA: Low-Rank Adaptation of Large Language Models", ICLR 2022</li>
+<li>QLoRA: Dettmers et al., "QLoRA: Efficient Finetuning of Quantized LLMs", NeurIPS 2023</li>
+<li>DPO: Rafailov et al., "Direct Preference Optimization", NeurIPS 2023</li>
+</ul>
