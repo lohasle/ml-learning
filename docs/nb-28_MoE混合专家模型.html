@@ -1,0 +1,373 @@
+<div class="nb-cell nb-markdown"><h1>第28课：MoE（混合专家模型）与稀疏激活架构</h1>
+
+<h2>学习目标</h2>
+- 理解 MoE（Mixture of Experts）的核心思想：条件计算
+- 掌握稀疏门控（Sparse Gating）的工作原理
+- 理解 MoE 在大模型中的应用：GPT-4、Mixtral、DeepSeek
+- 从零实现一个简单的 MoE 层，理解路由和负载均衡
+- 了解 MoE 的工程挑战：通信开销、负载不均、训练不稳定</div>
+<div class="nb-cell nb-markdown"><h2>核心概念：为什么需要 MoE？</h2>
+
+<h3>直觉理解</h3>
+
+想象一家大型医院：
+- <strong>密集模型</strong>：每个病人都由所有医生一起会诊 → 效率低，成本高
+- <strong>MoE 模型</strong>：分诊台根据症状把病人分配给最合适的专科医生 → 高效，专业
+
+核心思想很简单：<strong>不是所有参数都参与每次计算，而是根据输入动态选择一部分「专家」来处理</strong>。
+
+<h3>在 AI 演进史中的位置</h3>
+
+<table>
+<tr><td>时间</td><td>里程碑</td></tr>
+<tr><td>1991</td><td>Jacobs et al. 首次提出 MoE 框架</td></tr>
+<tr><td>2017</td><td>Sparsely-Gated MoE (Shazeer et al.) 应用于 NMT</td></tr>
+<tr><td>2021</td><td>Switch Transformer (Google) 验证大规模 MoE 的扩展性</td></tr>
+<tr><td>2024</td><td>Mixtral 8x7B 开源 MoE 模型引爆社区</td></tr>
+<tr><td>2024-2025</td><td>GPT-4、DeepSeek-V2/V3、Qwen-MoE 广泛采用 MoE 架构</td></tr>
+</table>
+
+MoE 是解决「模型规模扩展但推理成本不线性增长」这一矛盾的关键架构。</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+print('MoE 环境准备就绪')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>MoE 层的核心组件</h2>
+
+一个 MoE 层主要由两部分组成：
+
+1. <strong>门控网络（Router/Gating Network）</strong>：决定把输入 token 发给哪些专家
+2. <strong>专家网络（Experts）</strong>：一组并行的 FFN（前馈神经网络）
+
+<h3>数学表达</h3>
+
+给定输入 $x$，MoE 层的输出为：
+
+$$\text{MoE}(x) = \sum_{i \in \text{TopK}} g_i(x) \cdot E_i(x)$$
+
+其中：
+- $g_i(x) = \text{softmax}(W_g \cdot x)_i$，门控概率
+- $E_i(x)$ 是第 $i$ 个专家的输出
+- TopK 选择概率最高的 K 个专家（通常 K=2）
+
+<strong>关键洞察</strong>：总参数量 = N 个专家 × 每个专家的参数量，但每次推理只用 K 个，所以<strong>计算量远小于同等参数的密集模型</strong>。</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># 从零实现一个简单的 MoE 层
+
+class Expert:
+    """单个专家：一个简单的两层 FFN"""
+    def __init__(self, input_dim, hidden_dim, expert_id):
+        self.id = expert_id
+        # 使用 Xavier 初始化
+        scale = np.sqrt(2.0 / input_dim)
+        self.W1 = np.random.randn(input_dim, hidden_dim) * scale
+        self.b1 = np.zeros(hidden_dim)
+        self.W2 = np.random.randn(hidden_dim, input_dim) * scale
+        self.b2 = np.zeros(input_dim)
+    
+    def forward(self, x):
+        """前向传播：ReLU 激活的两层网络"""
+        h = x @ self.W1 + self.b1
+        h = np.maximum(0, h)  # ReLU
+        out = h @ self.W2 + self.b2
+        return out
+
+
+class TopKGating:
+    """Top-K 门控网络"""
+    def __init__(self, input_dim, num_experts, k=2):
+        self.num_experts = num_experts
+        self.k = k
+        self.W_g = np.random.randn(input_dim, num_experts) * 0.1
+    
+    def forward(self, x):
+        """
+        返回: (gates, indices)
+        - gates: shape (k,), 选中的专家权重
+        - indices: shape (k,), 选中的专家编号
+        """
+        logits = x @ self.W_g  # (num_experts,)
+        # Top-K 选择
+        top_k_idx = np.argpartition(logits, -self.k)[-self.k:]
+        top_k_idx = top_k_idx[np.argsort(logits[top_k_idx])[::-1]]  # 按得分排序
+        # Softmax 归一化
+        top_k_logits = logits[top_k_idx]
+        gates = np.exp(top_k_logits - np.max(top_k_logits))
+        gates = gates / gates.sum()
+        return gates, top_k_idx
+
+
+class MoELayer:
+    """MoE 层：门控 + 多专家"""
+    def __init__(self, input_dim, hidden_dim, num_experts=8, top_k=2):
+        self.num_experts = num_experts
+        self.top_k = top_k
+        self.gating = TopKGating(input_dim, num_experts, k=top_k)
+        self.experts = [Expert(input_dim, hidden_dim, i) for i in range(num_experts)]
+        self.routing_history = []  # 记录路由分布
+    
+    def forward(self, x):
+        """
+        x: shape (input_dim,)
+        返回: MoE 输出, 路由信息
+        """
+        gates, expert_idx = self.gating.forward(x)
+        self.routing_history.append(expert_idx.copy())
+        
+        # 加权组合选中专家的输出
+        output = np.zeros_like(x)
+        for i, idx in enumerate(expert_idx):
+            expert_out = self.experts[idx].forward(x)
+            output += gates[i] * expert_out
+        
+        return output, (gates, expert_idx)
+
+# 测试 MoE 层
+input_dim = 16
+hidden_dim = 32
+num_experts = 8
+top_k = 2
+
+moe = MoELayer(input_dim, hidden_dim, num_experts, top_k)
+x_test = np.random.randn(input_dim)
+output, (gates, idx) = moe.forward(x_test)
+
+print(f'输入维度: {x_test.shape}')
+print(f'输出维度: {output.shape}')
+print(f'选中专家: {idx}')
+print(f'门控权重: {gates}')
+print(f'激活参数比例: {top_k}/{num_experts} = {top_k/num_experts:.1%}')
+print(f'\n总参数量: {num_experts} × {(input_dim*hidden_dim + hidden_dim + hidden_dim*input_dim + input_dim):,} = {num_experts * (input_dim*hidden_dim + hidden_dim + hidden_dim*input_dim + input_dim):,}')
+print(f'每次推理参数量: {top_k} × {(input_dim*hidden_dim + hidden_dim + hidden_dim*input_dim + input_dim):,} = {top_k * (input_dim*hidden_dim + hidden_dim + hidden_dim*input_dim + input_dim):,}')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># 可视化：路由分布 + 参数效率分析
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# 模拟批量输入的路由分布
+moe_vis = MoELayer(input_dim=16, hidden_dim=32, num_experts=8, top_k=2)
+n_samples = 500
+expert_counts = np.zeros(8)
+
+for _ in range(n_samples):
+    x = np.random.randn(16)
+    _, (_, idx) = moe_vis.forward(x)
+    for e in idx:
+        expert_counts[e] += 1
+
+# 左图：路由分布
+ax1 = axes[0]
+colors = ['#C96442' if c &gt; expert_counts.mean() else '#FAF8F5' for c in expert_counts]
+edge_colors = ['#C96442'] * 8
+bars = ax1.bar(range(8), expert_counts, color=colors, edgecolor=edge_colors, linewidth=1.5)
+ax1.axhline(y=expert_counts.mean(), color='#C96442', linestyle='--', alpha=0.5, label=f'Mean: {expert_counts.mean():.0f}')
+ax1.set_xlabel('Expert #', fontsize=12)
+ax1.set_ylabel('Selection Count', fontsize=12)
+ax1.set_title('Router Distribution (500 samples)', fontsize=13)
+ax1.legend()
+ax1.set_xticks(range(8))
+
+# 右图：MoE vs Dense 参数效率对比
+ax2 = axes[1]
+expert_sizes = [4, 8, 16, 32, 64]
+total_params_moe = []
+active_params_moe = []
+total_params_dense = []
+
+for n_e in expert_sizes:
+    d = 512  # 假设隐藏维度
+    d_ff = 2048
+    # MoE: N experts, top-2
+    expert_params = d * d_ff + d_ff + d_ff * d + d  # 单个专家参数
+    total_params_moe.append(n_e * expert_params / 1e6)
+    active_params_moe.append(2 * expert_params / 1e6)  # top-2
+    # Dense: 等价于 1 个大 FFN
+    dense_params = d * (d_ff * n_e) + (d_ff * n_e) + (d_ff * n_e) * d + d
+    total_params_dense.append(dense_params / 1e6)
+
+x_pos = np.arange(len(expert_sizes))
+width = 0.25
+ax2.bar(x_pos - width, total_params_moe, width, label='MoE Total', color='#C96442', alpha=0.9)
+ax2.bar(x_pos, active_params_moe, width, label='MoE Active (Top-2)', color='#C96442', alpha=0.4)
+ax2.bar(x_pos + width, total_params_dense, width, label='Dense Equivalent', color='#888888', alpha=0.7)
+ax2.set_xlabel('Number of Experts', fontsize=12)
+ax2.set_ylabel('Parameters (M)', fontsize=12)
+ax2.set_title('MoE vs Dense: Parameter Efficiency', fontsize=13)
+ax2.set_xticks(x_pos)
+ax2.set_xticklabels([str(e) for e in expert_sizes])
+ax2.legend()
+
+plt.tight_layout()
+plt.savefig('moe_analysis.png', dpi=100, bbox_inches='tight')
+plt.show()
+print('\nMoE 的核心优势：大参数量、小计算量。训练时学到更多知识，推理时只激活一小部分。')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># 负载均衡损失（Load Balancing Loss）
+# MoE 训练中的关键问题：防止所有 token 都涌向少数几个专家
+
+def load_balancing_loss(routing_probs, num_experts, top_k):
+    """
+    计算辅助负载均衡损失 (Switch Transformer 风格)
+    
+    routing_probs: (batch_size, num_experts) 每个专家的路由概率
+    
+    公式: L_bal = N * sum_i(f_i * P_i)
+    - f_i: 专家 i 被选中的比例
+    - P_i: 专家 i 的平均路由概率
+    - 理想情况: f_i = P_i = 1/N, L_bal = N * N * (1/N) * (1/N) = 1
+    - 越不均衡, L_bal 越大
+    """
+    batch_size = routing_probs.shape[0]
+    
+    # f_i: 每个专家被选为 top-k 的比例
+    top_k_mask = np.zeros_like(routing_probs)
+    for i in range(batch_size):
+        top_indices = np.argpartition(routing_probs[i], -top_k)[-top_k:]
+        top_k_mask[i, top_indices] = 1.0
+    
+    f = top_k_mask.mean(axis=0)  # (num_experts,)
+    P = routing_probs.mean(axis=0)  # (num_experts,)
+    
+    loss = num_experts * np.sum(f * P)
+    return loss, f, P
+
+# 模拟三种路由分布
+n_experts = 8
+batch = 256
+
+# 均衡分布
+balanced = np.random.dirichlet(np.ones(n_experts), size=batch)
+# 不均衡分布（几个专家占大头）
+imbalanced = np.random.dirichlet(np.array([10, 8, 1, 1, 1, 1, 1, 1]), size=batch)
+# 极端不均衡
+extreme = np.random.dirichlet(np.array([50, 20, 1, 1, 1, 1, 1, 1]), size=batch)
+
+for name, probs in [('Balanced', balanced), ('Imbalanced', imbalanced), ('Extreme', extreme)]:
+    loss, f, P = load_balancing_loss(probs, n_experts, top_k=2)
+    print(f'{name:12s} | Loss: {loss:.4f} | f distribution: {np.round(f, 3)}')
+    print(f'{" " * 12} | Ideal f = {np.round(np.ones(n_experts)/n_experts, 3)}')
+    print()
+
+print('负载均衡损失越接近 1.0/N 越好。训练时会把这个辅助损失加到主损失中，')
+print('鼓励门控网络均匀地把 token 分配给各专家。')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>主流 MoE 模型架构对比</h2>
+
+<table>
+<tr><td>模型</td><td>专家数</td><td>Top-K</td><td>总参数</td><td>激活参数</td><td>特点</td></tr>
+<tr><td>Mixtral 8x7B</td><td>8</td><td>2</td><td>~47B</td><td>~13B</td><td>开源标杆，验证 MoE 实用性</td></tr>
+<tr><td>Switch-C</td><td>128</td><td>1</td><td>数万亿</td><td>数十亿</td><td>单专家路由，极致稀疏</td></tr>
+<tr><td>DeepSeek-V2</td><td>160</td><td>6</td><td>236B</td><td>21B</td><td>细粒度专家 + 共享专家</td></tr>
+<tr><td>DeepSeek-V3</td><td>256+</td><td>8</td><td>671B</td><td>37B</td><td>无辅助损失的负载均衡</td></tr>
+<tr><td>Qwen-MoE</td><td>60+</td><td>4</td><td>~143B</td><td>~20B</td><td>稠密专家 + 稀疏专家混合</td></tr>
+</table>
+
+<h3>DeepSeek-V3 的创新：无辅助损失负载均衡</h3>
+
+传统 MoE 使用额外的负载均衡损失来防止路由坍缩。DeepSeek-V3 提出了<strong>偏置项调整</strong>：
+- 给每个专家的门控分数加一个可学习的偏置 $b_i$
+- 偏置不参与梯度计算，而是根据负载动态调整
+- 负载过高的专家偏置减小，过低的增大
+- 这样既保证了均衡，又不损失主任务性能
+
+这是 MoE 工程化的重要突破。</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># 用 PyTorch 风格（NumPy 实现）模拟一个完整 MoE Transformer Block
+
+def softmax(x, axis=-1):
+    e = np.exp(x - np.max(x, axis=axis, keepdims=True))
+    return e / e.sum(axis=axis, keepdims=True)
+
+def layer_norm(x, eps=1e-5):
+    mean = x.mean(axis=-1, keepdims=True)
+    std = x.std(axis=-1, keepdims=True)
+    return (x - mean) / (std + eps)
+
+class MoETransformerBlock:
+    """简化版 MoE Transformer Block：
+    Attention → Add &amp; Norm → MoE-FFN → Add &amp; Norm
+    """
+    def __init__(self, d_model=64, n_heads=4, d_ff=128, n_experts=8, top_k=2):
+        self.d_model = d_model
+        # 简化：只用 MoE-FFN 部分
+        self.moe = MoELayer(d_model, d_ff, n_experts, top_k)
+    
+    def forward(self, x):
+        """x: (seq_len, d_model)"""
+        seq_len = x.shape[0]
+        x_norm = np.array([layer_norm(x[i]) for i in range(seq_len)])
+        
+        outputs = []
+        for t in range(seq_len):
+            moe_out, _ = self.moe.forward(x_norm[t])
+            outputs.append(x[t] + moe_out)  # residual connection
+        
+        return np.array(outputs)
+
+# 模拟一个 4-token 序列通过 MoE Block
+block = MoETransformerBlock(d_model=64, n_heads=4, d_ff=128, n_experts=8, top_k=2)
+seq_input = np.random.randn(4, 64)  # 4 个 token
+seq_output = block.forward(seq_input)
+
+print(f'Input shape:  {seq_input.shape}')
+print(f'Output shape: {seq_output.shape}')
+print(f'\nMoE Block 参数统计:')
+total_expert_params = sum(
+    e.W1.size + e.b1.size + e.W2.size + e.b2.size 
+    for e in block.moe.experts
+)
+gate_params = block.moe.gating.W_g.size
+print(f'  专家总参数: {total_expert_params:,}')
+print(f'  门控参数: {gate_params:,}')
+print(f'  总参数: {total_expert_params + gate_params:,}')
+print(f'  每次推理激活参数: ~{total_expert_params // 4 + gate_params:,} (2/8 experts)')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>MoE 的工程挑战</h2>
+
+<h3>1. 通信瓶颈</h3>
+- 在分布式训练中，token 需要通过 All-to-All 通信发送到持有对应专家的 GPU
+- 通信量 ∝ batch_size × hidden_dim，是 MoE 训练的主要瓶颈
+
+<h3>2. 负载不均</h3>
+- 路由坍缩（Routing Collapse）：所有 token 都涌向少数专家
+- 解决方案：辅助损失、容量因子（Capacity Factor）、专家选择（Expert Choice）
+
+<h3>3. 训练不稳定</h3>
+- 门控网络的离散选择导致梯度估计困难
+- 解决方案：噪声注入、负载均衡损失
+
+<h3>4. 显存管理</h3>
+- 所有专家参数都要加载到 GPU，即使每次只用几个
+- 解决方案：专家并行（Expert Parallelism）、CPU Offloading
+
+<h2>总结</h2>
+
+<table>
+<tr><td>概念</td><td>要点</td></tr>
+<tr><td>MoE 核心思想</td><td>条件计算，不是所有参数参与每次推理</td></tr>
+<tr><td>门控网络</td><td>学习把 token 路由到最合适的专家</td></tr>
+<tr><td>参数效率</td><td>总参数大（知识多），激活参数小（成本低）</td></tr>
+<tr><td>负载均衡</td><td>训练中的关键挑战，辅助损失或偏置调整</td></tr>
+<tr><td>典型应用</td><td>GPT-4, Mixtral, DeepSeek-V3 等主流大模型</td></tr>
+</table>
+
+<h2>课后思考</h2>
+
+1. <strong>如果所有专家都学到了相似的功能，MoE 的优势还在吗？</strong> 这种现象叫「专家坍缩」，如何检测和避免？
+
+2. <strong>为什么 MoE 在推理时特别有优势，而训练时的通信开销却是瓶颈？</strong> 思考训练（所有专家需要梯度更新）和推理（只需前向传播选中专家）的区别。
+
+3. <strong>如果一个 MoE 模型有 256 个专家但只用 top-8，那它和一个 8 个专家用 top-8 的密集模型有什么本质区别？</strong> 提示：思考专家的多样性和专业化。</div>

@@ -1,0 +1,38 @@
+<div class="note-content"><h1>MoE 混合专家模型</h1>
+
+<h2>一句话总结</h2>
+MoE（Mixture of Experts）通过条件计算，让模型拥有大参数量的同时只激活一小部分，实现「知识多但计算少」。
+
+<h2>核心机制</h2>
+
+<h3>门控路由</h3>
+- 输入 token → 线性变换 → Top-K 选择 → Softmax 加权
+- 每次只激活 K 个（通常 K=2）专家，而非全部 N 个
+
+<h3>关键公式</h3>
+
+| 公式 | 含义 |
+|------|------|
+| MoE(x) = Σ g_i(x) · E_i(x) | 选中专家的加权组合 |
+| g_i = softmax(W_g · x)_i | 门控概率 |
+| L_bal = N · Σ(f_i · P_i) | 负载均衡辅助损失 |
+
+<h3>主流 MoE 模型</h3>
+
+| 模型 | 总参数 | 激活参数 | Top-K |
+|------|--------|----------|-------|
+| Mixtral 8x7B | ~47B | ~13B | 2 |
+| DeepSeek-V2 | 236B | 21B | 6 |
+| DeepSeek-V3 | 671B | 37B | 8 |
+
+<h2>工程挑战</h2>
+- <strong>通信瓶颈</strong>：分布式训练中 All-to-All 通信是主要开销
+- <strong>负载均衡</strong>：防止路由坍缩，需要辅助损失或偏置调整
+- <strong>显存管理</strong>：所有专家参数都需加载，可用专家并行
+
+<h2>关联概念</h2>
+- <a href="#" class="note-link">Transformer 架构</a> - MoE 通常替换 Transformer 中的 FFN 层
+- <a href="#" class="note-link">大模型微调</a> - MoE + LoRA 的组合
+- <a href="#" class="note-link">高效微调技术</a> - LoRA/QLoRA 可应用于 MoE 模型
+- <a href="#" class="note-link">大模型训练与推理工程</a> - MoE 的分布式训练策略
+</div>

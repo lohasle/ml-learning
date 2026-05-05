@@ -1,0 +1,23 @@
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L8] Assistant: 好，开始严格执行 5 个 Phase。 ## Phase 1: 健康检查
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L10] Assistant: Phase 1 通过，无缺口。已有 26 课。进入 Phase 3。 先看路线图和最近几课，确定第 27 课主题：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L14] Assistant: 第 26 课是 RLHF 与人类对齐（2026-05-04）。今天是 2026-05-05，需要生成第 27 课。路线图阶段 6 还在"待定"状态，需要确定下一个主题。让我看最近一课的内容，确定衔接方向：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L21] Assistant: 没有 references 目录，我直接参考最近的 Notebook 和 daily 格式来生成。让我看一个最近的 Notebook 结构：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L23] Assistant: 好，10 个 cell（2 markdown + 8 code，满足 ≥5 cell、≥3 code cell 的要求）。 现在确定第 27 课主题。阶段 6 是"前沿专题"，已完成推理模型、AI评估、RLHF。按照路线图精神和 AGENTS.md 的学习主线，接下来应该进入**大模型微调实战与 LoRA/DPO 等高效微调技术**——这是从 RLHF 理论到工程实践的自然延伸。 让我搜索一些资料辅助生成：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L27] Assistant: Web search 不可用，但这个主题我已有充足知识。开始生成课程内容。 ## Phase 3: 生成今日新课程 **第 27 课：高效微调技术（LoRA / QLoRA / DPO）**
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L29] Assistant: 让我换种方式，先把 notebook 内容写成 Python 文件再执行：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L33] Assistant: Notebook 生成完成：10 cells (5 code + 5 markdown)，满足要求。现在生成 Daily MD 和知识笔记：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L37] Assistant: 现在生成 HTML 片段（Notebook HTML、Daily HTML、Note HTML）：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L41] Assistant: HTML 片段生成完成。现在进入 Phase 4：级联同步。 ## Phase 4: 级联同步 先看当前 README 和 index.html 的结构：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L43] Assistant: 现在更新 README.md：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L45] Assistant: 现在更新 docs/index.html、docs/notes-lab.html、docs/daily.html：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L52] Assistant: 现在执行级联更新——index.html、notes-lab.html、daily.html：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L54] Assistant: 现在更新 notes-lab.html：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L58] Assistant: 现在在 notes-lab.html 的概念笔记区域添加新笔记：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L62] Assistant: 现在更新 docs/daily.html：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L66] Assistant: 现在更新路线图：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L68] Assistant: ## Phase 5: 最终验证
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L70] Assistant: Phase 5 通过！27 notebooks，27 dailies，无缺口。现在执行 git 操作：
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L78] Assistant: Push 成功！
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L80] Assistant: --- ## 执行报告 ### validate 结果 - **Phase 1**: ✅ 通过（0 错误，26 notebooks + 26 dailies） - **Phase 2**: 无需修复 - **Phase 5**: ✅ 通过（0 错误，27 notebooks + 27 dailies） ### 今日新增 - **第 27 课：高效微调技术（LoRA / QLoRA / DPO）** - 新增文件： - `lessons/27_高效微调技术.ipynb`（10
+[ml-learning-coach/sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl#L80] Assistant: `cf69e29..68902f1 main -> main` ### 下一步学习建议 第 28 课：**AI 安全与可解释性**——大模型幻觉问题、红队测试、可解释性方法
+[ml-learning-coach/sessions/ml-learning-coach/5f779c0b-1f33-4f93-8512-d7cefeb52658.jsonl#L4] Assistant: 🧠 **第27课已就绪：高效微调技术（LoRA / QLoRA / DPO）** 📋 **今日主题**：如何用最少资源微调大模型 🔑 **核心要点**： • **LoRA**：低秩矩阵分解，参数量降 1000 倍，效果接近全量微调 • **QLoRA**：4-bit 量化 + LoRA，16GB 显存就能微调 7B 模型 • **DPO**：跳过奖励模型，直接用偏好数据优化（简化版 RLHF） 🔗 **关键衔接**：上节课学了 RLHF 三阶段流程，本课解决「普通人怎

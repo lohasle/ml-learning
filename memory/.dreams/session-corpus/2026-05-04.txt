@@ -1,0 +1,17 @@
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L8] Assistant: 好，SKILL.md 已读完。开始严格按 5 个 Phase 执行。 ## Phase 1: 健康检查
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L10] Assistant: Phase 1 通过 ✅，25课全部完好，无缺口。 ## Phase 2: 补齐缺口 无需修复，直接进入 Phase 3。 ## Phase 3: 生成今日新课程 先看当前路线图和最近课程，确定第26课主题。
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L14] Assistant: 第25课是"AI评估与基准测试"，阶段6第2课。接下来确定第26课主题。阶段6是"前沿专题"，前两课是推理模型和评估。接下来自然衔接的专题应该是 **RLHF 与人类对齐** —— 这是理解现代大模型训练闭环的关键一环，从预训练到微调到对齐的完整链条。
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L17] Assistant: 搜索不可用，没关系，我对 RLHF 的知识足够完整。现在开始生成第26课的全部内容。 先看模板：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L22] Assistant: 现在开始生成第26课的全部内容。先创建 Notebook：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L24] Assistant: Notebook 创建完成（8个 cell，4个代码cell + 4个 Markdown cell）。接下来创建 Daily MD 和 Notes：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L28] Assistant: 现在生成 HTML 片段。先渲染 Notebook HTML 和 Daily HTML：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L31] Assistant: HTML 片段全部生成。现在进入 **Phase 4: 级联同步**。 先看现有 README 和 index.html、notes-lab.html、daily.html 的结构：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L35] Assistant: 现在更新 docs/index.html：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L41] Assistant: 现在更新 notes-lab.html 的菜单树：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L47] Assistant: 现在添加 RLHF 概念笔记到菜单树：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L51] Assistant: 现在更新 docs/daily.html：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L57] Assistant: 现在更新路线图：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L59] Assistant: ## Phase 5: 最终验证
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L61] Assistant: Phase 5 通过 ✅！26课全部完好。现在 git commit & push：
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L67] Assistant: 全部完成！以下是今日执行报告： --- ## 📋 执行报告 ### validate 结果 - **Phase 1**: ✅ 通过 (25课完好) - **Phase 2**: 无需修复 - **Phase 5**: ✅ 通过 (26课全部完好) ### 今日新增 **第 26 课：RLHF 与人类对齐** 新增文件： | 文件 | 大小 | 说明 | |------|------|------| | `lessons/26_RLHF与人类对齐.ipynb` | 17.4 KB | 8 cells (4 c
+[ml-learning-coach/sessions/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl#L67] Assistant: `cf69e29` - **push**: ✅ 成功 ### 学习路线进度 - 阶段 6（前沿专题）：已完成 3/∞ 课 - 总进度：26 课（连续28天） --- 🧠 **今日学习简报（30分钟版）** **主题**：RLHF 与人类对齐——ChatGPT 背后的核心训练秘密 **核心收获**： 1. **对齐是质变**：预训练模型是续写器，RLHF 三阶段（SFT → 奖励模型 → PPO）让它变成有用助手 2. **DPO 是简化革命**：跳过奖励模型直接优化偏好，越来越主流 3. **关键权衡**：

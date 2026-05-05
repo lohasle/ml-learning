@@ -1,89 +1,61 @@
 {
   "version": 3,
   "files": {
-    "ml-learning-coach:sessions/190f7c2b-e689-4d39-aefa-3cc0f094e9b2.jsonl": {
+    "ml-learning-coach:sessions/ml-learning-coach/0c7902ab-96dd-4f0b-ae6d-1b3616e46262.jsonl": {
+      "mtimeMs": 1777929136982,
+      "size": 142944,
+      "contentHash": "1cc6563437cd5797118519da0a52d52882efbd22de0ff1591126a6e8d4736825",
+      "lineCount": 22,
+      "lastContentLine": 22
+    },
+    "ml-learning-coach:sessions/ml-learning-coach/190f7c2b-e689-4d39-aefa-3cc0f094e9b2.jsonl": {
       "mtimeMs": 1777497106426,
       "size": 149556,
       "contentHash": "24ae4a366cdaa507573c11c17fc4f8f3073f57f3c68acc3c71459b19db0ba1b9",
       "lineCount": 20,
       "lastContentLine": 20
     },
-    "ml-learning-coach:sessions/190f7c2b-e689-4d39-aefa-3cc0f094e9b2.trajectory.jsonl": {
-      "mtimeMs": 1777497106480,
-      "size": 329246,
-      "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
-      "lineCount": 0,
-      "lastContentLine": 0
-    },
-    "ml-learning-coach:sessions/257ab8a9-0ab4-4226-8433-4f85ea5b16aa.jsonl.deleted.2026-04-29T21-11-54.816Z": {
+    "ml-learning-coach:sessions/ml-learning-coach/257ab8a9-0ab4-4226-8433-4f85ea5b16aa.jsonl.deleted.2026-04-29T21-11-54.816Z": {
       "mtimeMs": 1777410598361,
       "size": 182775,
       "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
       "lineCount": 0,
       "lastContentLine": 0
     },
-    "ml-learning-coach:sessions/257ab8a9-0ab4-4226-8433-4f85ea5b16aa.trajectory.jsonl": {
-      "mtimeMs": 1777410598411,
-      "size": 354988,
-      "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
-      "lineCount": 0,
-      "lastContentLine": 0
+    "ml-learning-coach:sessions/ml-learning-coach/2d41b533-b9e2-476f-85d3-b3278dbb7ac3.jsonl": {
+      "mtimeMs": 1777842566479,
+      "size": 132342,
+      "contentHash": "89a13d12ddcb137628d0203965c1b00622db7270181f8e8210385cc0b76693d0",
+      "lineCount": 17,
+      "lastContentLine": 17
     },
-    "ml-learning-coach:sessions/58bd9a28-9195-42d3-8c50-ab7a8c8a4fb2.jsonl": {
+    "ml-learning-coach:sessions/ml-learning-coach/58bd9a28-9195-42d3-8c50-ab7a8c8a4fb2.jsonl": {
       "mtimeMs": 1777669899843,
       "size": 218360,
       "contentHash": "7154c6f29fed2490562cfcc1e825e0d66aa2617d96bc3dfd7ae55d5291e7a5ab",
       "lineCount": 24,
       "lastContentLine": 24
     },
-    "ml-learning-coach:sessions/58bd9a28-9195-42d3-8c50-ab7a8c8a4fb2.trajectory.jsonl": {
-      "mtimeMs": 1777669899909,
-      "size": 389908,
-      "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
-      "lineCount": 0,
-      "lastContentLine": 0
+    "ml-learning-coach:sessions/ml-learning-coach/5f779c0b-1f33-4f93-8512-d7cefeb52658.jsonl": {
+      "mtimeMs": 1777929124381,
+      "size": 5440,
+      "contentHash": "4460752ef613da0c4ff27ae43fa6e07f9dfd932e1a07535585cb5398f0aeda04",
+      "lineCount": 5,
+      "lastContentLine": 5
     },
-    "ml-learning-coach:sessions/5f779c0b-1f33-4f93-8512-d7cefeb52658.jsonl": {
-      "mtimeMs": 1777151100596,
-      "size": 4352,
-      "contentHash": "7afec50de3b54310ed4de8f103a3c66b9f73257a8fd7d2a8fd046eaec3baf5ff",
-      "lineCount": 2,
-      "lastContentLine": 2
-    },
-    "ml-learning-coach:sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl": {
+    "ml-learning-coach:sessions/ml-learning-coach/dc972118-a4a6-49c3-acf1-db3c043732c5.jsonl": {
       "mtimeMs": 1777756238172,
       "size": 151652,
       "contentHash": "07bc24463612e8108fab04badb6c6d9e1592d8409fd1c70132bca439a298bdfe",
       "lineCount": 18,
       "lastContentLine": 18
     },
-    "ml-learning-coach:sessions/dc972118-a4a6-49c3-acf1-db3c043732c5.trajectory.jsonl": {
-      "mtimeMs": 1777756238219,
-      "size": 322090,
-      "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
-      "lineCount": 0,
-      "lastContentLine": 0
-    },
-    "ml-learning-coach:sessions/dd1a119c-f397-434e-9125-4f228c5a3a61.trajectory.jsonl": {
-      "mtimeMs": 1777324395132,
-      "size": 348384,
-      "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
-      "lineCount": 0,
-      "lastContentLine": 0
-    },
-    "ml-learning-coach:sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl": {
+    "ml-learning-coach:sessions/ml-learning-coach/e34db751-0bf2-4fb8-b318-557d3b8777a9.jsonl": {
       "mtimeMs": 1777583500830,
       "size": 212369,
       "contentHash": "d06c1bbe7623c6736cee9380707db598c2ace08dfedc6600264f2d924fa73c01",
       "lineCount": 22,
       "lastContentLine": 22
-    },
-    "ml-learning-coach:sessions/e34db751-0bf2-4fb8-b318-557d3b8777a9.trajectory.jsonl": {
-      "mtimeMs": 1777583500875,
-      "size": 392828,
-      "contentHash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
-      "lineCount": 0,
-      "lastContentLine": 0
     }
   },
   "seenMessages": {
@@ -223,7 +195,8 @@
     ],
     "ml-learning-coach:5f779c0b-1f33-4f93-8512-d7cefeb52658": [
       "48b459037a487e476b62248397c53250db02bfea",
-      "397f0c84c47733e96a945d833eb4097b9d8a47fd"
+      "397f0c84c47733e96a945d833eb4097b9d8a47fd",
+      "ee50b48ae55e3013b8784db93145734888a280d8"
     ],
     "ml-learning-coach:c8867e7a-a036-40a5-bd67-518adca820f7": [
       "f8b7919cca71dc2a1058ad8104eb63ca352126f8",
@@ -376,6 +349,48 @@
       "e62a1eba9f9aa1f2af8bfe09514785080787e110",
       "d724f846cc14431826b48e314ad709118a12fa86"
     ],
-    "ml-learning-coach:dc972118-a4a6-49c3-acf1-db3c043732c5.trajectory": []
+    "ml-learning-coach:2d41b533-b9e2-476f-85d3-b3278dbb7ac3": [
+      "62e996f7e1e0b9cdc431514f1c2f13fa012df0b9",
+      "0b166550608811ed65d052b3bb925f0bbfd47d17",
+      "83fdc079d1d72e2edac10a53237491dba02a9da5",
+      "272248ffc8e93e42865c48bed67eaa089208d3d2",
+      "e5fdba60d3be04a84c58209c049d5a8519fa4911",
+      "217d0116e7d990cd9113374d3d9c82bd66e22cc0",
+      "392520d4140fa37911a76c7f70369701d395ab8e",
+      "847a2a2ccce908f7895b20b09bdccd98e954cff3",
+      "f0262a8662e9cbe1779c55d2b67a688b1d9584ab",
+      "b9fd22f4f2c320e46af006544efd66f009919279",
+      "a48957452ed58e2d4c74cd358ede50a0698dd680",
+      "18ec6d76330862fd9423ba0c37961f620cfc4f48",
+      "57402588b61f8856250c3e0f857bacb4dd9fa70e",
+      "c8ad675125266b43d646a06cf9ada414979466e0",
+      "bb07e9fe1676968f3c87823207e0d45f225635f3",
+      "732d90295bc6c7c1a1f7fd22374e18fc9ffb87c1",
+      "9eac0577170a07e6ca7fe38a7b8b711dbadb9fb3"
+    ],
+    "ml-learning-coach:0c7902ab-96dd-4f0b-ae6d-1b3616e46262": [
+      "fd16fb7789ec6080af78d322338d0b37519ba4a4",
+      "c1b326d87b430b38b346a913a9d953287fd2723b",
+      "71603e0d58db9554b867d5d545ec49e0d1d953be",
+      "edeedfcf4ac5777b5999599bb34632047b942061",
+      "77439fc6eed1ec00ffcc287612f482bafef30a53",
+      "fd5bbfba9b04cb03abd61f2a50da6f445fcc168e",
+      "0e356a2f7f4cfa76a8db3b8542cbc4965946786b",
+      "7f3a7d3f2afc9af5512f8948878381deabce9bbe",
+      "03cdbfa103064c1c6331df4e4f89876d8f64503c",
+      "205746acb4116e18d231cfa1fa7116822982b7f0",
+      "f7464faa22150a1f52b14d0f87a7bd8efd13d3f7",
+      "867d68220700e91cdf1515f027d9ecb9129693a2",
+      "ff2d7930619613311113400ce71723b812ec9912",
+      "8a337960bb941d0254b2349aac8cb0dc730ff582",
+      "e2612aa6669aa293f299fc3a27cc6d90fa153aad",
+      "ad33ae33cde629c76dc27532e57d708a01d59391",
+      "84e332b318415ca591d44de044013ddb8de05561",
+      "8fd4a118e682faaccd5e5f0405f7fd5cbd6df321",
+      "77e550fb6d5720c26dc730e4444ee39d24773496",
+      "9d02374c41bf42853798095e892874d42e342265",
+      "0a1c2cdca9345e311128d4b9edc051718fd73b69",
+      "3ea3b5ec2ce4aeabc77b60ba7e99f2f826adf7b9"
+    ]
   }
 }
