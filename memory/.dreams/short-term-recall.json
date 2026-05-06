@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-05T19:01:18.341Z",
+  "updatedAt": "2026-05-06T19:00:59.587Z",
   "entries": {
     "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1": {
       "key": "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1",
@@ -9257,6 +9257,395 @@
         "技术",
         "lora",
         "qlora"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:1:1": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:1:1",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 1,
+      "endLine": 1,
+      "source": "memory",
+      "snippet": "Assistant: 第28课选主题：**MoE（混合专家模型）与稀疏激活架构**。这是当前大模型架构最热门的方向之一，GPT-4、Mixtral、DeepSeek 都采用了 MoE。 先搜索一些参考资料：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "gpt",
+        "gpt-4",
+        "主题",
+        "moe",
+        "混合",
+        "专家",
+        "模型",
+        "稀疏"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:2:2": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:2:2",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 2,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "Assistant: 现在生成第28课的所有内容。先创建 Notebook：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "现在",
+        "生成",
+        "所有",
+        "内容",
+        "创建",
+        "notebook"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:3:3": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:3:3",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 3,
+      "endLine": 3,
+      "source": "memory",
+      "snippet": "Assistant: 现在生成 HTML 片段（从 Notebook 和 MD 渲染）：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "现在",
+        "生成",
+        "html",
+        "片段",
+        "notebook",
+        "渲染"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:4:4": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:4:4",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 4,
+      "endLine": 4,
+      "source": "memory",
+      "snippet": "Assistant: HTML 片段生成完成。现在进入 Phase 4 级联同步：更新 README.md、index.html、notes-lab.html、daily.html。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "readme.md",
+        "index.html",
+        "notes-lab.html",
+        "daily.html",
+        "html",
+        "片段",
+        "生成",
+        "完成"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:5:5": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:5:5",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 5,
+      "endLine": 5,
+      "source": "memory",
+      "snippet": "Assistant: 现在更新 4 个文件。先更新 README.md：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "readme.md",
+        "现在",
+        "更新",
+        "文件"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:6:6": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:6:6",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 6,
+      "endLine": 6,
+      "source": "memory",
+      "snippet": "Assistant: 更新 index.html（添加第28课 + 更新进度统计）：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "index.html",
+        "更新",
+        "添加",
+        "进度",
+        "统计"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:7:7": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:7:7",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 7,
+      "endLine": 7,
+      "source": "memory",
+      "snippet": "Assistant: 更新 notes-lab.html（添加第28课 tree-item + 概念笔记）：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "notes-lab.html",
+        "tree-item",
+        "更新",
+        "lab.html",
+        "添加",
+        "tree",
+        "item",
+        "概念"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:8:8": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:8:8",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 8,
+      "endLine": 8,
+      "source": "memory",
+      "snippet": "Assistant: 更新 daily.html（添加第28课时间线条目 + 更新统计）：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "daily.html",
+        "更新",
+        "添加",
+        "时间",
+        "线条",
+        "统计"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:9:9": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:9:9",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 9,
+      "endLine": 9,
+      "source": "memory",
+      "snippet": "Assistant: 更新 roadmap.md：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "roadmap.md",
+        "更新"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:10:10": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:10:10",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 10,
+      "endLine": 10,
+      "source": "memory",
+      "snippet": "Assistant: Phase 5：最终验证",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "phase",
+        "最终",
+        "验证"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:11:11": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:11:11",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 11,
+      "endLine": 11,
+      "source": "memory",
+      "snippet": "Assistant: 验证通过！执行 git push：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "验证",
+        "通过",
+        "执行",
+        "git",
+        "push"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:12:12": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:12:12",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 12,
+      "endLine": 12,
+      "source": "memory",
+      "snippet": "Assistant: --- ## 🧠 第28课：MoE（混合专家模型）与稀疏激活架构 ### 今日学习主题 **MoE（Mixture of Experts）—— 用「条件计算」让大模型参数多但不贵。** ### 为什么学这个？ 昨天学了 LoRA/QLoRA/DPO 解决「微调太贵」的问题，今天从**架构层面**解决另一个痛点：万亿参数模型推理成本。 核心思想很简单——一家医院有 8 个科室，来个病人不需要所有科室都看一遍，分诊台把病人送到最合适的 2 个科就行。MoE 就是这个「分诊台 + 专科医生」的组合。 ### 关键收获 1. **MoE",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "lora/qlora/dpo",
+        "moe",
+        "混合",
+        "专家",
+        "模型",
+        "稀疏",
+        "激活",
+        "架构"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-06.txt:13:13": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-06.txt:13:13",
+      "path": "memory/.dreams/session-corpus/2026-05-06.txt",
+      "startLine": 13,
+      "endLine": 13,
+      "source": "memory",
+      "snippet": "Assistant: `daily/2026-05-06.md`（2,829 bytes） - `notes/MoE混合专家模型.md`（784 bytes） - `docs/nb-28_MoE混合专家模型.html`（15,689 bytes） - `docs/daily-2026-05-06.html`（6,361 bytes） - `docs/note-MoE混合专家模型.html`（1,529 bytes） ### 级联同步 - ✅ README.md — 课程表格新增第28行 + 快速入口更新 - ✅ docs/index.html — 课程列",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-06T19:00:59.013Z",
+      "lastRecalledAt": "2026-05-06T19:00:59.013Z",
+      "queryHashes": [
+        "a4942137f8fd"
+      ],
+      "recallDays": [
+        "2026-05-07",
+        "2026-05-06"
+      ],
+      "conceptTags": [
+        "daily/2026-05-06.md",
+        "notes/moe混合专家模型.md",
+        "docs/nb-28-moe混合专家模型.html",
+        "docs/daily-2026-05-06.html",
+        "docs/note-moe混合专家模型.html",
+        "readme.md",
+        "docs/index.html",
+        "2,829"
       ]
     }
   }

@@ -1,0 +1,83 @@
+<h1>2026年5月7日 - 第29课：知识蒸馏与模型压缩</h1>
+<h2>今日学习主题</h2>
+<p><strong>知识蒸馏（Knowledge Distillation）：如何让小模型拥有大模型的知识——大模型时代的「降本增效」核心技术</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课（第28课 MoE 混合专家模型）解决的是「如何用稀疏激活降低计算量」，但 MoE 模型的总参数量仍然巨大。</p>
+<p><strong>知识蒸馏回答了另一个关键问题</strong>：能否直接训练一个参数少得多的小模型，却能达到接近大模型的效果？</p>
+<p>这是大模型落地部署的核心技术路线——训练用大模型，部署用蒸馏后的小模型。几乎所有成功的「小而强」模型背后都有蒸馏的影子。</p>
+<h2>核心概念解释</h2>
+<h3>1. 知识蒸馏的基本框架</h3>
+<ul>
+<li><strong>直觉</strong>：老教授（大模型）把毕生经验浓缩成精华传授给年轻助教（小模型）</li>
+<li><strong>核心</strong>：不是让小模型学习 one-hot 硬标签，而是学习大模型的输出概率分布</li>
+<li><strong>关键发现</strong>：大模型的 soft outputs 包含了类间相似关系——即「暗知识」</li>
+</ul>
+<p><strong>代码对应</strong>：Notebook 中的 <code>softmax_with_temperature()</code> 和 <code>distillation_loss()</code> 函数</p>
+<h3>2. Temperature 参数</h3>
+<ul>
+<li><strong>直觉</strong>：温度就像「信息放大镜」——温度越高，概率分布越平坦，隐藏的类间关系越明显</li>
+<li><strong>原理</strong>：$q_i = \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}$</li>
+<li><strong>T=1</strong>：正常 softmax；<strong>T=4~20</strong>：蒸馏常用范围</li>
+</ul>
+<h3>3. 蒸馏损失函数</h3>
+<ul>
+<li><strong>总损失</strong> = α × 蒸馏损失 + (1-α) × 标准交叉熵</li>
+<li><strong>蒸馏损失</strong> = KL 散度(教师soft分布, 学生soft分布) × T²</li>
+<li><strong>为什么乘 T²</strong>：因为高温让梯度变小了 T² 倍，需要补偿回来</li>
+</ul>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>带温度的 softmax</td>
+<td>$q_i = \exp(z_i/T) / \sum \exp(z_j/T)$</td>
+<td>T 越大，概率分布越「平」，暗知识越明显</td>
+</tr>
+<tr>
+<td>KL 散度</td>
+<td>$KL(p|q) = \sum p \log(p/q)$</td>
+<td>衡量两个分布的「距离」，越小越像</td>
+</tr>
+<tr>
+<td>蒸馏损失</td>
+<td>$L_{soft} = KL(p_T^{teacher} | p_T^{student}) \times T^2$</td>
+<td>学生要模仿老师的 soft output</td>
+</tr>
+<tr>
+<td>总损失</td>
+<td>$L = \alpha L_{soft} + (1-\alpha) L_{hard}$</td>
+<td>软硬标签双路指导</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 中完整实现了从零开始的蒸馏流程</li>
+<li>Temperature 建议从 T=4 开始调参，观察 soft targets 的变化</li>
+<li>α 值通常取 0.5~0.9，教师信号越强（α 越大），学生越依赖暗知识</li>
+<li>常见坑点：T 太大（&gt;50）会导致信息过于模糊，蒸馏效果下降</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: 知识蒸馏和迁移学习有什么区别？</strong>
+A: 迁移学习是直接复制预训练权重再微调；知识蒸馏是用大模型的输出作为「软标签」来训练一个全新的小模型。蒸馏不需要大模型的权重，只需要它的输出。</p>
+<p><strong>Q: 为什么 soft targets 比 hard labels 好？</strong>
+A: Hard labels 只告诉你「这是猫」，soft targets 还告诉你「这很像虎，不太像汽车」。这种类间关系是极其有价值的信息，能帮小模型学得更快更准。</p>
+<p><strong>Q: 蒸馏会把偏见也传递下去吗？</strong>
+A: 会的。如果教师模型有偏见，学生大概率也会继承。缓解方法包括：使用多教师集成、在蒸馏损失中加入公平性约束、用人类反馈修正。</p>
+<h2>本课总结</h2>
+<ol>
+<li>知识蒸馏通过 soft targets 传递「暗知识」，让小模型从大模型的知识中受益</li>
+<li>Temperature 控制分布「软度」，T=4~20 是常用范围</li>
+<li>蒸馏损失 = 软标签 KL 散度 + 硬标签交叉熵，两路信号联合训练</li>
+<li>模型压缩四大技术：蒸馏、量化、剪枝、低秩分解，实践中常组合使用</li>
+<li>当前趋势：DeepSeek-R1、Alpaca 等都用蒸馏将大模型能力迁移到小模型</li>
+</ol>
+<h2>下一步</h2>
+<p>第 30 课将学习<strong>量化推理技术</strong>——如何将模型权重从 FP16 压缩到 INT8/INT4，实现推理加速。量化是模型部署中最高频使用的压缩手段，与蒸馏形成互补。</p>

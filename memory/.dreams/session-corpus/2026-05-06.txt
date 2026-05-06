@@ -1,0 +1,13 @@
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L17] Assistant: 第28课选主题：**MoE（混合专家模型）与稀疏激活架构**。这是当前大模型架构最热门的方向之一，GPT-4、Mixtral、DeepSeek 都采用了 MoE。 先搜索一些参考资料：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L21] Assistant: 现在生成第28课的所有内容。先创建 Notebook：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L27] Assistant: 现在生成 HTML 片段（从 Notebook 和 MD 渲染）：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L31] Assistant: HTML 片段生成完成。现在进入 Phase 4 级联同步：更新 README.md、index.html、notes-lab.html、daily.html。
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L35] Assistant: 现在更新 4 个文件。先更新 README.md：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L37] Assistant: 更新 index.html（添加第28课 + 更新进度统计）：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L41] Assistant: 更新 notes-lab.html（添加第28课 tree-item + 概念笔记）：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L45] Assistant: 更新 daily.html（添加第28课时间线条目 + 更新统计）：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L51] Assistant: 更新 roadmap.md：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L55] Assistant: Phase 5：最终验证
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L57] Assistant: 验证通过！执行 git push：
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L61] Assistant: --- ## 🧠 第28课：MoE（混合专家模型）与稀疏激活架构 ### 今日学习主题 **MoE（Mixture of Experts）—— 用「条件计算」让大模型参数多但不贵。** ### 为什么学这个？ 昨天学了 LoRA/QLoRA/DPO 解决「微调太贵」的问题，今天从**架构层面**解决另一个痛点：万亿参数模型推理成本。 核心思想很简单——一家医院有 8 个科室，来个病人不需要所有科室都看一遍，分诊台把病人送到最合适的 2 个科就行。MoE 就是这个「分诊台 
+[ml-learning-coach/sessions/ml-learning-coach/b7de00b1-768d-4162-8264-4bd21fcb6da6.jsonl#L61] Assistant: `daily/2026-05-06.md`（2,829 bytes） - `notes/MoE混合专家模型.md`（784 bytes） - `docs/nb-28_MoE混合专家模型.html`（15,689 bytes） - `docs/daily-2026-05-06.html`（6,361 bytes） - `docs/note-MoE混合专家模型.html`（1,529 bytes） ### 级联同步 - ✅ README.md — 课程表格新增第28行 + 快速

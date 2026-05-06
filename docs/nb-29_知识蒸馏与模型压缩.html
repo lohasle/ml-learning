@@ -1,0 +1,386 @@
+<div class="nb-cell nb-markdown"><h1>第29课：知识蒸馏与模型压缩</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解知识蒸馏（Knowledge Distillation）的核心思想：大模型教小模型</li>
+<li>掌握 Hinton 2015 经典蒸馏框架的数学原理</li>
+<li>理解蒸馏中的「暗知识」（Dark Knowledge）：soft targets vs hard labels</li>
+<li>了解模型压缩的四大技术路线：蒸馏、量化、剪枝、低秩分解</li>
+<li>从零实现一个简单的知识蒸馏训练流程</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念：为什么需要知识蒸馏？</h2>
+<h3>直觉理解</h3>
+<p>想象一个场景：
+- <strong>老师</strong>：经验丰富的老教授，知识渊博，但讲课慢、请他答疑成本很高
+- <strong>学生</strong>：年轻助教，速度快、可同时服务很多人，但经验不足
+- <strong>蒸馏过程</strong>：老教授把毕生经验浓缩成精华传授给助教 → 助教既快又准</p>
+<p>核心思想：<strong>让大模型（Teacher）的「知识」迁移到小模型（Student）中，使小模型在参数少得多的情况下达到接近大模型的效果</strong>。</p>
+<h3>在 AI 演进史中的位置</h3>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>里程碑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2006</td>
+<td>Buciluǎ et al. 提出模型压缩的早期概念</td>
+</tr>
+<tr>
+<td>2015</td>
+<td>Hinton et al. 发表经典论文「Distilling the Knowledge in a Neural Network」</td>
+</tr>
+<tr>
+<td>2019</td>
+<td>DistilBERT：将 BERT 蒸馏为 40% 大小、保留 97% 性能</td>
+</tr>
+<tr>
+<td>2023</td>
+<td>Alpaca、Vicuna：用 GPT-4 输出蒸馏开源小模型</td>
+</tr>
+<tr>
+<td>2024-2025</td>
+<td>DeepSeek-R1 蒸馏：大推理模型 → 小推理模型；MiniCPM 等高效蒸馏方法</td>
+</tr>
+</tbody>
+</table>
+<p>知识蒸馏是大模型时代的「降本增效利器」：训练用大模型，部署用蒸馏后的小模型。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+print('知识蒸馏环境准备就绪')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>知识蒸馏的数学原理</h2>
+<h3>Soft Targets 与 Temperature</h3>
+<p>传统训练使用 <strong>hard labels</strong>（one-hot 编码）：</p>
+<pre><code>猫: [1, 0, 0, 0, 0]    ← 只告诉模型「这是猫」
+</code></pre>
+<p>大模型的输出是 <strong>soft targets</strong>（概率分布）：</p>
+<pre><code>猫: [0.85, 0.05, 0.04, 0.03, 0.03]    ← 猫的概率最高，但狗和虎也有相似度
+</code></pre>
+<p><strong>关键洞察</strong>：soft targets 包含了类与类之间的相似关系——这就是 Hinton 所说的「暗知识」（Dark Knowledge）。</p>
+<h3>Temperature 参数</h3>
+<p>为了让 soft targets 更「软」，引入温度参数 $T$：</p>
+<p>$$q_i = \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}$$</p>
+<ul>
+<li>$T=1$：正常 softmax</li>
+<li>$T &gt; 1$：概率分布更平滑（更「软」），暗知识更明显</li>
+<li>$T \to \infty$：所有类概率趋近于均匀分布</li>
+</ul>
+<h3>蒸馏损失函数</h3>
+<p>学生模型的总损失 = 两部分加权：</p>
+<p>$$L = \alpha \cdot L_{soft} + (1 - \alpha) \cdot L_{hard}$$</p>
+<p>其中：
+- $L_{soft} = KL(p_{teacher}^T | p_{student}^T) \times T^2$（蒸馏损失）
+- $L_{hard} = CE(y, p_{student})$（标准交叉熵损失）
+- $\alpha$ 通常取 0.5~0.9
+- $T^2$ 是补偿项：因为高温 soft targets 的梯度被温度缩小了，需要放大回来</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 从零实现知识蒸馏的核心组件
+
+def softmax_with_temperature(logits, T=1.0):
+    """带温度的 softmax"""
+    logits = np.array(logits)
+    exp_logits = np.exp((logits - np.max(logits)) / T)  # 数值稳定
+    return exp_logits / exp_logits.sum()
+
+def kl_divergence(p, q):
+    """KL 散度：KL(p || q)"""
+    p = np.array(p)
+    q = np.array(q)
+    # 避免 log(0)
+    q = np.clip(q, 1e-8, 1.0)
+    p = np.clip(p, 1e-8, 1.0)
+    return np.sum(p * np.log(p / q))
+
+def cross_entropy(y_true, y_pred):
+    """交叉熵损失"""
+    y_pred = np.clip(y_pred, 1e-8, 1.0)
+    return -np.sum(y_true * np.log(y_pred))
+
+def distillation_loss(student_logits, teacher_logits, y_true, T=4.0, alpha=0.7):
+    """知识蒸馏总损失"""
+    # Soft targets
+    p_teacher = softmax_with_temperature(teacher_logits, T)
+    p_student = softmax_with_temperature(student_logits, T)
+    
+    # Hard targets
+    p_student_hard = softmax_with_temperature(student_logits, T=1.0)
+    
+    # 两部分损失
+    L_soft = kl_divergence(p_teacher, p_student) * (T * T)
+    L_hard = cross_entropy(y_true, p_student_hard)
+    
+    total = alpha * L_soft + (1 - alpha) * L_hard
+    return total, L_soft, L_hard
+
+# 演示 Temperature 的效果
+logits = [5.0, 1.0, 0.5, -1.0, -3.0]  # 某个样本的 logits
+classes = ['猫', '狗', '虎', '汽车', '桌子']
+
+print('Temperature 对 soft targets 的影响：')
+print('-' * 60)
+for T in [1, 2, 4, 8]:
+    probs = softmax_with_temperature(logits, T)
+    prob_str = ', '.join([f'{c}:{p:.3f}' for c, p in zip(classes, probs)])
+    print(f'T={T:2d} → [{prob_str}]')
+
+print()
+print('观察：T 越大，概率分布越「均匀」，暗知识（类间相似关系）越明显。')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟一个完整的知识蒸馏训练过程
+
+# 简单的线性分类器（学生模型和教师模型）
+class SimpleClassifier:
+    def __init__(self, input_dim, num_classes, lr=0.01):
+        self.W = np.random.randn(input_dim, num_classes) * 0.1
+        self.b = np.zeros(num_classes)
+        self.lr = lr
+    
+    def predict_logits(self, X):
+        return X @ self.W + self.b
+    
+    def predict_proba(self, X):
+        logits = self.predict_logits(X)
+        exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+        return exp_logits / exp_logits.sum(axis=1, keepdims=True)
+
+# 生成模拟数据（3 分类）
+n_samples = 300
+n_features = 10
+n_classes = 3
+
+X = np.random.randn(n_samples, n_features)
+true_W = np.random.randn(n_features, n_classes)
+logits_true = X @ true_W
+y = np.argmax(logits_true, axis=1)
+y_onehot = np.eye(n_classes)[y]
+
+# 预训练教师模型（更大、更强）
+teacher = SimpleClassifier(n_features, n_classes, lr=0.05)
+for _ in range(200):
+    teacher_logits = teacher.predict_logits(X)
+    teacher.W += teacher.lr * (X.T @ (y_onehot - teacher.predict_proba(X))) / n_samples
+
+# 训练 3 种学生模型进行对比
+student_distill = SimpleClassifier(n_features, n_classes, lr=0.05)  # 蒸馏
+student_normal = SimpleClassifier(n_features, n_classes, lr=0.05)  # 普通训练
+
+T = 4.0
+alpha = 0.7
+losses_distill = []
+losses_normal = []
+acc_distill = []
+acc_normal = []
+
+for epoch in range(100):
+    # --- 蒸馏训练 ---
+    s_logits = student_distill.predict_logits(X)
+    t_logits = teacher.predict_logits(X)
+    
+    # 计算蒸馏损失
+    total_loss, _, _ = distillation_loss(s_logits, t_logits, y_onehot, T=T, alpha=alpha)
+    losses_distill.append(total_loss)
+    
+    # 简化的梯度更新（数值梯度近似）
+    eps = 0.01
+    for i in range(n_features):
+        for j in range(n_classes):
+            student_distill.W[i, j] += eps
+            s_logits_plus = student_distill.predict_logits(X)
+            loss_plus, _, _ = distillation_loss(s_logits_plus, t_logits, y_onehot, T=T, alpha=alpha)
+            student_distill.W[i, j] -= eps
+            grad = (loss_plus - total_loss) / eps
+            student_distill.W[i, j] -= student_distill.lr * grad
+    
+    # --- 普通训练 ---
+    s_logits_n = student_normal.predict_logits(X)
+    s_proba_n = student_normal.predict_proba(X)
+    normal_loss = cross_entropy(y_onehot, s_proba_n)
+    losses_normal.append(normal_loss)
+    
+    # 梯度更新
+    for i in range(n_features):
+        for j in range(n_classes):
+            student_normal.W[i, j] += eps
+            s_logits_plus = student_normal.predict_logits(X)
+            s_proba_plus = student_normal.predict_proba(X)
+            loss_plus = cross_entropy(y_onehot, s_proba_plus)
+            student_normal.W[i, j] -= eps
+            grad = (loss_plus - normal_loss) / eps
+            student_normal.W[i, j] -= student_normal.lr * grad
+    
+    # 记录准确率
+    acc_distill.append(np.mean(np.argmax(student_distill.predict_proba(X), axis=1) == y))
+    acc_normal.append(np.mean(np.argmax(student_normal.predict_proba(X), axis=1) == y))
+
+print(f'教师模型准确率: {np.mean(np.argmax(teacher.predict_proba(X), axis=1) == y):.2%}')
+print(f'蒸馏学生准确率: {acc_distill[-1]:.2%}')
+print(f'普通学生准确率: {acc_normal[-1]:.2%}')
+print(f'蒸馏最终损失: {losses_distill[-1]:.4f}')
+print(f'普通最终损失: {losses_normal[-1]:.4f}')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 可视化训练过程对比
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# 损失曲线
+axes[0].plot(losses_distill, label='蒸馏训练 (Distillation)', color='#C96442', linewidth=2)
+axes[0].plot(losses_normal, label='普通训练 (Normal)', color='#6B8E9B', linewidth=2, linestyle='--')
+axes[0].set_xlabel('Epoch')
+axes[0].set_ylabel('Loss')
+axes[0].set_title('训练损失对比')
+axes[0].legend()
+axes[0].grid(True, alpha=0.3)
+
+# 准确率曲线
+axes[1].plot(acc_distill, label='蒸馏训练 (Distillation)', color='#C96442', linewidth=2)
+axes[1].plot(acc_normal, label='普通训练 (Normal)', color='#6B8E9B', linewidth=2, linestyle='--')
+axes[1].set_xlabel('Epoch')
+axes[1].set_ylabel('Accuracy')
+axes[1].set_title('训练准确率对比')
+axes[1].legend()
+axes[1].grid(True, alpha=0.3)
+
+plt.suptitle('知识蒸馏 vs 普通训练', fontsize=14, fontweight='bold')
+plt.tight_layout()
+plt.savefig('docs/distillation_comparison.png', dpi=100, bbox_inches='tight')
+plt.show()
+print('蒸馏训练通常收敛更快，最终性能更好')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>模型压缩的四大技术路线</h2>
+<p>知识蒸馏只是模型压缩的一种方法。完整的模型压缩工具箱包括：</p>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>原理</th>
+<th>压缩比</th>
+<th>精度损失</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>知识蒸馏</strong></td>
+<td>大模型教小模型</td>
+<td>2-10x</td>
+<td>低</td>
+</tr>
+<tr>
+<td><strong>量化（Quantization）</strong></td>
+<td>降低数值精度（FP32→INT8/INT4）</td>
+<td>2-8x</td>
+<td>低~中</td>
+</tr>
+<tr>
+<td><strong>剪枝（Pruning）</strong></td>
+<td>移除不重要的权重/神经元</td>
+<td>2-10x</td>
+<td>低~高</td>
+</tr>
+<tr>
+<td><strong>低秩分解</strong></td>
+<td>用低秩矩阵近似权重矩阵</td>
+<td>2-5x</td>
+<td>低</td>
+</tr>
+</tbody>
+</table>
+<h3>实际应用中的组合策略</h3>
+<p>现代大模型部署通常是<strong>多层叠加</strong>：
+1. 先蒸馏：大模型 → 中等模型
+2. 再量化：FP16 → INT8 或 INT4
+3. 必要时剪枝：移除冗余头/层</p>
+<p>例如 DeepSeek-R1 的蒸馏路线：
+- 671B MoE 大模型 → 蒸馏到 7B/14B/32B 密集模型
+- 再通过量化进一步压缩到可在消费级 GPU 上运行</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模型压缩效果对比可视化
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+techniques = ['原始模型', '蒸馏', '量化(INT8)', '量化(INT4)', '蒸馏+量化']
+model_sizes = [100, 40, 50, 25, 10]  # 相对大小 %
+accuracies = [95, 93, 94, 90, 91]     # 相对精度 %
+
+x = np.arange(len(techniques))
+width = 0.35
+
+bars1 = ax.bar(x - width/2, model_sizes, width, label='模型大小 (%)', color='#C96442', alpha=0.8)
+bars2 = ax.bar(x + width/2, accuracies, width, label='精度保持 (%)', color='#6B8E9B', alpha=0.8)
+
+ax.set_xlabel('压缩技术')
+ax.set_ylabel('百分比 (%)')
+ax.set_title('模型压缩技术对比（以原始模型为基准）')
+ax.set_xticks(x)
+ax.set_xticklabels(techniques)
+ax.legend()
+ax.grid(True, alpha=0.3, axis='y')
+
+# 在柱子上方标注数值
+for bar in bars1:
+    height = bar.get_height()
+    ax.annotate(f'{height}%', xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3), textcoords='offset points', ha='center', fontsize=9)
+for bar in bars2:
+    height = bar.get_height()
+    ax.annotate(f'{height}%', xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3), textcoords='offset points', ha='center', fontsize=9)
+
+plt.tight_layout()
+plt.savefig('docs/compression_comparison.png', dpi=100, bbox_inches='tight')
+plt.show()</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>🎯 本课要点</h3>
+<ol>
+<li><strong>知识蒸馏核心</strong>：让大模型的 soft targets（而非 hard labels）指导小模型训练，传递「暗知识」</li>
+<li><strong>Temperature 参数</strong>：控制 soft targets 的「软度」，通常 T=4~20 效果好</li>
+<li><strong>蒸馏损失</strong> = α × KL散度(soft) + (1-α) × 交叉熵(hard)，两路信号共同指导</li>
+<li><strong>四大压缩路线</strong>：蒸馏、量化、剪枝、低秩分解，实践中常组合使用</li>
+<li><strong>工业趋势</strong>：训练用大模型，部署用蒸馏+量化后的小模型，是当前主流范式</li>
+</ol>
+<h3>🔑 关键公式速查</h3>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$q_i = \text{softmax}(z_i/T)$</td>
+<td>带温度的 softmax</td>
+</tr>
+<tr>
+<td>$L_{soft} = KL(p_T | q_T) \cdot T^2$</td>
+<td>蒸馏损失</td>
+</tr>
+<tr>
+<td>$L = \alpha L_{soft} + (1-\alpha) L_{hard}$</td>
+<td>总损失</td>
+</tr>
+</tbody>
+</table>
+<h2>课后思考</h2>
+<ol>
+<li><strong>为什么不直接用 hard labels 训练小模型？</strong> soft targets 中的「暗知识」到底包含了什么信息？</li>
+<li><strong>Temperature 太大或太小会有什么问题？</strong> 极端情况下蒸馏还生效吗？</li>
+<li><strong>如果教师模型本身有偏见，蒸馏会把偏见也传给学生吗？</strong> 如何缓解？</li>
+</ol>
+<h3>下一步</h3>
+<p>第 30 课将学习<strong>量化推理技术</strong>——如何将模型权重从 FP16 压缩到 INT8/INT4，实现推理加速，这是模型部署中最常用的压缩手段。</p></div>
