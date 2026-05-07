@@ -1,0 +1,90 @@
+<h1>量化推理技术</h1>
+<h2>概述</h2>
+<p>量化（Quantization）是将模型权重和激活值从高精度浮点数（FP32/FP16）映射到低精度整数（INT8/INT4）的技术。它是大模型部署中最广泛使用的压缩手段。</p>
+<h2>核心机制</h2>
+<h3>均匀对称量化</h3>
+<p>$$q = \text{round}\left(\frac{x}{s}\right), \quad s = \frac{\max(|x|)}{2^{b-1}-1}$$</p>
+<p>反量化：$\hat{x} = q \times s$</p>
+<h3>PTQ vs QAT</h3>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>描述</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PTQ</td>
+<td>训练后量化，少量校准数据</td>
+<td>快速、低成本</td>
+<td>INT4 可能有精度损失</td>
+</tr>
+<tr>
+<td>QAT</td>
+<td>训练中模拟量化</td>
+<td>精度最优</td>
+<td>需要完整训练</td>
+</tr>
+</tbody>
+</table>
+<h2>主流量化方案</h2>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>核心思想</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPTQ</td>
+<td>Hessian 二阶优化</td>
+<td>GPU 推理</td>
+</tr>
+<tr>
+<td>AWQ</td>
+<td>保护 salient 权重通道</td>
+<td>GPU 推理</td>
+</tr>
+<tr>
+<td>GGUF</td>
+<td>CPU/GPU 混合格式</td>
+<td>本地/边缘部署</td>
+</tr>
+<tr>
+<td>SmoothQuant</td>
+<td>激活→权重离群值迁移</td>
+<td>W8A8 服务端推理</td>
+</tr>
+<tr>
+<td>AQLM</td>
+<td>多码本向量量化</td>
+<td>极低比特 (1-2bit)</td>
+</tr>
+</tbody>
+</table>
+<h2>关键洞察</h2>
+<ol>
+<li><strong>INT8 几乎无损</strong>：余弦相似度 &gt; 0.999，压缩 2 倍</li>
+<li><strong>INT4 是实用下限</strong>：轻微精度损失，压缩 4 倍</li>
+<li><strong>离群值是核心挑战</strong>：LLM 权重中约 0.1% 的极端值会破坏朴素量化</li>
+<li><strong>量化与蒸馏互补</strong>：蒸馏减小模型，量化减小表示</li>
+</ol>
+<h2>关联概念</h2>
+<ul>
+<li>[[知识蒸馏]] - 模型压缩的另一条路线</li>
+<li>[[MoE 混合专家模型]] - 稀疏激活降低推理成本</li>
+<li>[[大模型训练与推理工程]] - 量化是推理工程的核心组件</li>
+<li>[[高效微调技术]] - LoRA 等方法也可与量化结合（QLoRA）</li>
+</ul>
+<h2>关键论文</h2>
+<ul>
+<li>GPTQ (Frantar et al., 2022) - 二阶后训练量化</li>
+<li>AWQ (Lin et al., 2023) - 激活感知权重量化</li>
+<li>SmoothQuant (Xiao et al., 2022) - 平滑激活离群值</li>
+<li>LLM.int8() (Dettmers et al., 2022) - 混合精度 INT8 推理</li>
+</ul>

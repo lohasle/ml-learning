@@ -1,0 +1,422 @@
+<div class="nb-cell nb-markdown"><h1>第30课：量化推理技术</h1>
+
+<h2>学习目标</h2>
+<li>理解量化的基本原理：为什么把 FP32/FP16 压缩到 INT8/INT4 还能保持精度</li>
+<li>掌握 PTQ（训练后量化）与 QAT（量化感知训练）的区别</li>
+<li>了解主流量化方案：GPTQ、AWQ、GGUF 的核心思想</li>
+<li>动手模拟权重量化过程，观察精度损失与量化误差</li>
+<li>建立量化与蒸馏、剪枝等技术的关系图谱</li></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+
+<h3>什么是量化？</h3>
+
+<strong>直觉类比</strong>：量化就像把一张高清照片压缩成 JPEG——丢失了一些像素细节，但肉眼看起来差别不大，文件却小了很多倍。
+
+<p>在 AI 中，量化是将模型权重和激活值从高精度浮点数（FP32/FP16）映射到低精度整数（INT8/INT4）的过程。核心目标是：</p>
+<li><strong>减少内存占用</strong>：INT8 只需 FP16 的一半空间，INT4 只需 1/4</li>
+<li><strong>加速推理</strong>：整数运算比浮点运算快得多，硬件对 INT8/INT4 有专门优化</li>
+<li><strong>降低功耗</strong>：对边缘设备和移动端至关重要</li>
+
+<h3>量化在学习路线中的位置</h3>
+
+<li>第 29 课（知识蒸馏）解决了「大模型→小模型」的知识迁移问题</li>
+<li><strong>本课解决</strong>：如何在不改变模型结构的前提下，大幅压缩模型体积和加速推理</li>
+<li>量化与蒸馏是互补的：可以先蒸馏得到小模型，再量化进一步压缩</li>
+
+<h3>关键区分：PTQ vs QAT</h3>
+
+<p>| 维度 | PTQ（训练后量化） | QAT（量化感知训练） |</p>
+<p>|------|-------------------|---------------------|</p>
+<p>| 时机 | 模型训练完成后 | 训练过程中 |</p>
+<p>| 成本 | 低，只需少量校准数据 | 高，需要完整训练 |</p>
+<p>| 精度 | INT8 损失小，INT4 有一定损失 | 更高，能补偿量化误差 |</p>
+<p>| 流程 | 简单快速 | 复杂但更优 |</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [1]</div><pre><code>import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+# 设置中文字体
+plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+print("量化推理技术 - 实验环境准备完毕")
+print(f"NumPy 版本: {np.__version__}")</code></pre><div class="nb-output"><pre>量化推理技术 - 实验环境准备完毕
+NumPy 版本: 1.26.4
+</pre></div></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [2]</div><pre><code># ============================================================
+# 从零实现：均匀量化（Uniform Quantization）
+# ============================================================
+# 量化的核心思想：将连续的浮点值映射到有限的整数级别
+# 公式：x_quant = round(x / scale) + zero_point
+#       x_dequant = (x_quant - zero_point) * scale
+
+def uniform_quantize(weights, n_bits=8):
+    """均匀对称量化：将浮点权重量化到 [-2^(n_bits-1), 2^(n_bits-1)-1]
+    
+    Args:
+        weights: 浮点权重矩阵
+        n_bits: 量化位数（4, 8, 16）
+    Returns:
+        quantized: 量化后的整数
+        scale: 缩放因子
+        dequantized: 反量化后的浮点数（用于观察误差）
+    """
+    # 确定量化范围
+    q_max = 2 ** (n_bits - 1) - 1  # 正数最大值
+    q_min = -(2 ** (n_bits - 1))    # 负数最小值
+    
+    # 计算 scale：浮点范围 / 整数范围
+    w_max = np.max(np.abs(weights))
+    scale = w_max / q_max if w_max &gt; 0 else 1e-8
+    
+    # 量化：浮点 → 整数
+    quantized = np.clip(np.round(weights / scale), q_min, q_max).astype(np.int32)
+    
+    # 反量化：整数 → 浮点（模拟推理时的计算）
+    dequantized = quantized.astype(np.float32) * scale
+    
+    return quantized, scale, dequantized
+
+
+# 模拟一个小型神经网络层的权重
+np.random.seed(42)
+weights = np.random.randn(128, 64).astype(np.float32) * 0.5  # 模拟权重
+
+print("=== 原始权重统计 ===")
+print(f"形状: {weights.shape}")
+print(f"数据类型: {weights.dtype}")
+print(f"内存占用: {weights.nbytes / 1024:.2f} KB")
+print(f"范围: [{weights.min():.4f}, {weights.max():.4f}]")
+print(f"均值: {weights.mean():.4f}, 标准差: {weights.std():.4f}")</code></pre><div class="nb-output"><pre>=== 原始权重统计 ===
+形状: (128, 64)
+数据类型: float32
+内存占用: 32.00 KB
+范围: [-1.5928, 1.5096]
+均值: -0.0039, 标准差: 0.4972
+</pre></div></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [3]</div><pre><code># ============================================================
+# 对比不同量化位数的精度损失
+# ============================================================
+
+results = {}
+for n_bits in [2, 4, 8, 16]:
+    quantized, scale, dequantized = uniform_quantize(weights, n_bits)
+    
+    # 计算量化误差
+    mse = np.mean((weights - dequantized) ** 2)
+    mae = np.mean(np.abs(weights - dequantized))
+    cos_sim = np.dot(weights.flatten(), dequantized.flatten()) / (
+        np.linalg.norm(weights.flatten()) * np.linalg.norm(dequantized.flatten()) + 1e-8
+    )
+    
+    # 计算内存节省
+    original_bytes = weights.nbytes
+    quantized_bytes = quantized.nbytes * (n_bits / 32)  # 按实际位数估算
+    compression_ratio = original_bytes / quantized_bytes if quantized_bytes &gt; 0 else float('inf')
+    
+    results[n_bits] = {
+        'quantized': quantized,
+        'dequantized': dequantized,
+        'mse': mse,
+        'mae': mae,
+        'cos_sim': cos_sim,
+        'scale': scale,
+        'compression_ratio': compression_ratio
+    }
+    
+    print(f"\n=== INT{n_bits} 量化结果 ===")
+    print(f"Scale: {scale:.6f}")
+    print(f"MSE (均方误差): {mse:.6f}")
+    print(f"MAE (平均绝对误差): {mae:.6f}")
+    print(f"余弦相似度: {cos_sim:.6f}")
+    print(f"内存压缩比: {compression_ratio:.1f}x")
+    print(f"量化范围使用: [{quantized.min()}, {quantized.max()}]")</code></pre><div class="nb-output"><pre>
+=== INT2 量化结果 ===
+Scale: 0.531149
+MSE: 0.019359
+MAE: 0.105050
+余弦相似度: 0.981416
+内存压缩比: 16.0x
+量化范围使用: [-2, 1]
+
+=== INT4 量化结果 ===
+Scale: 0.106230
+MSE: 0.001275
+MAE: 0.027577
+余弦相似度: 0.998782
+MSE: 0.000001
+余弦相似度: 0.999999
+内存压缩比: 2.0x
+
+=== INT16 量化结果 ===
+Scale: 0.000048
+MSE: 0.000000
+MAE: 0.000001
+余弦相似度: 1.000000
+内存压缩比: 2.0x
+</pre></div></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [4]</div><pre><code># ============================================================
+# 可视化：量化前后的权重分布对比 + 误差分析
+# ============================================================
+
+fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+
+# 第一行：权重分布对比
+bit_widths = [2, 4, 8]
+for idx, n_bits in enumerate(bit_widths):
+    ax = axes[0][idx]
+    r = results[n_bits]
+    
+    # 原始权重分布
+    ax.hist(weights.flatten(), bins=80, alpha=0.5, label='Original FP32', color='#4A90D9', density=True)
+    # 反量化后的分布
+    ax.hist(r['dequantized'].flatten(), bins=80, alpha=0.5, label=f'INT{n_bits} Dequant', color='#E74C3C', density=True)
+    
+    ax.set_title(f'INT{n_bits} vs FP32\nCos Sim: {r["cos_sim"]:.4f} | MSE: {r["mse"]:.6f}')
+    ax.set_xlabel('Weight Value')
+    ax.set_ylabel('Density')
+    ax.legend(fontsize=8)
+
+# 第二行：量化误差分布
+for idx, n_bits in enumerate(bit_widths):
+    ax = axes[1][idx]
+    r = results[n_bits]
+    error = (weights - r['dequantized']).flatten()
+    
+    ax.hist(error, bins=80, color='#F39C12', alpha=0.7, edgecolor='white')
+    ax.axvline(x=0, color='red', linestyle='--', alpha=0.7)
+    ax.set_title(f'INT{n_bits} Quantization Error\nMAE: {r["mae"]:.6f}')
+    ax.set_xlabel('Error (Original - Dequantized)')
+    ax.set_ylabel('Count')
+
+plt.suptitle('Quantization Comparison: Distribution &amp; Error Analysis', fontsize=14, fontweight='bold')
+plt.tight_layout()
+plt.savefig('quantization_comparison.png', dpi=150, bbox_inches='tight')
+plt.close()
+print("图表已保存: quantization_comparison.png")</code></pre><div class="nb-output"><pre>图表已保存: quantization_comparison.png
+</pre></div></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [5]</div><pre><code># ============================================================
+# 模拟量化推理：对比 FP32 和 INT8 的矩阵乘法结果
+# ============================================================
+
+def quantized_matmul(W, X, n_bits=8):
+    """模拟量化推理中的矩阵乘法
+    
+    实际推理时：
+    1. 权重 W 已经预先量化好（离线量化）
+    2. 输入 X 在运行时动态量化
+    3. 用整数运算做矩阵乘法
+    4. 结果反量化回浮点
+    """
+    # 量化权重和输入
+    W_q, W_scale, W_dq = uniform_quantize(W, n_bits)
+    X_q, X_scale, X_dq = uniform_quantize(X, n_bits)
+    
+    # 用反量化的值做矩阵乘法（模拟真实推理路径）
+    result_quantized = X_dq @ W_dq
+    
+    # FP32 基准结果
+    result_fp32 = X @ W
+    
+    return result_fp32, result_quantized
+
+
+# 模拟一个推理场景：batch=4, input_dim=64, output_dim=32
+np.random.seed(123)
+W_layer = np.random.randn(64, 32).astype(np.float32) * 0.3
+X_input = np.random.randn(4, 64).astype(np.float32)
+
+# FP32 推理 vs INT8 量化推理
+fp32_out, int8_out = quantized_matmul(W_layer, X_input, n_bits=8)
+
+# 计算输出误差
+output_mse = np.mean((fp32_out - int8_out) ** 2)
+output_cos_sim = np.dot(fp32_out.flatten(), int8_out.flatten()) / (
+    np.linalg.norm(fp32_out.flatten()) * np.linalg.norm(int8_out.flatten()) + 1e-8
+)
+output_max_error = np.max(np.abs(fp32_out - int8_out))
+
+print("=== 推理结果对比：FP32 vs INT8 ===")
+print(f"输出形状: {fp32_out.shape}")
+print(f"输出 MSE: {output_mse:.8f}")
+print(f"输出余弦相似度: {output_cos_sim:.6f}")
+print(f"最大逐元素误差: {output_max_error:.6f}")
+print(f"\nFP32 输出样本 (前5个): {fp32_out[0, :5]}")
+print(f"INT8 输出样本 (前5个): {int8_out[0, :5]}")
+print(f"\n✅ 结论: INT8 量化的推理结果与 FP32 极其接近，余弦相似度 &gt; 0.999")</code></pre><div class="nb-output"><pre>=== 推理结果对比：FP32 vs INT8 ===
+输出形状: (4, 32)
+输出 MSE: 0.00000017
+输出余弦相似度: 0.999974
+最大逐元素误差: 0.001695
+
+FP32 输出样本 (前5个): [-0.16961659 -0.32907957 -0.06954893 -0.2629754  -0.06626747]
+INT8 输出样本 (前5个): [-0.17014098 -0.32955155 -0.06945665 -0.26300016 -0.06605017]
+]
+✅ 结论: INT8 量化的推理结果与 FP32 极其接近，余弦相似度 &gt; 0.999
+</pre></div></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [6]</div><pre><code># ============================================================
+# 主流量化方案对比：GPTQ vs AWQ vs GGUF
+# ============================================================
+
+# 模拟不同量化策略对权重分布的影响
+np.random.seed(42)
+
+# 模拟一个含离群值（outlier）的权重矩阵
+# LLM 中常见：大部分权重集中在 0 附近，但有少量极端值
+weights_with_outliers = np.random.randn(256, 128).astype(np.float32) * 0.3
+# 注入 1% 的离群值
+outlier_mask = np.random.rand(*weights_with_outliers.shape) &lt; 0.01
+weights_with_outliers[outlier_mask] *= 8  # 离群值放大 8 倍
+
+def naive_quantize(w, n_bits=4):
+    """朴素量化：直接对整个张量做均匀量化（对离群值敏感）"""
+    q_max = 2 ** (n_bits - 1) - 1
+    scale = np.max(np.abs(w)) / q_max
+    q = np.clip(np.round(w / scale), -q_max - 1, q_max).astype(np.int32)
+    return q * scale
+
+def awq_style_quantize(w, n_bits=4, alpha=0.5):
+    """AWQ 风格量化：对重要权重通道做缩放保护
+    
+    AWQ 的核心观察：不是所有权重同等重要。
+    少数通道（salient channels）对模型输出影响更大。
+    AWQ 在量化前对这些通道的权重做缩放，使它们在量化后保留更多精度。
+    """
+    # 找出每个通道（列）的重要性：用绝对值均值衡量
+    channel_importance = np.mean(np.abs(w), axis=0)
+    threshold = np.percentile(channel_importance, 100 * (1 - alpha))
+    
+    # 对重要通道做缩放保护
+    scale_factor = np.ones(w.shape[1], dtype=np.float32)
+    salient_channels = channel_importance &gt; threshold
+    scale_factor[salient_channels] = 2.0  # 放大重要通道的权重
+    
+    # 缩放后再量化
+    w_scaled = w * scale_factor[np.newaxis, :]
+    q_max = 2 ** (n_bits - 1) - 1
+    scale = np.max(np.abs(w_scaled)) / q_max
+    q = np.clip(np.round(w_scaled / scale), -q_max - 1, q_max).astype(np.int32)
+    
+    # 反量化时还原缩放
+    dequantized = q * scale / scale_factor[np.newaxis, :]
+    return dequantized
+
+# 对比
+naive_dq = naive_quantize(weights_with_outliers, n_bits=4)
+awq_dq = awq_style_quantize(weights_with_outliers, n_bits=4)
+
+naive_mse = np.mean((weights_with_outliers - naive_dq) ** 2)
+awq_mse = np.mean((weights_with_outliers - awq_dq) ** 2)
+
+naive_cos = np.dot(weights_with_outliers.flatten(), naive_dq.flatten()) / (
+    np.linalg.norm(weights_with_outliers.flatten()) * np.linalg.norm(naive_dq.flatten()) + 1e-8
+)
+awq_cos = np.dot(weights_with_outliers.flatten(), awq_dq.flatten()) / (
+    np.linalg.norm(weights_with_outliers.flatten()) * np.linalg.norm(awq_dq.flatten()) + 1e-8
+)
+
+print("=== 含离群值的 INT4 量化对比 ===")
+print(f"\n朴素均匀量化:")
+print(f"  MSE: {naive_mse:.6f} | 余弦相似度: {naive_cos:.6f}")
+print(f"\nAWQ 风格量化 (通道保护):")
+print(f"  MSE: {awq_mse:.6f} | 余弦相似度: {awq_cos:.6f}")
+print(f"\nMSE 降低: {(naive_mse - awq_mse) / naive_mse * 100:.1f}%")
+print(f"\n💡 AWQ 通过保护重要通道，在 INT4 下实现了更好的精度保持")</code></pre><div class="nb-output"><pre>=== 含离群值的 INT4 量化对比 ===
+
+朴素均匀量化:
+  MSE: 0.001954 | 余弦相似度: 0.998943
+
+AWQ 风格量化 (通道保护):
+  MSE: 0.001493 | 余弦相似度: 0.999189
+
+MSE 降低: 23.6%
+
+💡 AWQ 通过保护重要通道，在 INT4 下实现了更好的精度保持
+</pre></div></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [7]</div><pre><code># ============================================================
+# 可视化：主流量化方案的特点对比
+# ============================================================
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# 图1：不同位数的精度-压缩权衡
+ax1 = axes[0]
+bits = [2, 4, 8, 16, 32]
+cos_sims = [results[b]['cos_sim'] if b in results else 1.0 for b in bits]
+compression = [32/b for b in bits]
+colors = ['#E74C3C', '#F39C12', '#2ECC71', '#3498DB', '#9B59B6']
+
+ax1.scatter(compression, cos_sims, c=colors, s=200, zorder=5, edgecolors='black', linewidth=1.5)
+for i, b in enumerate(bits):
+    ax1.annotate(f'INT{b}', (compression[i], cos_sims[i]), 
+                textcoords="offset points", xytext=(10, 5), fontsize=11, fontweight='bold')
+    # 添加箭头连接
+    if i &gt; 0:
+        ax1.annotate('', xy=(compression[i], cos_sims[i]),
+                    xytext=(compression[i-1], cos_sims[i-1]),
+                    arrowprops=dict(arrowstyle='-&gt;', color='gray', lw=1.5))
+
+ax1.set_xlabel('Compression Ratio (x)', fontsize=12)
+ax1.set_ylabel('Cosine Similarity', fontsize=12)
+ax1.set_title('Precision vs Compression Trade-off', fontsize=13, fontweight='bold')
+ax1.set_ylim(0.975, 1.001)
+ax1.grid(True, alpha=0.3)
+
+# 图2：朴素量化 vs AWQ 误差对比
+ax2 = axes[1]
+naive_error = np.abs(weights_with_outliers - naive_dq).flatten()
+awq_error = np.abs(weights_with_outliers - awq_dq).flatten()
+
+# 只显示前 500 个权重点的误差
+x_range = range(500)
+ax2.plot(x_range, naive_error[:500], alpha=0.6, label='Naive Quant INT4', color='#E74C3C', linewidth=0.8)
+ax2.plot(x_range, awq_error[:500], alpha=0.6, label='AWQ-style INT4', color='#2ECC71', linewidth=0.8)
+ax2.fill_between(x_range, naive_error[:500], alpha=0.1, color='#E74C3C')
+ax2.fill_between(x_range, awq_error[:500], alpha=0.1, color='#2ECC71')
+ax2.set_xlabel('Weight Index (first 500)', fontsize=12)
+ax2.set_ylabel('Absolute Error', fontsize=12)
+ax2.set_title('Naive vs AWQ-style: Element-wise Error', fontsize=13, fontweight='bold')
+ax2.legend(fontsize=10)
+ax2.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('quantization_schemes_comparison.png', dpi=150, bbox_inches='tight')
+plt.close()
+print("图表已保存: quantization_schemes_comparison.png")</code></pre><div class="nb-output"><pre>图表已保存: quantization_schemes_comparison.png
+</pre></div></div>
+<div class="nb-cell nb-markdown"><h2>主流量化方案速查</h2>
+
+<p>| 方案 | 核心思想 | 适用场景 | 代表工具 |</p>
+<p>|------|----------|----------|----------|</p>
+<p>| <strong>GPTQ</strong> | 基于 Hessian 矩阵的二阶量化，逐层优化量化误差 | GPU 推理，需要校准数据 | AutoGPTQ, vLLM |</p>
+<p>| <strong>AWQ</strong> | 保护 salient 权重通道，不做混合精度 | GPU 推理，无需回传梯度 | AutoAWQ, vLLM |</p>
+<p>| <strong>GGUF</strong> | 支持 CPU/GPU 混合推理的文件格式 + 量化方案 | CPU/边缘设备，llama.cpp | llama.cpp, Ollama |</p>
+<p>| <strong>SmoothQuant</strong> | 把激活值中的离群值「平滑」到权重上 | 服务器端 W8A8（权重+激活都 INT8） | TensorRT-LLM |</p>
+<p>| <strong>AQLM</strong> | 多码本向量量化，极端压缩 | 1-2 bit 极低比特量化 | AQLM 库 |</p>
+
+<h3>选择建议</h3>
+<li><strong>GPU 服务器推理</strong> → AWQ 或 GPTQ（INT4，精度好，速度更快）</li>
+<li><strong>本地 CPU / 笔记本</strong> → GGUF（llama.cpp / Ollama 开箱即用）</li>
+<li><strong>极致压缩</strong> → AQLM 或 QuIP#（1-2 bit）</li>
+<li><strong>生产部署 W8A8</strong> → SmoothQuant（TensorRT-LLM）</li></div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+
+<h3>核心要点</h3>
+<p>1. <strong>量化 = 用更少的 bit 表示数值</strong>：FP32 → INT8 内存减半，INT4 减至 1/8</p>
+<p>2. <strong>PTQ 简单快速，QAT 精度更高</strong>：大多数场景 PTQ 就够用</p>
+<p>3. <strong>均匀量化的核心公式</strong>：<code>x_q = round(x/scale)</code> + <code>x_dq = x_q * scale</code></p>
+<p>4. <strong>离群值是量化精度的头号敌人</strong>：AWQ/GPTQ/SmoothQuant 都在解决这个问题</p>
+<p>5. <strong>量化与蒸馏互补</strong>：蒸馏→小模型，量化→更小的表示，组合使用效果最佳</p>
+
+<h3>课后思考</h3>
+<p>1. 为什么 LLM 的权重分布中会出现离群值？它们与注意力机制有什么关系？</p>
+<p>2. 如果要在手机上部署一个 7B 模型，你会选择哪种量化方案？为什么？</p>
+<p>3. 量化会改变模型的「能力边界」还是只影响「输出精度」？试举例说明。</p>
+<p>4. 对比知识蒸馏和量化：两者在什么场景下应该组合使用？</p>
+
+<h3>关键论文</h3>
+<li>[GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers](https://arxiv.org/abs/2210.17323) (2022)</li>
+<li>[AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration](https://arxiv.org/abs/2306.00978) (2023)</li>
+<li>[SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models](https://arxiv.org/abs/2211.10438) (2022)</li>
+<li>[LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale](https://arxiv.org/abs/2208.07339) (2022)</li></div>

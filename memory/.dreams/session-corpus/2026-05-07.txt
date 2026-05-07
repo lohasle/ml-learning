@@ -1,0 +1,20 @@
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L18] Assistant: Phase 1 通过，无缺口。现在进入 Phase 3，先了解当前路线图状态。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L24] Assistant: 现在搜索知识蒸馏与模型压缩的最新资料，辅助内容生成。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L28] Assistant: 没有 web search 可用，基于已有知识生成课程内容。先读取模板。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L34] Assistant: 现在开始生成课程文件。先看一个最近的 notebook 作为格式参考。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L36] Assistant: 好的，已经了解了格式。现在开始生成第29课：知识蒸馏与模型压缩。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L42] Assistant: 现在渲染 HTML 片段。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L44] Assistant: HTML 片段已生成。现在进入 Phase 4 级联同步，更新所有必要文件。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L48] Assistant: 现在更新 docs/index.html 首页课程列表。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L50] Assistant: 需要在 index.html 中添加第29课的课程行。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L52] Assistant: 同时更新进度统计信息。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L54] Assistant: 现在更新 notes-lab.html 菜单树。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L60] Assistant: 现在更新 docs/daily.html 时间线。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L66] Assistant: 现在更新路线图。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L68] Assistant: 现在进入 Phase 5 最终验证。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L72] Assistant: Phase 5 验证通过！现在执行 Git 操作。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L78] Assistant: TLS 连接失败，重试第 2 次。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L84] Assistant: 3 次均失败。尝试通过 SSH 或 gh CLI 推送。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L92] Assistant: 网络 TLS 持续不可用。保留本地变更并报告。
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L94] Assistant: --- ## 🧠 今日学习简报：第29课 知识蒸馏与模型压缩 ### 📍 为什么今天学这个？ 上节课 MoE 解决「如何让参数多但不贵」，这节课回答另一个关键问题：**能否直接把大模型的知识「压缩」到小模型里？** 知识蒸馏是大模型部署的标配——训练用大模型，上线用蒸馏后的小模型。DistilBERT、Alpaca、DeepSeek-R1 蒸馏版都走这条路。 ### 🎯 核心知识点 1. **暗知识（Dark Knowledge）**：大模型的 soft output
+[ml-learning-coach/sessions/ml-learning-coach/0655133b-969e-4781-90b1-1d43fc671911.jsonl#L94] Assistant: `docs/nb-29_知识蒸馏与模型压缩.html`（11.5KB） - `docs/daily-2026-05-07.html`（2.7KB） - `docs/note-知识蒸馏.html`（1.5KB） ### 级联同步 - ✅ README.md — 课程表格 + 快速入口已更新 - ✅ docs/index.html — 课程列表 + 进度（97%）已更新 - ✅ docs/notes-lab.html — 菜单树已添加第29课 tree-item - ✅ doc
