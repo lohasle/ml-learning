@@ -1,0 +1,314 @@
+<div class="nb-cell nb-markdown"><h1>第31课：推测解码（Speculative Decoding）</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解自回归生成的瓶颈：为什么 LLM 生成慢</li>
+<li>掌握推测解码的核心思想：用小模型猜、大模型验</li>
+<li>理解 draft-then-verify 的工作流程</li>
+<li>了解 speculative decoding 的变体与实际应用</li>
+<li>通过代码模拟理解接受/拒绝的概率机制</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<h3>为什么需要推测解码？</h3>
+<p>大模型（如 LLaMA-70B）生成文本时，每个 token 都必须等上一个 token 生成完才能开始——这是<strong>自回归（autoregressive）</strong>的本质。</p>
+<p>即使 GPU 计算能力很强，生成 100 个 token 也需要 100 次串行前向传播。而 GPU 的并行能力在一次前向传播中其实可以同时处理很多 token。</p>
+<p><strong>瓶颈不是算力，而是串行依赖。</strong></p>
+<h3>核心直觉</h3>
+<blockquote>
+<p>就像你写邮件时，先让一个「打字快但不太靠谱」的助手把整段打出来，然后你自己快速扫一遍——对的保留，错的改掉。这样比你一个字一个字打快多了。</p>
+</blockquote>
+<ul>
+<li><strong>Draft Model（草稿模型）</strong>：小模型（如 7B），快速生成 K 个候选 token</li>
+<li><strong>Target Model（目标模型）</strong>：大模型（如 70B），一次性并行验证所有候选</li>
+<li><strong>接受/拒绝</strong>：按概率决定保留哪些 token，拒绝的从该位置重新采样</li>
+</ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from collections import defaultdict
+
+np.random.seed(42)</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># ========================================
+# 模拟 Speculative Decoding 的核心流程
+# ========================================
+
+class SimpleTokenizer:
+    """简化 tokenizer，用整数表示 token"""
+    def __init__(self, vocab_size=100):
+        self.vocab_size = vocab_size
+    
+    def decode(self, token_id):
+        return f"&lt;t{token_id}&gt;"
+
+
+class DraftModel:
+    """草稿模型：速度快，但概率分布不太准确"""
+    def __init__(self, vocab_size=100, quality=0.6):
+        self.vocab_size = vocab_size
+        self.quality = quality  # 与 target 模型的对齐程度
+    
+    def generate(self, prompt_tokens, n_tokens=5):
+        """快速生成 n 个候选 token（模拟）"""
+        candidates = []
+        probs = []
+        for _ in range(n_tokens):
+            # 草稿模型的概率分布（简化：在正确答案附近采样）
+            token = np.random.randint(0, self.vocab_size)
+            prob = np.random.uniform(0.3, 0.9)  # 草稿模型给出的概率
+            candidates.append(token)
+            probs.append(prob)
+        return candidates, probs
+
+
+class TargetModel:
+    """目标模型：慢但准确，用于验证"""
+    def __init__(self, vocab_size=100, draft_quality=0.6):
+        self.vocab_size = vocab_size
+        self.draft_quality = draft_quality
+    
+    def verify(self, candidates, draft_probs):
+        """
+        并行验证所有候选 token
+        返回：接受的 token 数量 + 修正后的 token（如有拒绝）
+        """
+        accepted = 0
+        for i, (token, q_draft) in enumerate(zip(candidates, draft_probs)):
+            # 模拟 target 模型的概率
+            # draft_quality 越高，target 越可能也认为这个 token 好
+            p_accept = self.draft_quality * q_draft + (1 - self.draft_quality) * np.random.uniform(0, 0.5)
+            p_accept = min(p_accept, 0.99)
+            
+            # 接受条件：p_target(x) / p_draft(x) &gt;= random
+            # 简化为按概率接受
+            if np.random.random() &lt; p_accept:
+                accepted += 1
+            else:
+                # 拒绝：从 target 重新采样一个 token
+                new_token = np.random.randint(0, self.vocab_size)
+                return accepted, new_token
+        
+        # 全部接受，额外采样一个 token
+        bonus_token = np.random.randint(0, self.vocab_size)
+        return accepted, bonus_token
+
+
+def speculative_decode(draft, target, prompt, n_generate=20, K=5):
+    """
+    推测解码主循环
+    - K: 每次草稿生成的 token 数
+    - n_generate: 总共需要生成的 token 数
+    """
+    tokens = list(prompt)
+    forward_passes = 0  # 计算大模型前向传播次数
+    
+    while len(tokens) &lt; len(prompt) + n_generate:
+        # Step 1: Draft 模型快速生成 K 个候选
+        candidates, draft_probs = draft.generate(tokens, n_tokens=K)
+        forward_passes += K  # draft 模型 K 次前向（但很快）
+        
+        # Step 2: Target 模型一次性验证
+        accepted, new_token = target.verify(candidates, draft_probs)
+        forward_passes += 1  # target 只需 1 次前向（并行验证）
+        
+        # Step 3: 保留接受的 + 补充新的
+        tokens.extend(candidates[:accepted])
+        tokens.append(new_token)
+    
+    return tokens[:len(prompt) + n_generate], forward_passes
+
+
+# 运行模拟
+draft = DraftModel(vocab_size=100, quality=0.7)
+target = TargetModel(vocab_size=100, draft_quality=0.7)
+
+result, passes = speculative_decode(draft, target, prompt=[1, 2, 3], n_generate=30, K=5)
+print(f"生成 {len(result)-3} 个 token")
+print(f"大模型前向传播次数: {passes}")
+print(f"对比自回归：需要 {len(result)-3} 次前向传播")
+print(f"加速比（近似）: {(len(result)-3) / ((passes - (len(result)-3)*5//5) + 1):.1f}x")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># ========================================
+# 可视化：Draft Quality vs 接受率 vs 加速比
+# ========================================
+
+def benchmark_speculative(quality_values, n_trials=200, n_generate=50, K=5):
+    """测试不同 draft quality 下的接受率和加速效果"""
+    results = defaultdict(list)
+    
+    for q in quality_values:
+        accept_rates = []
+        speedups = []
+        
+        for _ in range(n_trials):
+            draft = DraftModel(100, quality=q)
+            target = TargetModel(100, draft_quality=q)
+            
+            tokens = [1]
+            total_accepted = 0
+            total_rounds = 0
+            target_passes = 0
+            
+            while len(tokens) &lt; 1 + n_generate:
+                cands, dprobs = draft.generate(tokens, n_tokens=K)
+                accepted, new_tok = target.verify(cands, dprobs)
+                tokens.extend(cands[:accepted])
+                tokens.append(new_tok)
+                total_accepted += accepted
+                total_rounds += 1
+                target_passes += 1
+            
+            avg_accept = total_accepted / (total_rounds * K) if total_rounds &gt; 0 else 0
+            # 加速比 = 自回归次数 / target 前向次数
+            speedup = n_generate / target_passes if target_passes &gt; 0 else 0
+            accept_rates.append(avg_accept)
+            speedups.append(speedup)
+        
+        results['quality'].append(q)
+        results['accept_rate'].append(np.mean(accept_rates))
+        results['speedup'].append(np.mean(speedups))
+    
+    return results
+
+quality_values = np.arange(0.3, 1.0, 0.05)
+results = benchmark_speculative(quality_values, n_trials=150, n_generate=50, K=5)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+# 接受率
+ax1.plot(results['quality'], results['accept_rate'], 'o-', color='#C96442', linewidth=2, markersize=5)
+ax1.set_xlabel('Draft-Target 对齐度 (quality)', fontsize=12)
+ax1.set_ylabel('平均接受率', fontsize=12)
+ax1.set_title('草稿质量 → 接受率', fontsize=14)
+ax1.grid(True, alpha=0.3)
+ax1.axhline(y=0.8, color='green', linestyle='--', alpha=0.5, label='80% 接受率')
+ax1.legend()
+
+# 加速比
+ax2.plot(results['quality'], results['speedup'], 's-', color='#2D6A4F', linewidth=2, markersize=5)
+ax2.set_xlabel('Draft-Target 对齐度 (quality)', fontsize=12)
+ax2.set_ylabel('加速比 (×)', fontsize=12)
+ax2.set_title('草稿质量 → 推理加速', fontsize=14)
+ax2.grid(True, alpha=0.3)
+ax2.axhline(y=1.0, color='red', linestyle='--', alpha=0.5, label='无加速基线')
+ax2.axhline(y=K, color='blue', linestyle='--', alpha=0.5, label=f'理论上限 (K={K})')
+ax2.legend()
+
+plt.tight_layout()
+plt.savefig('speculative_decoding_benchmark.png', dpi=150, bbox_inches='tight')
+plt.show()
+print(f"K=5 时，最高加速比约 {max(results['speedup']):.2f}×")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># ========================================
+# 对比：自回归 vs 推测解码 vs 批量推测
+# ========================================
+
+def compare_strategies(max_tokens=200):
+    """对比不同生成策略的 target model 前向传播次数"""
+    
+    # 自回归：每 token 1 次前向
+    ar_passes = list(range(1, max_tokens + 1))
+    
+    # 推测解码 K=4, 平均接受率 80%
+    sd_passes = []
+    tokens_generated = 0
+    target_fwd = 0
+    while tokens_generated &lt; max_tokens:
+        accepted = min(np.random.binomial(4, 0.8), 4)  # 平均接受 3.2/4
+        tokens_generated += accepted + 1  # 接受的 + bonus
+        target_fwd += 1
+        sd_passes.append((tokens_generated, target_fwd))
+    
+    # 推测解码 K=8, 平均接受率 70%
+    sd8_passes = []
+    tokens_generated = 0
+    target_fwd = 0
+    while tokens_generated &lt; max_tokens:
+        accepted = min(np.random.binomial(8, 0.7), 8)
+        tokens_generated += accepted + 1
+        target_fwd += 1
+        sd8_passes.append((tokens_generated, target_fwd))
+    
+    return ar_passes, sd_passes, sd8_passes
+
+np.random.seed(42)
+ar, sd4, sd8 = compare_strategies(200)
+
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, 201), ar, '-', color='#C96442', linewidth=2, label='自回归 (1 token/步)')
+plt.plot([x[0] for x in sd4], [x[1] for x in sd4], 'o-', color='#2D6A4F', 
+         linewidth=2, markersize=4, label='推测解码 K=4 (80%接受)')
+plt.plot([x[0] for x in sd8], [x[1] for x in sd8], 's-', color='#4361EE', 
+         linewidth=2, markersize=4, label='推测解码 K=8 (70%接受)')
+
+plt.xlabel('生成 Token 数', fontsize=12)
+plt.ylabel('Target Model 前向传播次数', fontsize=12)
+plt.title('生成策略对比：Target Model 计算量', fontsize=14)
+plt.legend(fontsize=11)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('speculative_comparison.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# 计算加速比
+sd4_total_fwd = sd4[-1][1]
+sd8_total_fwd = sd8[-1][1]
+print(f"生成 200 tokens:")
+print(f"  自回归:  {200} 次 target 前向")
+print(f"  K=4 SD: {sd4_total_fwd} 次 target 前向 → 加速 {200/sd4_total_fwd:.1f}×")
+print(f"  K=8 SD: {sd8_total_fwd} 次 target 前向 → 加速 {200/sd8_total_fwd:.1f}×")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>推测解码的关键要点</h3>
+<ol>
+<li><strong>核心思想</strong>：用小模型（draft）快速猜多个 token，大模型（target）一次性验证</li>
+<li><strong>无损失</strong>：接受/拒绝机制保证最终分布与纯 target 模型完全一致</li>
+<li><strong>加速来源</strong>：将串行的 N 次前向传播变为约 N/K 次前向 + N 次 draft 前向</li>
+<li><strong>关键因素</strong>：draft 模型与 target 模型的分布对齐度决定实际加速比</li>
+</ol>
+<h3>重要变体</h3>
+<table>
+<thead>
+<tr>
+<th>变体</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Self-Speculative</strong></td>
+<td>用同一模型的早退出（early exit）做 draft</td>
+</tr>
+<tr>
+<td><strong>Medusa</strong></td>
+<td>给 target 加多个解码头，无需单独 draft 模型</td>
+</tr>
+<tr>
+<td><strong>Eagle</strong></td>
+<td>用 feature-level 预测而非 token-level</td>
+</tr>
+<tr>
+<td><strong>Lookahead Decoding</strong></td>
+<td>利用 Jacobi 迭代并行生成</td>
+</tr>
+</tbody>
+</table>
+<h3>与第30课（量化）的关系</h3>
+<ul>
+<li>量化 = 减少<strong>每次前向传播的计算量</strong>（更少的 bit 运算）</li>
+<li>推测解码 = 减少<strong>前向传播的次数</strong>（用并行换串行）</li>
+<li>两者可以叠加使用：量化后的模型 + 推测解码 = 更极致的推理加速</li>
+</ul>
+<h2>课后思考</h2>
+<ol>
+<li>如果 draft 模型和 target 模型完全相同（quality=1），理论加速比是多少？</li>
+<li>为什么推测解码在 batch inference 中收益会下降？</li>
+<li>Medusa 方法为什么不需要单独的 draft 模型？它的 trade-off 是什么？</li>
+</ol></div>

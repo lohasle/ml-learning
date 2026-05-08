@@ -1,0 +1,131 @@
+<h1>2026年5月9日 - 第31课：推测解码（Speculative Decoding）</h1>
+<h2>今日学习主题</h2>
+<p><strong>推测解码：如何让大模型「猜得快又准」——用小模型当助手，大模型并行验证，突破自回归串行瓶颈</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课（第30课 量化推理技术）我们学会了用更少的 bit 表示模型参数，减少了<strong>每次前向传播的计算量</strong>。但大模型推理还有另一个根本瓶颈：<strong>自回归的串行依赖</strong>——生成 100 个 token 就需要 100 次串行前向传播。</p>
+<p>推测解码回答了：<strong>能不能不改模型权重，不改精度，只改生成策略，就让推理快 2~3 倍？</strong></p>
+<p>答案是肯定的。Speculative Decoding 已被 Google、Meta、DeepSeek 等广泛采用，是 2023-2025 年 LLM 推理优化的核心突破之一。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<ul>
+<li><strong>前序知识</strong>：第30课的量化压缩了每次前向的计算量</li>
+<li><strong>本课</strong>：推测解码减少了前向传播的<strong>次数</strong></li>
+<li><strong>历史位置</strong>：2023 年由 DeepMind 和 Google 分别提出（Leviathan et al., Chen et al.），迅速成为 LLM serving 标配</li>
+<li><strong>后续连接</strong>：推测解码 + 量化 + 蒸馏 的组合是当前 LLM 部署的最佳实践</li>
+</ul>
+<h2>核心概念解释</h2>
+<h3>1. 自回归瓶颈</h3>
+<ul>
+<li><strong>直觉</strong>：想象你在排队结账——每个人必须等前面的人结完才能开始。即使每个收银台很快，100 个人还是得排 100 次</li>
+<li><strong>问题本质</strong>：GPU 可以一次处理很多 token（如 prefill 阶段），但 decode 阶段每次只能生成 1 个 token</li>
+<li><strong>关键公式</strong>：自回归生成 $P(x_t | x_1, ..., x_{t-1})$，每步依赖上一步的输出</li>
+</ul>
+<h3>2. Draft-then-Verify 流程</h3>
+<pre><code>Step 1: Draft 模型（7B）快速生成 K 个候选 token
+Step 2: Target 模型（70B）一次前向传播，并行评估所有 K 个 token
+Step 3: 按概率接受/拒绝，拒绝处重新采样
+</code></pre>
+<ul>
+<li><strong>直觉</strong>：就像让打字快的实习生先把邮件草稿打好，你扫一遍——对的留下，错的当场改。比你从头一个字一个字敲快得多</li>
+<li><strong>核心保证</strong>：接受/拒绝的概率机制确保最终分布与纯 target 模型<strong>完全一致</strong>（零质量损失）</li>
+</ul>
+<h3>3. 接受概率的数学</h3>
+<p>对于候选 token $x$，接受条件：</p>
+<p>$$\text{accept if } r &lt; \min\left(1, \frac{p_{\text{target}}(x)}{p_{\text{draft}}(x)}\right)$$</p>
+<p>其中 $r \sim \text{Uniform}(0,1)$</p>
+<ul>
+<li><strong>直觉</strong>：如果 target 比 draft 更认可这个 token（比值 &gt; 1），一定接受；如果 target 不太认可，按比例概率接受</li>
+<li><strong>关键</strong>：draft 模型越接近 target → 接受率越高 → 加速比越大</li>
+</ul>
+<h3>4. 加速比分析</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>K（候选数）</th>
+<th>接受率</th>
+<th>等效加速</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>理想对齐</td>
+<td>5</td>
+<td>~95%</td>
+<td>~4.5×</td>
+</tr>
+<tr>
+<td>实际常见</td>
+<td>5</td>
+<td>~80%</td>
+<td>~2.5-3×</td>
+</tr>
+<tr>
+<td>较差对齐</td>
+<td>5</td>
+<td>~50%</td>
+<td>~1.5-2×</td>
+</tr>
+<tr>
+<td>完全不对齐</td>
+<td>5</td>
+<td>~20%</td>
+<td>~1.0×（无收益）</td>
+</tr>
+</tbody>
+</table>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>自回归概率</td>
+<td>$P(x_t|x_{&lt;t})$</td>
+<td>每个字只能看前面的字来猜</td>
+</tr>
+<tr>
+<td>接受条件</td>
+<td>$r &lt; p_t / p_d$</td>
+<td>target 说「好」就留，说「一般」就碰运气</td>
+</tr>
+<tr>
+<td>理论加速</td>
+<td>$\approx K \cdot \alpha + 1$</td>
+<td>K 个候选 × 接受率 + 1 个 bonus token</td>
+</tr>
+<tr>
+<td>Draft 成本</td>
+<td>$C_{\text{draft}} / C_{\text{target}}$</td>
+<td>小模型快多少倍（通常 10-50×）</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 中模拟了完整的 draft-then-verify 流程</li>
+<li><code>quality</code> 参数控制 draft-target 的对齐度，直观感受对加速比的影响</li>
+<li>对比了自回归 vs K=4 vs K=8 三种策略的前向传播次数</li>
+<li>注意：加速比有理论上限（=K），实际受 draft 质量制约</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: 推测解码会降低生成质量吗？</strong>
+A: 不会。接受/拒绝的概率机制保证最终分布与纯 target 模型完全一致。这是推测解码最大的优势——免费加速，零质量损失。</p>
+<p><strong>Q: Draft 模型怎么选？</strong>
+A: 通常选同系列的小模型（如 LLaMA-7B 配 LLaMA-70B）。关键是分布要对齐，而不是参数越多越好。也有方法不用单独的 draft 模型（如 Medusa、Self-Speculative）。</p>
+<p><strong>Q: 推测解码什么时候不适用？</strong>
+A: 两个场景：(1) batch inference 时，每个请求的接受 token 数不同，导致难以对齐；(2) draft 模型与 target 差异太大时，接受率低反而增加开销。</p>
+<h2>本课总结</h2>
+<ol>
+<li>自回归生成的串行瓶颈是 LLM 推理慢的根本原因</li>
+<li>推测解码用小模型猜 + 大模型验，将串行变为半并行</li>
+<li>接受/拒绝机制保证零质量损失</li>
+<li>加速比取决于 draft-target 的分布对齐度（通常 2-3×）</li>
+<li>量化（减计算量）+ 推测解码（减次数）可叠加使用</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课将学习 <strong>向量数据库与嵌入检索</strong>——这是 RAG（第19课）的底层基础设施，也是构建现代 AI 应用的关键组件。从推理优化回到应用构建，补齐工程实践的关键一环。</p>
