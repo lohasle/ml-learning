@@ -1,0 +1,13 @@
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L12] Assistant: Phase 1 通过，30 课已完成。我需要确定下一课主题。
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L26] Assistant: 好的，远端已是最新。现在进入 Phase 3，生成第 31 课：**推测解码（Speculative Decoding）**。 这是量化推理之后的自然延续——量化压缩了模型体积，推测解码则加速了自回归生成的延迟。两者共同构成大模型推理优化的核心工具箱。
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L30] Assistant: 现在生成知识笔记和 HTML 片段：
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L32] Assistant: 现在渲染 HTML 片段：
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L34] Assistant: HTML 片段生成完成。现在进入 Phase 4：级联同步。
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L36] Assistant: 先读取需要更新的文件：
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L40] Assistant: 现在更新 docs/index.html、notes-lab.html、daily.html：
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L50] Assistant: 现在我已获取所有上下文。让我来完成所有编辑：
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L56] Assistant: 现在更新路线图:
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L58] Assistant: Phase 4 完成。进入 Phase 5：最终验证。
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L60] Assistant: 验证通过！31 个 notebook、31 个 daily，无缺口。Git push：
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L64] Assistant: --- ## 📋 执行报告 ### validate 结果 - **Phase 1**: ✅ 通过（30 notebooks, 30 dailies, 0 gaps） - **Phase 2**: 无需修复 - **Phase 5**: ✅ 通过（31 notebooks, 31 dailies, 0 gaps） ### 今日新增：第 31 课 — 推测解码（Speculative Decoding） **为什么学这个？** 上一课量化压缩了每次前向传播的计算量，但自回归
+[ml-learning-coach/sessions/ml-learning-coach/1fa257b6-fe53-4bd8-9575-718bc123a5ec.jsonl#L64] Assistant: `docs/notes-lab.html` — 菜单树 tree-item - ✅ `docs/daily.html` — 时间线条目 + 累计天数 30→31 - ✅ `roadmap/roadmap.md` — 新增第31课 + 下一课预告 ### Git 状态 - **远端同步**: ✅ 已 pull（已是最新） - **commit**: `a1d51e7` - **push**: ✅ 成功 ### 下一步建议 第 32 课预告：**向量数据库与嵌入检索** — 补

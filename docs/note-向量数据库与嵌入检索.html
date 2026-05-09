@@ -1,0 +1,144 @@
+<h1>向量数据库与嵌入检索</h1>
+<h2>概述</h2>
+<p>向量数据库是现代 AI 应用的核心基础设施，负责存储和检索高维嵌入向量，支撑 RAG、AI Agent、语义搜索等应用场景。</p>
+<h2>核心概念</h2>
+<h3>嵌入（Embedding）</h3>
+<ul>
+<li>将文本映射为高维向量（768/1024/1536 维）</li>
+<li>语义相近的文本在向量空间中距离相近</li>
+<li>常用模型：text-embedding-3-small、BGE-large-zh、E5-base</li>
+</ul>
+<h3>相似度度量</h3>
+<table>
+<thead>
+<tr>
+<th>度量</th>
+<th>公式</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>余弦相似度</td>
+<td>$\cos(\theta) = \frac{a \cdot b}{|a||b|}$</td>
+<td>关注方向，最常用</td>
+</tr>
+<tr>
+<td>欧氏距离</td>
+<td>$|a - b|_2$</td>
+<td>关注绝对距离</td>
+</tr>
+<tr>
+<td>内积</td>
+<td>$a \cdot b$</td>
+<td>归一化后等价余弦</td>
+</tr>
+</tbody>
+</table>
+<h3>ANN 索引算法</h3>
+<table>
+<thead>
+<tr>
+<th>算法</th>
+<th>原理</th>
+<th>适用规模</th>
+<th>查询复杂度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flat</td>
+<td>暴力搜索</td>
+<td>&lt;100万</td>
+<td>$O(N)$</td>
+</tr>
+<tr>
+<td>IVF</td>
+<td>聚类+局部搜索</td>
+<td>100万~1亿</td>
+<td>$O(N/nlist \times nprobe)$</td>
+</tr>
+<tr>
+<td>HNSW</td>
+<td>多层导航图</td>
+<td>100万~1亿</td>
+<td>$O(\log N)$</td>
+</tr>
+<tr>
+<td>PQ</td>
+<td>乘积量化</td>
+<td>&gt;1亿</td>
+<td>近似，高压缩率</td>
+</tr>
+</tbody>
+</table>
+<h2>主流向量数据库</h2>
+<table>
+<thead>
+<tr>
+<th>数据库</th>
+<th>类型</th>
+<th>规模</th>
+<th>部署</th>
+<th>过滤</th>
+<th>适合场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FAISS</td>
+<td>库</td>
+<td>十亿级</td>
+<td>本地</td>
+<td>无</td>
+<td>研究/原型</td>
+</tr>
+<tr>
+<td>Milvus</td>
+<td>分布式</td>
+<td>十亿级</td>
+<td>自托管/云</td>
+<td>丰富</td>
+<td>生产环境</td>
+</tr>
+<tr>
+<td>Pinecone</td>
+<td>托管</td>
+<td>亿级</td>
+<td>全托管</td>
+<td>有</td>
+<td>快速上线</td>
+</tr>
+<tr>
+<td>Chroma</td>
+<td>嵌入式</td>
+<td>百万级</td>
+<td>本地</td>
+<td>基础</td>
+<td>原型开发</td>
+</tr>
+<tr>
+<td>Weaviate</td>
+<td>全功能</td>
+<td>亿级</td>
+<td>自托管/云</td>
+<td>丰富</td>
+<td>企业应用</td>
+</tr>
+</tbody>
+</table>
+<h2>关键工程决策</h2>
+<ol>
+<li><strong>嵌入模型选择</strong>：中文优先 BGE，通用场景用 OpenAI</li>
+<li><strong>分块策略</strong>：256-512 tokens，按语义或递归分块</li>
+<li><strong>索引选择</strong>：小规模用 HNSW，大规模用 IVF_PQ</li>
+<li><strong>检索策略</strong>：生产环境推荐混合检索（BM25 + 向量）</li>
+<li><strong>重排序</strong>：初检索 Top-K → Reranker 精排 → 最终结果</li>
+</ol>
+<h2>关联概念</h2>
+<ul>
+<li><strong>上游</strong>：RAG（第19课）、Transformer 嵌入层</li>
+<li><strong>下游</strong>：AI Agent 知识库、语义搜索、推荐系统</li>
+<li><strong>相关</strong>：量化推理（第30课）→ 向量量化（PQ）同源技术</li>
+<li><strong>工程实践</strong>：文档分块、增量索引、向量版本管理</li>
+</ul>

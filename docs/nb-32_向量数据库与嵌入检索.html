@@ -1,0 +1,443 @@
+<div class="nb-cell nb-markdown"><h1>第32课：向量数据库与嵌入检索</h1>
+<p><strong>为什么学这个？</strong></p>
+<p>前面的课程中我们学了 RAG（第19课）、Agent（第20课）和大模型部署（第23课）。这些系统的底层都有一个共同的基础设施：<strong>向量数据库 + 嵌入检索</strong>。</p>
+<p>向量数据库是现代 AI 应用的「记忆系统」——它让模型能从海量文本中快速找到最相关的内容。没有它，RAG 就无法工作，AI Agent 就没有知识库可查。</p>
+<p><strong>本课目标：</strong>
+1. 理解「嵌入」是什么，为什么需要把文本变成向量
+2. 掌握向量相似度检索的核心原理
+3. 了解主流向量数据库（FAISS / Milvus / Pinecone / Chroma）的特点
+4. 动手实现一个完整的「文本→嵌入→索引→检索」流程</p></div>
+<div class="nb-cell nb-markdown"><h2>1. 从文本到向量：嵌入（Embedding）</h2>
+<h3>直觉理解</h3>
+<p>想象你在地图上标注城市：距离近的城市在地图上也近。<strong>嵌入就是把词语/句子/段落映射到一个高维空间，语义相近的内容在空间中距离也近。</strong></p>
+<pre><code>&quot;猫&quot; ───→ [0.23, -0.15, 0.89, ...]  (768维)
+&quot;狗&quot; ───→ [0.21, -0.13, 0.91, ...]  (很接近！)
+&quot;汽车&quot; ─→ [-0.45, 0.67, -0.12, ...] (很远)
+</code></pre>
+<h3>关键概念</h3>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>说明</th>
+<th>类比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Embedding Model</td>
+<td>将文本转为向量的模型</td>
+<td>翻译官（文本→数字）</td>
+</tr>
+<tr>
+<td>向量维度</td>
+<td>通常 768/1024/1536 维</td>
+<td>地图的坐标系数量</td>
+</tr>
+<tr>
+<td>语义相似度</td>
+<td>向量间的距离/夹角</td>
+<td>地图上两点的距离</td>
+</tr>
+<tr>
+<td>向量数据库</td>
+<td>高效存储和检索向量</td>
+<td>图书馆的智能索引系统</td>
+</tr>
+</tbody>
+</table>
+<h3>常用 Embedding 模型</h3>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>维度</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>text-embedding-3-small (OpenAI)</td>
+<td>1536</td>
+<td>通用性强</td>
+</tr>
+<tr>
+<td>bge-large-zh (BAAI)</td>
+<td>1024</td>
+<td>中文效果好</td>
+</tr>
+<tr>
+<td>E5-base</td>
+<td>768</td>
+<td>开源，多语言</td>
+</tr>
+<tr>
+<td>Cohere embed-v3</td>
+<td>1024</td>
+<td>多任务优化</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [1]</div>
+  <pre><code>import numpy as np
+from collections import defaultdict
+import time
+
+# ============================================================
+# 模拟 Embedding：用简化的伪嵌入来演示核心概念
+# 真实场景中会使用 sentence-transformers 或 OpenAI API
+# ============================================================
+
+def mock_embed(text, dim=128, seed=None):
+    """基于文本哈希生成伪嵌入向量（仅用于演示）"""
+    rng = np.random.RandomState(hash(text) % (2**31))
+    vec = rng.randn(dim)
+    vec = vec / np.linalg.norm(vec)  # L2 归一化
+    return vec
+
+# 模拟语义相近的文本
+texts = [
+    "如何学习机器学习？",
+    "机器学习入门指南",
+    "深度学习教程推荐",
+    "今天天气怎么样？",
+    "Python编程最佳实践",
+    "神经网络优化技巧",
+    "北京明天会下雨吗？",
+    "什么是梯度下降算法？",
+]
+
+# 生成嵌入
+embeddings = np.array([mock_embed(t) for t in texts])
+print(f"生成了 {len(texts)} 个嵌入，维度: {embeddings.shape[1]}")
+print(f"\n示例: '{texts[0]}' 的嵌入前5维: {embeddings[0][:5].round(3)}")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [2]</div>
+  <pre><code># ============================================================
+# 向量相似度：余弦相似度 vs 欧氏距离
+# ============================================================
+
+def cosine_similarity(a, b):
+    """余弦相似度：衡量向量方向的接近程度"""
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def euclidean_distance(a, b):
+    """欧氏距离：衡量向量绝对距离"""
+    return np.linalg.norm(a - b)
+
+# 计算所有文本对之间的相似度
+query = "怎么开始学AI？"
+query_vec = mock_embed(query)
+
+print(f"查询: '{query}'\n")
+print(f"{'文本':&lt;25} {'余弦相似度':&gt;12} {'欧氏距离':&gt;12}")
+print("-" * 55)
+
+results = []
+for i, text in enumerate(texts):
+    cos_sim = cosine_similarity(query_vec, embeddings[i])
+    euc_dist = euclidean_distance(query_vec, embeddings[i])
+    results.append((cos_sim, euc_dist, text))
+    
+# 按余弦相似度排序
+results.sort(key=lambda x: x[0], reverse=True)
+for cos_sim, euc_dist, text in results:
+    marker = " ← 最相关" if cos_sim == results[0][0] else ""
+    print(f"{text:&lt;25} {cos_sim:&gt;12.4f} {euc_dist:&gt;12.4f}{marker}")
+
+print("\n💡 注意：归一化向量上，余弦相似度和欧氏距离是等价的")
+print("   余弦相似度关注方向（语义），欧氏距离关注绝对位置")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [3]</div>
+  <pre><code># ============================================================
+# 向量索引：暴力搜索 vs ANN（近似最近邻）
+# ============================================================
+
+class BruteForceIndex:
+    """暴力搜索：逐一计算所有向量的相似度"""
+    def __init__(self):
+        self.vectors = []
+        self.texts = []
+    
+    def add(self, vec, text):
+        self.vectors.append(vec)
+        self.texts.append(text)
+    
+    def search(self, query_vec, top_k=5):
+        sims = [(cosine_similarity(query_vec, v), t) for v, t in zip(self.vectors, self.texts)]
+        sims.sort(key=lambda x: x[0], reverse=True)
+        return sims[:top_k]
+
+class IVFIndex:
+    """简化版 IVF（倒排文件索引）：先聚类再搜索"""
+    def __init__(self, n_clusters=3, n_probe=2):
+        self.n_clusters = n_clusters
+        self.n_probe = n_probe  # 搜索时查几个聚类
+        self.centroids = None
+        self.cluster_data = defaultdict(list)
+    
+    def build(self, vectors, texts):
+        """K-Means 聚类建立索引"""
+        n = len(vectors)
+        # 随机初始化质心
+        indices = np.random.choice(n, self.n_clusters, replace=False)
+        self.centroids = vectors[indices].copy()
+        
+        # 分配向量到最近质心
+        for vec, text in zip(vectors, texts):
+            dists = [euclidean_distance(vec, c) for c in self.centroids]
+            cluster_id = np.argmin(dists)
+            self.cluster_data[cluster_id].append((vec, text))
+    
+    def search(self, query_vec, top_k=5):
+        # 找最近的 n_probe 个聚类
+        dists = [euclidean_distance(query_vec, c) for c in self.centroids]
+        nearest_clusters = np.argsort(dists)[:self.n_probe]
+        
+        # 只在这些聚类中搜索
+        candidates = []
+        for cid in nearest_clusters:
+            candidates.extend(self.cluster_data[cid])
+        
+        sims = [(cosine_similarity(query_vec, v), t) for v, t in candidates]
+        sims.sort(key=lambda x: x[0], reverse=True)
+        return sims[:top_k]
+
+# 性能对比
+np.random.seed(42)
+n_docs = 10000
+dim = 128
+fake_vectors = np.random.randn(n_docs, dim)
+fake_vectors = fake_vectors / np.linalg.norm(fake_vectors, axis=1, keepdims=True)
+fake_texts = [f"doc_{i}" for i in range(n_docs)]
+
+# 暴力搜索
+bf = BruteForceIndex()
+for v, t in zip(fake_vectors, fake_texts):
+    bf.add(v, t)
+
+query = np.random.randn(dim)
+query = query / np.linalg.norm(query)
+
+start = time.time()
+bf_results = bf.search(query, top_k=5)
+bf_time = time.time() - start
+
+# IVF 索引
+ivf = IVFIndex(n_clusters=50, n_probe=5)
+ivf.build(fake_vectors, fake_texts)
+
+start = time.time()
+ivf_results = ivf.search(query, top_k=5)
+ivf_time = time.time() - start
+
+print(f"文档数: {n_docs}, 维度: {dim}")
+print(f"\n{'方法':&lt;20} {'耗时':&gt;12} {'扫描向量数':&gt;12}")
+print("-" * 48)
+print(f"{'暴力搜索':&lt;20} {bf_time*1000:&gt;10.2f}ms {n_docs:&gt;10}")
+print(f"{'IVF (50聚类,5probe)':&lt;20} {ivf_time*1000:&gt;10.2f}ms {5*(n_docs//50):&gt;10}")
+print(f"\n⚡ IVF 扫描的向量数是暴力的 {5*(n_docs//50)/n_docs*100:.0f}%")
+print(f"   当文档数达到百万级时，差距会呈数量级放大")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [4]</div>
+  <pre><code># ============================================================
+# 完整 RAG 检索流程模拟
+# ============================================================
+
+# 模拟知识库文档
+knowledge_base = [
+    "机器学习是人工智能的一个分支，通过数据训练模型来进行预测或决策。",
+    "深度学习使用多层神经网络来学习数据的层次化表示。",
+    "Transformer 架构通过自注意力机制处理序列数据，是 GPT 和 BERT 的基础。",
+    "RAG（检索增强生成）通过先检索相关文档，再将检索结果注入 LLM 的提示词中。",
+    "向量数据库存储高维嵌入向量，支持高效的相似度搜索。",
+    "FAISS 是 Meta 开源的向量搜索库，支持十亿级向量的高效检索。",
+    "Milvus 是分布式向量数据库，支持水平扩展和多种索引类型。",
+    "Pinecone 是全托管的向量数据库服务，无需运维基础设施。",
+    "Chroma 是轻量级嵌入式向量数据库，适合原型开发和本地使用。",
+    "HNSW（层次导航小世界图）是目前最流行的 ANN 索引算法之一。",
+    "量化（Quantization）可以将 float32 向量压缩到 int8，节省 75% 存储空间。",
+    "混合检索结合了关键词检索（BM25）和向量检索，能兼顾精确匹配和语义理解。",
+]
+
+# 步骤1：文档分块（Chunking）
+def chunk_texts(texts, max_len=100):
+    """简单分块：每个文档作为一个 chunk"""
+    chunks = []
+    for text in texts:
+        if len(text) &gt; max_len:
+            # 简单按句号分割
+            parts = text.split('。')
+            for p in parts:
+                if len(p.strip()) &gt; 10:
+                    chunks.append(p.strip())
+        else:
+            chunks.append(text)
+    return chunks
+
+chunks = chunk_texts(knowledge_base)
+print(f"知识库: {len(knowledge_base)} 篇文档 → {len(chunks)} 个 chunk")
+
+# 步骤2：生成嵌入并建索引
+chunk_embeddings = np.array([mock_embed(c) for c in chunks])
+index = BruteForceIndex()
+for vec, text in zip(chunk_embeddings, chunks):
+    index.add(vec, text)
+
+# 步骤3：检索
+queries = [
+    "什么是向量数据库？",
+    "如何实现高效检索？",
+    "深度学习和机器学习什么关系？",
+]
+
+for q in queries:
+    q_vec = mock_embed(q)
+    results = index.search(q_vec, top_k=3)
+    print(f"\n{'='*60}")
+    print(f"查询: {q}")
+    print(f"{'='*60}")
+    for rank, (sim, text) in enumerate(results, 1):
+        print(f"  {rank}. [相似度 {sim:.4f}] {text[:50]}...")
+
+print(f"\n{'='*60}")
+print("💡 完整的 RAG 流程 = 文档分块 → 嵌入生成 → 向量索引 → 相似度检索 → 注入 LLM")
+print("   向量数据库负责的就是中间三步：存、索引、查")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>主流向量数据库对比</h2>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>FAISS</th>
+<th>Milvus</th>
+<th>Pinecone</th>
+<th>Chroma</th>
+<th>Weaviate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>类型</td>
+<td>库</td>
+<td>分布式数据库</td>
+<td>托管服务</td>
+<td>嵌入式数据库</td>
+<td>全功能数据库</td>
+</tr>
+<tr>
+<td>规模</td>
+<td>十亿级</td>
+<td>十亿级</td>
+<td>亿级</td>
+<td>百万级</td>
+<td>亿级</td>
+</tr>
+<tr>
+<td>部署</td>
+<td>本地/自托管</td>
+<td>自托管/云</td>
+<td>全托管</td>
+<td>本地</td>
+<td>自托管/云</td>
+</tr>
+<tr>
+<td>索引类型</td>
+<td>IVF/HNSW/PQ/Flat</td>
+<td>IVF/HNSW/DiskANN</td>
+<td>专有</td>
+<td>HNSW</td>
+<td>HNSW</td>
+</tr>
+<tr>
+<td>过滤</td>
+<td>无</td>
+<td>丰富</td>
+<td>有</td>
+<td>基础</td>
+<td>丰富</td>
+</tr>
+<tr>
+<td>适合场景</td>
+<td>研究原型/大批量</td>
+<td>生产环境</td>
+<td>快速上线</td>
+<td>快速原型</td>
+<td>企业应用</td>
+</tr>
+</tbody>
+</table>
+<h2>ANN 索引算法速览</h2>
+<h3>1. IVF（倒排文件索引）</h3>
+<ul>
+<li>先对向量聚类，搜索时只查最近的几个聚类</li>
+<li>参数：<code>nlist</code>（聚类数）、<code>nprobe</code>（搜索聚类数）</li>
+<li><strong>速度 vs 精度的旋钮</strong>：增大 nprobe → 更准但更慢</li>
+</ul>
+<h3>2. HNSW（层次导航小世界图）</h3>
+<ul>
+<li>构建多层图结构，像「高速公路网 + 地方路」</li>
+<li>顶层稀疏连接快速跳跃，底层密集连接精确定位</li>
+<li>内存开销大（需要存图结构），但查询极快</li>
+</ul>
+<h3>3. PQ（乘积量化）</h3>
+<ul>
+<li>将向量切分成子向量，每个子向量用码本量化</li>
+<li>压缩率极高：128维 float32 → 几十字节</li>
+<li>精度有损，但适合超大规模（&gt;10亿）场景</li>
+</ul>
+<pre><code>选择指南：
+  &lt; 100万向量  → Flat（暴力搜索就够了）
+  100万~1亿    → HNSW（内存够的话）或 IVF_PQ
+  &gt; 1亿        → DiskANN / IVF_PQ / 分片 Milvus
+</code></pre>
+<h2>关键工程决策</h2>
+<table>
+<thead>
+<tr>
+<th>决策点</th>
+<th>选项</th>
+<th>考量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>嵌入模型</td>
+<td>OpenAI / BGE / E5</td>
+<td>中文场景优先 BGE</td>
+</tr>
+<tr>
+<td>分块策略</td>
+<td>固定长度 / 语义分块 / 递归分块</td>
+<td>文档类型决定</td>
+</tr>
+<tr>
+<td>索引类型</td>
+<td>Flat / HNSW / IVF_PQ</td>
+<td>数据规模和延迟要求</td>
+</tr>
+<tr>
+<td>检索策略</td>
+<td>纯向量 / 混合(BM25+向量)</td>
+<td>关键词匹配需求</td>
+</tr>
+<tr>
+<td>重排序</td>
+<td>Cross-encoder / Cohere Rerank</td>
+<td>精度要求高时使用</td>
+</tr>
+</tbody>
+</table>
+<h2>本课小结</h2>
+<ol>
+<li><strong>嵌入</strong>是把语义信息编码成向量的过程，是所有向量检索的基础</li>
+<li><strong>余弦相似度</strong>是最常用的相似度度量，归一化后等价于欧氏距离</li>
+<li><strong>ANN 索引</strong>（HNSW/IVF/PQ）通过牺牲微小精度换取数量级的速度提升</li>
+<li><strong>向量数据库</strong>选型取决于：规模、部署方式、过滤需求和团队规模</li>
+<li><strong>混合检索</strong>（关键词+向量）是当前生产环境的最佳实践</li>
+</ol>
+<p><strong>下一课预告：</strong> 我们将学习 <strong>AI 安全与对齐</strong>——从技术视角理解 LLM 的安全风险与防护策略。</p></div>
