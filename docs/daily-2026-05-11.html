@@ -1,0 +1,125 @@
+<h1>2026年5月11日 - 第33课：AI 安全与对齐</h1>
+<h2>今日学习主题</h2>
+<p><strong>AI 安全与对齐：给超级智能装上「刹车」——对抗攻击、对齐技术、越狱防御与红队测试</strong></p>
+<h2>为什么学这个？</h2>
+<p>前面我们学了 RAG（第19课）、Agent（第20课）、RLHF（第26课）、高效微调（第27课）和向量数据库（第32课）。这些技术让 AI 变得更强大、更有用。但<strong>能力越大，风险越大</strong>。</p>
+<p>当 AI 系统被部署到真实世界面对用户时，安全问题就不再是学术讨论，而是工程刚需。如果你要构建一个面向用户的大模型应用，你必须理解：模型会被攻击、会被误导、会被滥用——而你的责任是提前防御。</p>
+<p>本课把「AI 安全」从抽象概念变成具体的工程知识。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<ul>
+<li><strong>前序知识</strong>：第26课 RLHF 介绍了对齐的基础方法；第32课向量数据库是 AI 应用的基础设施</li>
+<li><strong>本课</strong>：深入 AI 安全的四大维度——对抗攻击、对齐技术、越狱防御、红队测试</li>
+<li><strong>历史位置</strong>：2022 ChatGPT 引爆 LLM 安全讨论 → 2023 AI 安全峰会（布莱切利园）→ 2024 EU AI Act 通过 → 2025-2026 安全对齐成为行业标配</li>
+<li><strong>后续连接</strong>：下一课将进入新的前沿主题，安全意识将贯穿后续所有工程实践</li>
+</ul>
+<h2>核心概念解释</h2>
+<h3>1. 对抗样本（Adversarial Examples）</h3>
+<ul>
+<li><strong>直觉</strong>：给一张猫的照片加一层人眼看不见的噪点，AI 就会把它认成汽车</li>
+<li><strong>本质</strong>：利用模型决策边界的脆弱性，通过精心设计的微小扰动欺骗模型</li>
+<li><strong>经典方法</strong>：FGSM（Fast Gradient Sign Method）</li>
+<li><strong>公式</strong>：$x_{adv} = x + \epsilon \cdot \text{sign}(\nabla_x J(\theta, x, y))$</li>
+<li><strong>类比</strong>：像给一个 GPS 坐标加了几米的偏移，导航系统就带你去完全不同的地方</li>
+</ul>
+<h3>2. 对齐技术三阶段</h3>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>方法</th>
+<th>核心思想</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第一代</td>
+<td>RLHF</td>
+<td>人类标注偏好 → 训练奖励模型 → PPO 强化学习</td>
+</tr>
+<tr>
+<td>第二代</td>
+<td>Constitutional AI</td>
+<td>AI 自己评判自己 → 用「宪法」规则自我约束</td>
+</tr>
+<tr>
+<td>第三代</td>
+<td>DPO</td>
+<td>直接用偏好数据优化策略，跳过奖励模型</td>
+</tr>
+</tbody>
+</table>
+<h3>3. 越狱攻击（Jailbreaking）</h3>
+<ul>
+<li><strong>角色扮演</strong>：让 AI 假装是「没有限制的角色」（DAN 攻击）</li>
+<li><strong>间接注入</strong>：在数据中嵌入恶意指令（简历投毒、文档注入）</li>
+<li><strong>多轮引导</strong>：逐步引导 AI 绕过安全检查</li>
+<li><strong>编码绕过</strong>：用 base64/ROT13 编码攻击指令</li>
+</ul>
+<h3>4. 红队测试（Red Teaming）</h3>
+<p>系统性地模拟攻击，发现 AI 系统的安全漏洞。就像网络安全中的渗透测试，但目标是 AI 模型的行为边界。</p>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/方法</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FGSM 攻击</td>
+<td>$x + \epsilon \cdot \text{sign}(\nabla_x L)$</td>
+<td>沿让损失增大的方向推一小步</td>
+</tr>
+<tr>
+<td>DPO 损失</td>
+<td>$-\log\sigma(\beta(\log\frac{\pi_\theta(y_w)}{\pi_{ref}(y_w)} - \log\frac{\pi_\theta(y_l)}{\pi_{ref}(y_l)}))$</td>
+<td>让好回答概率升、坏回答概率降</td>
+</tr>
+<tr>
+<td>对抗训练</td>
+<td>$\min_\theta \max_\delta L(\theta, x+\delta, y)$</td>
+<td>在最坏扰动下也能做对</td>
+</tr>
+<tr>
+<td>安全三要素</td>
+<td>Helpfulness + Honesty + Harmlessness</td>
+<td>有用、诚实、无害缺一不可</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<p>Notebook 中的关键步骤：
+1. <strong>FGSM 攻击</strong>：用逻辑回归演示对抗样本生成，观察准确率断崖式下降
+2. <strong>DPO 损失模拟</strong>：可视化训练过程中好/坏回答概率的此消彼长
+3. <strong>越狱检测器</strong>：基于正则匹配的简单防御，检测常见越狱模式
+4. <strong>对抗训练</strong>：用增强数据重新训练，观察鲁棒性提升</p>
+<h3>常见坑点</h3>
+<ul>
+<li>FGSM 的 $\epsilon$ 太大 → 扰动可被肉眼发现，失去意义</li>
+<li>规则检测器只能防已知模式，无法防御新型攻击</li>
+<li>对抗训练会轻微降低干净样本的准确率（安全 vs 性能的权衡）</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: RLHF 和 DPO 到底选哪个？</strong>
+A: 2024-2026 的趋势是 DPO 为主，因为更简单稳定。RLHF 在需要精细控制时仍有优势（如对齐到特定价值观）。实际工程中两者常结合使用。</p>
+<p><strong>Q: 对抗样本在真实世界有多大威胁？</strong>
+A: 对于 LLM 文本输入，直接对抗样本的威胁相对较小（因为文本是离散的）。更大的威胁是越狱攻击和间接注入——攻击者不需要优化梯度，只需要设计巧妙的 prompt。</p>
+<p><strong>Q: 红队测试需要多少人？</strong>
+A: 自动化工具能覆盖大部分基础测试，但需要领域专家设计边缘用例。大公司通常有专门的红队团队（10-50人）。</p>
+<h2>本课总结</h2>
+<ol>
+<li><strong>对抗样本</strong>揭示了神经网络的脆弱性——微小扰动就能欺骗模型</li>
+<li><strong>对齐技术</strong>从 RLHF 演进到 DPO，越来越简单高效</li>
+<li><strong>越狱攻击</strong>花样百出，防御需要多层策略（输入过滤 + 输出审查 + 系统提示加固）</li>
+<li><strong>对抗训练</strong>是提高鲁棒性的标准方法，但有安全-性能的权衡</li>
+<li><strong>红队测试</strong>是安全发布的必经之路，需要系统化方法论</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课将探索前沿专题的下一个主题。AI 安全的意识将贯穿后续所有工程实践——在构建任何 AI 应用时，安全都不是最后加的补丁，而是设计时就要考虑的核心维度。</p>
+<hr />
+<p>🔗 <strong>相关课程</strong>：
+- <a href="daily/2026-05-04.md">第26课：RLHF 与人类对齐</a>
+- <a href="daily/2026-05-05.md">第27课：高效微调技术</a>
+- <a href="daily/2026-05-10.md">第32课：向量数据库与嵌入检索</a></p>

@@ -1,0 +1,94 @@
+<h1>AI 安全与对齐</h1>
+<blockquote>
+<p>第33课 | 阶段 6：前沿专题</p>
+</blockquote>
+<h2>核心概念</h2>
+<p>AI 安全关注的是确保 AI 系统的行为符合人类意图和安全边界。这不是一个单一问题，而是一个多维度挑战。</p>
+<h2>关键维度</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>核心问题</th>
+<th>代表方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>对抗鲁棒性</td>
+<td>模型能否抵抗精心设计的输入扰动？</td>
+<td>FGSM、PGD、对抗训练</td>
+</tr>
+<tr>
+<td>对齐</td>
+<td>模型行为是否符合人类价值观？</td>
+<td>RLHF、Constitutional AI、DPO</td>
+</tr>
+<tr>
+<td>越狱防御</td>
+<td>模型能否抵御绕过安全限制的尝试？</td>
+<td>输入过滤、输出审查、系统提示加固</td>
+</tr>
+<tr>
+<td>红队测试</td>
+<td>系统是否有未被发现的漏洞？</td>
+<td>自动化攻击、人工评估、基准测试</td>
+</tr>
+</tbody>
+</table>
+<h2>对齐技术演进</h2>
+<pre><code>RLHF (2022) → Constitutional AI (2022) → DPO (2023) → KTO/ORPO (2024)
+  ↓                    ↓                       ↓
+人类标注偏好       AI 自我评判           直接偏好优化
+奖励模型 + PPO    减少 human effort      跳过奖励模型
+</code></pre>
+<h2>DPO 核心思想</h2>
+<p>$$\mathcal{L}<em>{DPO} = -\mathbb{E}\left[\log\sigma\left(\beta\log\frac{\pi</em>\theta(y_w|x)}{\pi_{ref}(y_w|x)} - \beta\log\frac{\pi_\theta(y_l|x)}{\pi_{ref}(y_l|x)}\right)\right]$$</p>
+<p><strong>直觉</strong>：不需要训练奖励模型，直接用偏好数据让模型学会「好回答 &gt; 坏回答」。</p>
+<h2>安全三要素</h2>
+<ul>
+<li><strong>Helpfulness</strong>：模型应该有用</li>
+<li><strong>Honesty</strong>：模型应该诚实</li>
+<li><strong>Harmlessness</strong>：模型应该无害</li>
+</ul>
+<h2>关联概念</h2>
+<ul>
+<li>[[RLHF 与人类对齐]]（第26课）：对齐的基础方法</li>
+<li>[[高效微调技术]]（第27课）：LoRA/DPO 等训练方法</li>
+<li>[[向量数据库与嵌入检索]]（第32课）：安全检索的边界</li>
+</ul>
+<h2>关键论文与项目</h2>
+<table>
+<thead>
+<tr>
+<th>论文/项目</th>
+<th>核心贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Goodfellow et al. (2015) FGSM</td>
+<td>开创对抗样本研究</td>
+</tr>
+<tr>
+<td>Christiano et al. (2017) RLHF</td>
+<td>人类反馈强化学习</td>
+</tr>
+<tr>
+<td>Ouyang et al. (2022) InstructGPT</td>
+<td>RLHF 首次大规模应用</td>
+</tr>
+<tr>
+<td>Rafailov et al. (2023) DPO</td>
+<td>直接偏好优化</td>
+</tr>
+<tr>
+<td>Anthropic Constitutional AI</td>
+<td>AI 自我对齐范式</td>
+</tr>
+<tr>
+<td>HarmBench (2024)</td>
+<td>安全评估标准化</td>
+</tr>
+</tbody>
+</table>
