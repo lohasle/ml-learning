@@ -1,0 +1,335 @@
+<div class="nb-cell nb-markdown"><h1>第34课：Prompt Engineering 高级技巧</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 Prompt Engineering 从「技巧」到「工程」的演化</li>
+<li>掌握 5 种核心 Prompting 范式：Zero-shot、Few-shot、CoT、ToT、ReAct</li>
+<li>学会用结构化 Prompt 模板构建可靠的 LLM 应用</li>
+<li>理解 Prompt 的鲁棒性问题与自动优化方法</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念介绍</h2>
+<h3>为什么 Prompt Engineering 是一门「工程」？</h3>
+<p>很多开发者以为 Prompt Engineering 就是「跟 AI 说人话」。但实际上：</p>
+<ul>
+<li><strong>类比</strong>：Prompt 是给大模型的「API 接口」。好的接口设计让系统稳定，差的接口让系统随机崩溃</li>
+<li><strong>本质</strong>：Prompt 是对模型 latent space 中特定能力的「激活模式」。同一个模型，不同 prompt 可以激活完全不同的行为</li>
+<li><strong>演进</strong>：从 2022 年的「prompt tricks」到 2024-2025 年的 DSPy 自动化 prompt 优化，这已经是一门有方法论的系统工程</li>
+</ul>
+<h3>在学习路线中的位置</h3>
+<ul>
+<li><strong>前置</strong>：第15课 Attention、第17课 BERT/GPT、第20课 Agent、第24课 思维链、第33课 AI安全</li>
+<li><strong>本课</strong>：把前面的知识点串起来——Prompt 就是激活这些能力的「遥控器」</li>
+<li><strong>后续</strong>：Prompt 是 Agent、RAG、微调等所有 LLM 应用的基础接口层</li>
+</ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code>import json
+import re
+from typing import List, Dict, Optional
+
+# 模拟一个简单的 LLM 接口（实际中替换为 OpenAI / Anthropic API）
+class MockLLM:
+    """模拟大模型推理，用于演示 prompt 技巧的效果差异"""
+    
+    def __init__(self):
+        self.call_count = 0
+        self.prompts = []
+    
+    def generate(self, prompt: str, max_tokens: int = 500) -&gt; str:
+        self.call_count += 1
+        self.prompts.append(prompt)
+        # 模拟不同 prompt 的不同响应质量
+        if 'step' in prompt.lower() and ('think' in prompt.lower() or '分析' in prompt.lower()):
+            return self._structured_response(prompt)
+        elif '例如' in prompt or 'example' in prompt.lower() or '输出格式' in prompt:
+            return self._formatted_response(prompt)
+        else:
+            return self._vague_response(prompt)
+    
+    def _structured_response(self, prompt):
+        return json.dumps({
+            "reasoning": "让我一步步分析...",
+            "step1": "识别问题的核心约束",
+            "step2": "列出可能的方案",
+            "step3": "评估各方案的优劣",
+            "conclusion": "推荐方案B，因为...",
+            "confidence": 0.85
+        }, ensure_ascii=False, indent=2)
+    
+    def _formatted_response(self, prompt):
+        return json.dumps({
+            "answer": "结构化回答",
+            "explanation": "按照要求的格式输出",
+            "examples": ["示例1", "示例2"]
+        }, ensure_ascii=False, indent=2)
+    
+    def _vague_response(self, prompt):
+        return "这个问题很复杂，需要具体分析。一般来说可以有多种方法..."
+
+llm = MockLLM()
+print(f"MockLLM 初始化完成，准备演示 prompt 技巧")</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># ============================================================
+# 技巧1: Zero-shot vs Few-shot 对比
+# ============================================================
+
+# Zero-shot: 不给示例，直接提问
+zero_shot_prompt = """将以下电影评论分类为「正面」或「负面」：
+评论：这个电影的特效太棒了，但剧情有点拖沓。"""
+
+# Few-shot: 给几个示例，让模型学会模式
+few_shot_prompt = """将以下电影评论分类为「正面」或「负面」：
+
+评论：演技炸裂，故事引人入胜！→ 正面
+评论：浪费了我两小时的人生。→ 负面
+评论：画面很美，但节奏太快看不懂。→ 负面
+评论：这个电影的特效太棒了，但剧情有点拖沓。→"""
+
+print("=" * 60)
+print("Zero-shot Prompt:")
+print(zero_shot_prompt)
+print("\n" + "=" * 60)
+print("Response:", llm.generate(zero_shot_prompt))
+print("\n" + "=" * 60)
+print("Few-shot Prompt:")
+print(few_shot_prompt)
+print("\n" + "=" * 60)
+print("Response:", llm.generate(few_shot_prompt))
+
+# Few-shot 的关键：示例的选择比数量更重要
+# 经验法则：3-5 个覆盖边界情况的示例 &gt; 20 个雷同的示例</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># ============================================================
+# 技巧2: Chain-of-Thought (CoT) 思维链
+# ============================================================
+
+# 核心：让模型「说出推理过程」，大幅提升复杂推理准确率
+# 论文：Wei et al. (2022) "Chain-of-Thought Prompting Elicits Reasoning"
+
+standard_prompt = """一个商店有 23 个苹果，卖出了 17 个，又进货了 8 个。现在有多少个苹果？"""
+
+cot_prompt = """一个商店有 23 个苹果，卖出了 17 个，又进货了 8 个。现在有多少个苹果？
+请一步一步思考，先算卖出后剩余，再算进货后总数。"""
+
+# 自动 CoT：用 "Let's think step by step" 触发推理
+auto_cot_prompt = """一个商店有 23 个苹果，卖出了 17 个，又进货了 8 个。现在有多少个苹果？
+Let's think step by step."""
+
+print("Standard:", llm.generate(standard_prompt))
+print("\n--- CoT ---")
+print(llm.generate(cot_prompt))
+print("\n--- Auto CoT ---")
+print(llm.generate(auto_cot_prompt))
+
+# CoT 的直觉：就像数学老师要求「写出解题步骤」
+# 不写步骤 → 容易算错；写了步骤 → 每步可验证，最终正确率更高</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># ============================================================
+# 技巧3: 结构化 Prompt 模板（实战中最常用）
+# ============================================================
+
+class PromptTemplate:
+    """可复用的结构化 Prompt 模板"""
+    
+    def __init__(self, template: str, input_variables: List[str]):
+        self.template = template
+        self.input_variables = input_variables
+    
+    def format(self, **kwargs) -&gt; str:
+        # 验证所有必需变量都已提供
+        missing = [v for v in self.input_variables if v not in kwargs]
+        if missing:
+            raise ValueError(f"缺少变量: {missing}")
+        return self.template.format(**kwargs)
+
+# RAG 场景的 Prompt 模板
+rag_template = PromptTemplate(
+    template="""你是一个专业的技术文档助手。
+
+## 任务
+根据以下参考资料回答用户问题。如果资料中没有答案，请明确说「根据现有资料无法回答」。
+
+## 参考资料
+{context}
+
+## 用户问题
+{question}
+
+## 输出要求
+1. 先给出直接回答（1-2句话）
+2. 再给出详细解释
+3. 标注信息来源（引用参考资料编号）
+4. 如果有不确定的地方，明确说明""",
+    input_variables=["context", "question"]
+)
+
+# 使用示例
+filled = rag_template.format(
+    context="[1] Transformer 使用自注意力机制处理序列...\n[2] 注意力计算复杂度为 O(n²)...",
+    question="Transformer 的注意力机制有什么缺点？"
+)
+print(filled)
+print("\n" + "=" * 60)
+print("LLM Response:", llm.generate(filled))</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># ============================================================
+# 技巧4: Tree-of-Thought (ToT) 与 ReAct
+# ============================================================
+
+# ToT: 在 CoT 基础上允许「回溯」——探索多条推理路径
+# 论文：Yao et al. (2023) "Tree of Thoughts: Deliberate Problem Solving"
+
+tot_prompt = """你正在解决一个复杂问题。请按以下步骤进行：
+
+1. 提出至少3个不同的解决思路
+2. 对每个思路评估可行性（高/中/低）
+3. 选择最可行的思路，展开详细方案
+4. 如果遇到困难，可以回溯到之前的思路
+
+问题：设计一个能在手机上实时运行的图像分类系统。
+请用 Tree of Thoughts 方法分析。"""
+
+# ReAct: 结合 Reasoning + Acting
+# 论文：Yao et al. (2022) "ReAct: Synergizing Reasoning and Acting"
+# 核心思想：思考 → 行动 → 观察 → 再思考（循环）
+
+react_prompt = """你是一个智能助手，可以通过工具来回答问题。
+请交替使用 Thought（思考）和 Action（行动）来解决问题。
+
+可用工具：
+- search(query): 搜索信息
+- lookup(keyword): 在当前文档中查找关键词
+- calculate(expr): 计算数学表达式
+- finish(answer): 给出最终答案
+
+问题：Python 的 list 和 tuple 有什么区别？分别适合什么场景？
+
+Thought: 我需要从多个维度对比 list 和 tuple 的区别。"""
+
+print("=== ToT Prompt ===")
+print(tot_prompt[:200] + "...")
+print("\n=== ReAct Prompt ===")
+print(react_prompt[:300] + "...")
+
+# 关键洞察：
+# CoT → 线性推理（适合数学、逻辑）
+# ToT → 树状搜索（适合规划、创意）
+# ReAct → 交互式推理（适合需要外部信息的任务）
+# 三者不是互斥的，可以组合使用</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># ============================================================
+# 技巧5: Prompt 鲁棒性测试
+# ============================================================
+
+import hashlib
+
+def prompt_fingerprint(prompt: str) -&gt; str:
+    """计算 prompt 的指纹，用于检测微小的变化"""
+    return hashlib.md5(prompt.encode()).hexdigest()[:8]
+
+def test_prompt_robustness(template: PromptTemplate, test_cases: List[Dict]):
+    """测试 Prompt 在不同输入下的输出一致性"""
+    results = []
+    for i, case in enumerate(test_cases):
+        prompt = template.format(**case)
+        response = llm.generate(prompt)
+        results.append({
+            "case_id": i + 1,
+            "fingerprint": prompt_fingerprint(prompt),
+            "response_len": len(response),
+            "has_structure": '{' in response or '步骤' in response or 'Step' in response,
+            "response_preview": response[:80]
+        })
+    return results
+
+# 测试：同一模板，不同输入
+test_cases = [
+    {"context": "[1] Python 是解释型语言", "question": "Python 是编译型还是解释型？"},
+    {"context": "[1] Rust 的所有权系统保证内存安全", "question": "Rust 如何保证内存安全？"},
+    {"context": "[1] 数据缺失", "question": "量子计算什么时候能商用？"},  # 测试边界：context无相关信息
+]
+
+robustness = test_prompt_robustness(rag_template, test_cases)
+print("Prompt 鲁棒性测试结果:")
+print("-" * 80)
+for r in robustness:
+    print(f"Case {r['case_id']}: fingerprint={r['fingerprint']}, "
+          f"structured={r['has_structure']}, len={r['response_len']}")
+    print(f"  Preview: {r['response_preview']}")
+    print()
+
+print(f"\n总调用次数: {llm.call_count}")
+print("\n核心原则: 好的 Prompt 不是一次写成的，而是通过测试迭代出来的")</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>5 种核心 Prompting 范式</h3>
+<table>
+<thead>
+<tr>
+<th>范式</th>
+<th>核心思想</th>
+<th>适用场景</th>
+<th>关键论文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zero-shot</td>
+<td>直接提问</td>
+<td>简单任务</td>
+<td>GPT-3 (2020)</td>
+</tr>
+<tr>
+<td>Few-shot</td>
+<td>给示例学模式</td>
+<td>分类、格式化</td>
+<td>Brown et al. (2020)</td>
+</tr>
+<tr>
+<td>CoT</td>
+<td>写出推理步骤</td>
+<td>数学、逻辑推理</td>
+<td>Wei et al. (2022)</td>
+</tr>
+<tr>
+<td>ToT</td>
+<td>多路径探索+回溯</td>
+<td>规划、创意、搜索</td>
+<td>Yao et al. (2023)</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>推理+行动循环</td>
+<td>需要工具的任务</td>
+<td>Yao et al. (2022)</td>
+</tr>
+</tbody>
+</table>
+<h3>Prompt Engineering 的工程化趋势</h3>
+<ol>
+<li><strong>模板化</strong>：用 PromptTemplate 管理变量和格式</li>
+<li><strong>版本化</strong>：Prompt 变更要有记录，像管理代码一样管理 Prompt</li>
+<li><strong>测试化</strong>：建立测试集，评估 Prompt 在边界情况下的表现</li>
+<li><strong>自动化</strong>：DSPy 等框架可以自动优化 Prompt</li>
+</ol>
+<h3>要记住的 3 件事</h3>
+<ol>
+<li><strong>Prompt 是接口</strong> —— 它定义了你和模型之间的「API 契约」</li>
+<li><strong>结构化 &gt; 随意写</strong> —— 角色设定 + 任务描述 + 输出格式 = 可靠的输出</li>
+<li><strong>CoT 是通用增强</strong> —— 加一句「一步步思考」就能让大多数推理任务变好</li>
+</ol>
+<h2>课后思考</h2>
+<ol>
+<li>为什么 Few-shot 的示例选择比数量更重要？想一想什么样的示例会「误导」模型。</li>
+<li>如果你要设计一个客服机器人，会用哪种 Prompting 范式组合？为什么？</li>
+<li>Prompt 越长效果越好吗？什么情况下简短的 Prompt 反而更可靠？</li>
+</ol></div>

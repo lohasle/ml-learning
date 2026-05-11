@@ -1,0 +1,127 @@
+<h1>2026年5月12日 - 第34课：Prompt Engineering 高级技巧</h1>
+<h2>今日学习主题</h2>
+<p><strong>Prompt Engineering：从「跟 AI 说人话」到「系统化接口设计」——5 种核心 Prompting 范式与工程化实践</strong></p>
+<h2>为什么学这个？</h2>
+<p>前 33 课我们已经学了 Transformer、大模型微调、RAG、Agent、推理优化、向量数据库、AI 安全等关键技术。但你有没有发现一个关键问题——<strong>所有这些技术的效果，都取决于你怎么「问」模型</strong>。</p>
+<p>Prompt 就是人和大模型之间的接口层。好的 Prompt 能让同样的模型表现天差地别。这课不是教「写 prompt 的技巧」，而是教你把 Prompt 当作工程接口来设计——有模板、有测试、有版本管理。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<ul>
+<li><strong>前序知识</strong>：第15课 Attention（理解模型如何处理输入）、第24课 思维链（CoT 的理论基础）、第33课 AI 安全（prompt injection 防御）</li>
+<li><strong>本课</strong>：把 Prompt 从「技巧」升维为「工程」，掌握系统化的 Prompting 方法论</li>
+<li><strong>历史位置</strong>：2020 GPT-3 证明 few-shot 能力 → 2022 CoT 论文 → 2023 ToT / ReAct → 2024 DSPy 自动优化 → 2025 Prompt 成为 AI 工程师的核心技能</li>
+<li><strong>后续连接</strong>：Prompt 是后续 Agent 系统、RAG 系统、微调评估的基础接口</li>
+</ul>
+<h2>核心概念解释</h2>
+<h3>1. Prompt 的本质：Latent Space 激活器</h3>
+<ul>
+<li><strong>直觉</strong>：大模型的参数里存储了海量知识和能力。Prompt 就是一把「钥匙」，决定打开哪扇门</li>
+<li><strong>类比</strong>：大模型是一栋巨大的图书馆，Prompt 是你的检索词。精确的检索词能找到最相关的书，模糊的检索词可能找到一堆无关的</li>
+<li><strong>代码直觉</strong>：Notebook 中的 MockLLM 演示了同一问题不同 Prompt 的响应质量差异</li>
+</ul>
+<h3>2. 五种核心 Prompting 范式</h3>
+<table>
+<thead>
+<tr>
+<th>范式</th>
+<th>一句话描述</th>
+<th>关键魔法词</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Zero-shot</strong></td>
+<td>直接问，不给示例</td>
+<td>无</td>
+</tr>
+<tr>
+<td><strong>Few-shot</strong></td>
+<td>给 3-5 个示例</td>
+<td><code>例如：...→...</code></td>
+</tr>
+<tr>
+<td><strong>CoT</strong></td>
+<td>让模型写推理步骤</td>
+<td><code>一步步思考</code></td>
+</tr>
+<tr>
+<td><strong>ToT</strong></td>
+<td>探索多条路径再选最优</td>
+<td><code>列出3个方案，评估可行性</code></td>
+</tr>
+<tr>
+<td><strong>ReAct</strong></td>
+<td>边想边做，循环推理</td>
+<td><code>Thought → Action → Observation</code></td>
+</tr>
+</tbody>
+</table>
+<h3>3. 结构化 Prompt 的四要素</h3>
+<p>一个工程级的 Prompt 应该包含：</p>
+<ol>
+<li><strong>角色设定</strong>（Role）：你是谁</li>
+<li><strong>任务描述</strong>（Task）：做什么</li>
+<li><strong>约束条件</strong>（Constraints）：不能做什么 / 边界</li>
+<li><strong>输出格式</strong>（Format）：以什么形式回答</li>
+</ol>
+<pre><code>角色：你是一个专业的 Python 代码审查专家
+任务：审查以下代码片段，找出 bug 和性能问题
+约束：只关注逻辑错误和性能，不讨论代码风格
+格式：用 JSON 输出 [{line, issue, severity, suggestion}]
+</code></pre>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>核心思想</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Few-shot</td>
+<td>$P(y</td>
+<td>x, E_1...E_k)$</td>
+</tr>
+<tr>
+<td>CoT</td>
+<td>$P(a</td>
+<td>q) = \prod P(r_i</td>
+</tr>
+<tr>
+<td>ToT</td>
+<td>$\text{argmax}<em>a \sum</em>{\text{path}} V(\text{path})$</td>
+<td>同时探索多条路径，选择评估价值 $V$ 最高的</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>$a_t = f(s_t, o_t)$</td>
+<td>每步行动 $a$ 基于当前思考 $s$ 和观察 $o$ 决定</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li><strong>Notebook 实验1</strong>：对比 Zero-shot 和 Few-shot 对同一问题的响应差异</li>
+<li><strong>Notebook 实验2</strong>：体验 CoT 对推理质量的提升</li>
+<li><strong>Notebook 实验3</strong>：构建可复用的 PromptTemplate 类</li>
+<li><strong>参数选择</strong>：Few-shot 示例数量 3-5 个最佳，不要超过 10 个</li>
+<li><strong>常见坑点</strong>：Prompt 中包含矛盾指令会让模型输出不可预测</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: Prompt 越长效果越好吗？</strong>
+A: 不是。过长的 Prompt 会稀释关键信息，模型可能「迷失」在上下文中。关键是精确和结构化，不是长度。研究表明 200-500 词的结构化 Prompt 通常效果最好。</p>
+<p><strong>Q: Few-shot 的示例从哪里来？</strong>
+A: 三个策略：① 手工挑选覆盖边界情况的典型案例；② 从训练集/历史数据中用 embedding 相似度自动检索；③ 用模型自己生成示例（Self-Generated CoT）。示例的质量 &gt;&gt; 数量。</p>
+<p><strong>Q: 怎么评估 Prompt 的好坏？</strong>
+A: 三步法：① 建立测试集（正常 + 边界 + 对抗样本）；② 定义评估指标（准确率/格式合规率/延迟）；③ A/B 对比不同 Prompt 版本。DSPy 框架可以自动化这个流程。</p>
+<h2>本课总结</h2>
+<ol>
+<li>Prompt 不是「说话技巧」，是人和大模型之间的「API 接口设计」</li>
+<li>5 种范式（Zero-shot → Few-shot → CoT → ToT → ReAct）覆盖从简单到复杂的所有场景</li>
+<li>工程化的 Prompt 有四要素：角色 + 任务 + 约束 + 格式</li>
+<li>CoT（「一步步思考」）是万能增强器，几乎适用于所有推理任务</li>
+<li>好的 Prompt 需要测试驱动，不是一次写成的</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课将学习<strong>分布式训练</strong>——当模型大到一张 GPU 放不下时，如何用多张卡并行训练。这是理解大模型工程的关键一环。</p>

@@ -60,18 +60,19 @@
 | 31 | 推测解码 | [📖 Notebook](lessons/31_推测解码.ipynb) | [2026-05-09](daily/2026-05-09.md) |
 | 32 | 向量数据库与嵌入检索 | [📖 Notebook](lessons/32_向量数据库与嵌入检索.ipynb) | [2026-05-10](daily/2026-05-10.md) |
 | 33 | AI 安全与对齐 | [📖 Notebook](lessons/33_AI安全与对齐.ipynb) | [2026-05-11](daily/2026-05-11.md) |
+| 34 | Prompt Engineering 高级技巧 | [📖 Notebook](lessons/34_Prompt_Engineering高级技巧.ipynb) | [2026-05-12](daily/2026-05-12.md) |
 
 ## 🔗 快速入口
 
 - [🗺️ 学习路线](roadmap/roadmap.md)
 - [📅 每日学习记录](daily/)
-  - 🆕 **第33课：AI 安全与对齐** (2026-05-11) 🆕
+  - 🆕 **第34课：Prompt Engineering 高级技巧** (2026-05-12) 🆕
+  - **第33课：AI 安全与对齐** (2026-05-11)
   - **第32课：向量数据库与嵌入检索** (2026-05-10)
   - **第31课：推测解码（Speculative Decoding）** (2026-05-09)
   - **第30课：量化推理技术** (2026-05-08)
   - **第29课：知识蒸馏与模型压缩** (2026-05-07)
   - **第28课：MoE 混合专家模型** (2026-05-06)
-  - **第27课：高效微调技术（LoRA/QLoRA/DPO）** (2026-05-05)
 - [📊 每周复盘](weekly/)
 - [💡 知识卡片](notes/)
 - [📜 AI 技术演进史](history/ai-evolution.md)
