@@ -1,0 +1,41 @@
+<div class="note-content">
+<h1>MLOps 与 AI 工程化实践</h1>
+<h2>概念定义</h2>
+<p>MLOps 是将 DevOps 原则应用于机器学习系统的实践，覆盖从数据管理到模型部署、监控的完整生命周期。</p>
+<h2>核心公式与机制</h2>
+<h3>MLOps 成熟度模型</h3>
+<tr><td>Level</td><td>描述</td><td>关键能力</td></tr>
+<p>|-------|------|----------|</p>
+<tr><td>0</td><td>手动流程</td><td>无自动化</td></tr>
+<tr><td>1</td><td>ML Pipeline</td><td>自动训练+部署</td></tr>
+<tr><td>2</td><td>CI/CD + CT</td><td>代码/数据变更触发训练</td></tr>
+<tr><td>3</td><td>全自动化+治理</td><td>特征商店、模型注册表、审计</td></tr>
+<h3>数据漂移检测方法</h3>
+<tr><td>方法</td><td>公式直觉</td><td>适用场景</td></tr>
+<p>|------|----------|----------|</p>
+<tr><td>Z-Score</td><td>\</td><td>μ_new - μ_ref\</td><td>/ σ_ref</td><td>均值偏移检测</td></tr>
+<tr><td>KS Test</td><td>max\</td><td>F_ref(x) - F_new(x)\</td><td></td><td>分布整体偏移</td></tr>
+<tr><td>PSI</td><td>Σ(p_new - p_ref) × ln(p_new/p_ref)</td><td>分箱后的分布差异</td></tr>
+<tr><td>JSD</td><td>KL(P\</td><td>M)/2 + KL(Q\</td><td>M)/2</td><td>概率分布距离</td></tr>
+<h2>关键工具链</h2>
+<tr><td>类别</td><td>工具</td><td>特点</td></tr>
+<p>|------|------|------|</p>
+<tr><td>实验追踪</td><td>MLflow, W&amp;B</td><td>参数/指标/模型版本管理</td></tr>
+<tr><td>数据版本</td><td>DVC, LakeFS</td><td>数据集版本化</td></tr>
+<tr><td>Pipeline</td><td>Kubeflow, Airflow, Dagster</td><td>DAG 编排</td></tr>
+<tr><td>Serving</td><td>vLLM, TGI, Triton</td><td>高性能推理</td></tr>
+<tr><td>监控</td><td>Evidently, Arize</td><td>漂移检测、性能监控</td></tr>
+<h2>LLM 时代的新挑战</h2>
+<li>**Prompt 版本管理**：prompt 变更影响大，需要版本化和测试</li>
+<li>**幻觉监控**：LLM 产生虚假内容的概率需要持续监控</li>
+<li>**Token 成本控制**：推理成本可能远超训练成本</li>
+<li>**多组件协调**：模型 + RAG + Agent + Prompt 联合部署</li>
+<h2>关联概念</h2>
+<li>[[量化推理技术]] — 部署优化手段</li>
+<li>[[向量数据库与嵌入检索]] — RAG 基础设施</li>
+<li>[[AI系统设计与部署]] — 系统层面设计</li>
+<li>[[Prompt Engineering高级技巧]] — Prompt 工程化</li>
+<h2>关键论文</h2>
+<li>Sculley et al., &quot;Hidden Technical Debt in ML Systems&quot;, NIPS 2015</li>
+<li>Google, &quot;MLOps: Continuous Delivery for Machine Learning Models&quot;, 2020</li>
+</div>

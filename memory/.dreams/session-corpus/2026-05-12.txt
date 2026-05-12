@@ -1,0 +1,14 @@
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L22] Assistant: Phase 1 通过，33课无缺口。现在确定第34课主题。
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L38] Assistant: Now let me check existing notes to avoid duplication and look at the README for the current structure:
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L50] Assistant: Good, now I have the full picture. Let me create lesson 34: **Prompt Engineering 高级技巧**. This naturally follows the AI safety lesson (understanding how prompts can be used/manipulated) and is a critical practical skill.
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L56] Assistant: Now render the HTML fragments:
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L58] Assistant: Phase 3 完成。进入 Phase 4 级联同步：
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L62] Assistant: Now update docs/index.html:
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L70] Assistant: 现在更新 notes-lab.html — 添加树项和注释项：
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L76] Assistant: 现在更新 `daily.html`:
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L84] Assistant: 现在更新路线图:
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L86] Assistant: 阶段 4 完成。进入 阶段 5：
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L90] Assistant: Phase 5 验证通过！Git push：
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L110] Assistant: 网络连接 GitHub 存在 TLS 问题（gnutls_handshake 失败），连续 4 次 push 均失败。变更已本地提交（commit 8a54fa3），待网络恢复后推送。
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L112] Assistant: --- ## 执行报告 ### validate 结果 - Phase 1: ✅ 通过（33课无缺口） - Phase 2: 无需修复 - Phase 5: ✅ 通过（34课全部验证通过） ### 今日新增 - **第 34 课：Prompt Engineering 高级技巧** - 新增文件： - `lessons/34_Prompt_Engineering高级技巧.ipynb`（12KB, 8 cells） - `daily/2026-05-12.md`（2.7KB）
+[ml-learning-coach/sessions/ml-learning-coach/b867c099-a1d3-46b0-9a43-29c82f7994b4.jsonl#L112] Assistant: **为什么学这个？** 前33课学了模型架构、微调、RAG、Agent、推理优化、安全……所有技术的效果最终都取决于「你怎么问模型」。Prompt 就是人机接口层——设计好它，同样的模型能发挥10倍效果。 **核心收获：** 1. **5种范式递进**：Zero-shot → Few-shot（给示例）→ CoT（写步骤）→ ToT（多路径）→ ReAct（边想边做） 2. **万能魔法词**：加一句「一步步思考」就能大幅提升推理质量（CoT） 3. **结构化四要素**

@@ -1,0 +1,77 @@
+<div class="daily-content">
+<h1>2026年5月13日 - 第35课：MLOps 与 AI 工程化实践</h1>
+<h2>今日学习主题</h2>
+<p>**MLOps：从「训练出好模型」到「跑出好产品」——ML 系统的完整生命周期管理**</p>
+<h2>为什么学这个？</h2>
+<p>前 34 课我们系统学习了从线性回归到 Prompt Engineering 的 AI 技术栈。但一个残酷的现实是：**训练出好模型只是 AI 工程的 20%，剩下 80% 是工程化**。</p>
+<p>作为架构师，你一定深有体会——没有 CI/CD、没有监控、没有灰度发布的系统不可能上线。AI 系统也是一样，只是多了数据漂移、模型衰减、幻觉检测这些独特挑战。</p>
+<p>这课帮你把之前学到的所有模型知识，连接到真实的生产系统。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<li>**前序知识**：第30课 量化推理（部署优化）、第32课 向量数据库（RAG 基础设施）、第34课 Prompt Engineering（LLM 接口设计）</li>
+<li>**本课**：从模型到产品的工程化桥梁</li>
+<li>**历史位置**：2015 Sculley 提出 ML 技术债概念 → 2017 Kubeflow 诞生 → 2020 Google 发布 MLOps 成熟度模型 → 2023 LLM 推理成本成为核心关注点 → 2025 Prompt 版本管理成为新标配</li>
+<li>**后续连接**：第36课 AI 应用架构与案例实战</li>
+<h2>核心概念解释</h2>
+<h3>MLOps = DevOps + 数据 + 模型</h3>
+<tr><td>DevOps</td><td>MLOps</td></tr>
+<p>|--------|-------|</p>
+<tr><td>代码版本管理</td><td>**代码 + 数据 + 模型** 三重版本管理</td></tr>
+<tr><td>CI/CD</td><td>**CT (Continuous Training)** + CI/CD</td></tr>
+<tr><td>服务监控</td><td>**模型性能监控** + 服务监控</td></tr>
+<tr><td>灰度发布</td><td>**A/B 测试 + 影子模式**</td></tr>
+<tr><td>回滚</td><td>**模型回滚 + 数据回滚**</td></tr>
+<h3>ML 系统的隐藏技术债</h3>
+<p>Google 经典论文指出：ML 代码只占整个系统的很小一部分。真正的工程挑战在数据管道、特征工程、部署服务、监控告警等基础设施。</p>
+<h3>4 种部署策略</h3>
+<p>1. **蓝绿部署**：新旧版本并存，一键切换</p>
+<p>2. **金丝雀发布**：逐步放量，降低风险（推荐）</p>
+<p>3. **A/B 测试**：同时对比，数据驱动决策</p>
+<p>4. **影子模式**：新版本接收流量但不返回结果，用于验证</p>
+<h3>LLM 时代的 MLOps 新挑战</h3>
+<tr><td>维度</td><td>传统 ML</td><td>LLM 时代</td></tr>
+<p>|------|---------|----------|</p>
+<tr><td>部署单位</td><td>模型权重</td><td>Prompt + 模型 + RAG 管道</td></tr>
+<tr><td>版本管理</td><td>模型版本</td><td>Prompt + 模型 + 知识库</td></tr>
+<tr><td>主要成本</td><td>训练</td><td>**推理**（token 计费）</td></tr>
+<tr><td>监控重点</td><td>准确率</td><td>幻觉率、拒答率、成本</td></tr>
+<h2>直觉理解</h2>
+<p>想象你开了一家餐厅（AI 系统）：</p>
+<li>**训练模型** = 研发出一道好菜 → 这是 20% 的工作</li>
+<li>**MLOps** = 确保这道菜每天稳定出餐、食材新鲜、顾客反馈持续改进 → 这是 80% 的工作</li>
+<li>**数据漂移** = 顾客口味变了，但你的菜谱没变 → 需要检测和调整</li>
+<li>**金丝雀发布** = 新菜品先给 5% 的顾客试吃 → 没问题再全量上线</li>
+<h2>关键机制</h2>
+<h3>数据漂移检测</h3>
+<li>统计方法：KS 检验、PSI（Population Stability Index）、Jensen-Shannon Divergence</li>
+<li>触发条件：分布偏移超过阈值 → 自动触发重训练 Pipeline</li>
+<h3>模型监控指标</h3>
+<li>**性能指标**：准确率、F1、延迟（P50/P99）</li>
+<li>**LLM 特有**：幻觉率、拒答率、token 消耗、成本/请求</li>
+<li>**数据质量**：输入分布、缺失率、异常值</li>
+<h2>最小实践建议</h2>
+<h1>核心思路：每次实验记录完整上下文</h1>
+<p>tracker.log_experiment(</p>
+<p>    name=&#x27;sentiment-v2&#x27;,</p>
+<p>    params={&#x27;model&#x27;: &#x27;bert-large&#x27;, &#x27;lr&#x27;: 0.001},</p>
+<p>    metrics={&#x27;accuracy&#x27;: 0.935, &#x27;latency_ms&#x27;: 120},</p>
+<p>    # 数据版本、代码版本也要记录!</p>
+<p>)</p>
+<p>**关键工具链**：</p>
+<li>实验追踪：MLflow, W&amp;B</li>
+<li>Pipeline：Kubeflow, Airflow, Dagster</li>
+<li>Serving：vLLM, TGI, Triton</li>
+<li>监控：Evidently, Arize, Prometheus + Grafana</li>
+<h2>关键论文与项目</h2>
+<li>📄 **Hidden Technical Debt in ML Systems** (Sculley et al., 2015)</li>
+<li>📄 **MLOps: Continuous Delivery for ML** (Google, 2020)</li>
+<li>🔧 **MLflow** — 开源实验追踪和模型管理</li>
+<li>🔧 **vLLM** — 高性能 LLM 推理服务</li>
+<h2>今天学完后你应该记住什么</h2>
+<p>1. MLOps = DevOps + 数据管理 + 模型生命周期，不只是部署</p>
+<p>2. ML 代码只是冰山一角，周围有大量基础设施</p>
+<p>3. LLM 时代新变量：prompt 版本管理、幻觉监控、token 成本</p>
+<p>4. 部署策略：影子模式 → 金丝雀 → 全量</p>
+<p>5. 数据漂移是模型衰退的头号杀手</p>
+<h2>下一步</h2>
+<p>第36课将学习 **AI 应用架构与案例实战**，把 Transformer、RAG、Agent、MLOps 串成完整的 AI 应用架构。</p>
+</div>
