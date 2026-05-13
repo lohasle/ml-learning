@@ -62,12 +62,14 @@
 | 33 | AI 安全与对齐 | [📖 Notebook](lessons/33_AI安全与对齐.ipynb) | [2026-05-11](daily/2026-05-11.md) |
 | 34 | Prompt Engineering 高级技巧 | [📖 Notebook](lessons/34_Prompt_Engineering高级技巧.ipynb) | [2026-05-12](daily/2026-05-12.md) |
 | 35 | MLOps 与 AI 工程化 | [📖 Notebook](lessons/35_MLOps与AI工程化.ipynb) | [2026-05-13](daily/2026-05-13.md) |
+| 36 | AI 应用架构与案例实战 | [📖 Notebook](lessons/36_AI应用架构与案例实战.ipynb) | [2026-05-14](daily/2026-05-14.md) |
 
 ## 🔗 快速入口
 
 - [🗺️ 学习路线](roadmap/roadmap.md)
 - [📅 每日学习记录](daily/)
-  - 🆕 **第35课：MLOps 与 AI 工程化** (2026-05-13) 🆕
+  - 🆕 **第36课：AI 应用架构与案例实战** (2026-05-14) 🆕
+  - **第35课：MLOps 与 AI 工程化** (2026-05-13)
   - **第34课：Prompt Engineering 高级技巧** (2026-05-12)
   - **第33课：AI 安全与对齐** (2026-05-11)
   - **第32课：向量数据库与嵌入检索** (2026-05-10)

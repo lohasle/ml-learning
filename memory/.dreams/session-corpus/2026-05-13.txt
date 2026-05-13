@@ -1,0 +1,17 @@
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L12] Assistant: Phase 1 通过，无缺口。已有 34 课。现在确定第 35 课主题。
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L20] Assistant: 第 34 课已于 5/12 完成。今天是 5/13，需要生成第 35 课。路线图阶段 6 看起来已经完成了前 11 个专题，需要确定下一个主题。让我检查路线图是否有更多规划。
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L22] Assistant: 阶段 6 没有更多预规划内容了。我需要确定一个合适的第 35 课主题。回顾已覆盖的内容和 AGENTS.md 中的学习范围，还没覆盖的重要主题包括： - 强化学习基础（RLHF 已学，但 RL 基础没单独讲） - AI 工程化实践 / MLOps - 分布式训练 - AI 应用架构与案例 - 语音模型（多模态只总体讲了） 考虑到前面学了 Prompt Engineering，接下来适合进入 **MLOps / AI 工程化实践**——从模型到产品的关键环节，也是架构师最熟悉
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L30] Assistant: 好的，我来参考上一课的结构，生成第 35 课。主题选 **MLOps 与 AI 工程化实践**——从模型到产品的关键桥梁。
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L34] Assistant: 好，现在开始创建第 35 课。让我先生成所有需要的文件。
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L38] Assistant: 现在生成 daily MD 和 notes 文件：
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L42] Assistant: 现在生成 HTML 片段：
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L44] Assistant: Phase 3 完成。现在进入 Phase 4：级联同步。需要更新 README.md、index.html、notes-lab.html、daily.html。
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L48] Assistant: 现在更新 docs/index.html、docs/notes-lab.html、docs/daily.html：
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L66] Assistant: 现在更新路线图：
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L68] Assistant: Phase 4 完成。进入 Phase 5：验证。
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L70] Assistant: ✅ 验证通过！35 个笔记，35 个日常任务，无间隙。现在执行 git 操作。
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L72] Assistant: Commit 成功但 push 失败，重试：
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L80] Assistant: TLS 握手持续失败。尝试用 SSH：
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L86] Assistant: Push 3 次均失败（TLS 握手问题），本地变更已保留。
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L88] Assistant: --- ## 执行报告 ### validate 结果 - Phase 1: ✅ 通过（35 notebooks, 35 dailies, 0 gaps） - Phase 2: 无需修复 - Phase 5: ✅ 通过 ### 今日新增 - **第 35 课：MLOps 与 AI 工程化** - 新增文件： - `lessons/35_MLOps与AI工程化.ipynb`（7 cells: 2 markdown + 5 code） - `daily/2026-05-13.m
+[ml-learning-coach/sessions/ml-learning-coach/af98c6fa-f6c4-4401-8a58-48b82fc1edfd.jsonl#L88] Assistant: **MLOps = DevOps + 数据 + 模型** — 三重版本管理、CT（持续训练）、性能监控 2. **ML 代码只是冰山一角** — Google 论文揭示技术债：数据管道、特征工程、部署服务才是大头 3. **4 种部署策略**：影子模式 → 金丝雀 → A/B 测试 → 蓝绿，推荐先用影子 + 金丝雀 4. **数据漂移检测** — 模型衰退的头号杀手，必须有自动化检测机制 5. **LLM 时代新变量**：prompt 版本管理、幻觉监控、token 成本

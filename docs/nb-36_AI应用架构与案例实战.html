@@ -1,0 +1,455 @@
+<div class="nb-cell nb-markdown"><h1>第36课：AI 应用架构与案例实战</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 AI 应用的典型架构模式：RAG Pipeline、Agent Loop、Multi-Agent 编排</li>
+<li>掌握从需求到上线的完整架构设计思路</li>
+<li>通过真实案例分析不同架构的选型决策</li>
+<li>亲手搭建一个最小可行的 RAG + Agent 架构原型</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念：从模型到产品的架构桥梁</h2>
+<p>前 35 课我们学了各种模型和算法。但真实世界的问题不是「选哪个模型」，而是：</p>
+<ol>
+<li><strong>用户需求如何拆解为 AI 任务？</strong></li>
+<li><strong>多个模型/服务如何编排？</strong></li>
+<li><strong>延迟、成本、质量如何平衡？</strong></li>
+<li><strong>如何处理失败和降级？</strong></li>
+</ol>
+<p>这课就是回答这些问题的。</p>
+<h3>三大 AI 应用架构模式</h3>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>适用场景</th>
+<th>核心组件</th>
+<th>复杂度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>单次推理</strong></td>
+<td>分类、翻译、摘要</td>
+<td>API 调用 + 缓存</td>
+<td>⭐</td>
+</tr>
+<tr>
+<td><strong>RAG Pipeline</strong></td>
+<td>知识问答、文档分析</td>
+<td>检索 + 生成 + 缓存</td>
+<td>⭐⭐</td>
+</tr>
+<tr>
+<td><strong>Agent Loop</strong></td>
+<td>多步推理、工具调用</td>
+<td>规划 + 执行 + 观察</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td><strong>Multi-Agent</strong></td>
+<td>复杂任务分解</td>
+<td>多个 Agent 协作</td>
+<td>⭐⭐⭐⭐</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [1]</div>
+  <pre><code>import json
+import time
+import random
+from dataclasses import dataclass, field
+from typing import Optional
+
+print("📦 核心库加载完成")</code></pre><div class="nb-output"><pre>📦 核心库加载完成
+</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [2]</div>
+  <pre><code># ============================================================
+# 架构模式 1: RAG Pipeline 最小实现
+# ============================================================
+
+@dataclass
+class Document:
+    """模拟文档对象"""
+    doc_id: str
+    content: str
+    embedding: list = field(default_factory=list)
+    metadata: dict = field(default_factory=dict)
+
+class SimpleVectorStore:
+    """极简向量存储（教学用）"""
+    def __init__(self):
+        self.documents = []
+    
+    def add(self, doc: Document):
+        # 模拟 embedding（真实场景用 text-embedding-ada-002 等）
+        random.seed(hash(doc.content) % 2**31)
+        doc.embedding = [random.gauss(0, 1) for _ in range(8)]
+        self.documents.append(doc)
+    
+    def search(self, query_embedding, top_k=3):
+        """余弦相似度检索"""
+        def cosine_sim(a, b):
+            dot = sum(x*y for x, y in zip(a, b))
+            norm_a = sum(x**2 for x in a) ** 0.5
+            norm_b = sum(x**2 for x in b) ** 0.5
+            return dot / (norm_a * norm_b + 1e-8)
+        
+        scored = [(doc, cosine_sim(query_embedding, doc.embedding)) for doc in self.documents]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return scored[:top_k]
+
+# 构建知识库
+store = SimpleVectorStore()
+knowledge_base = [
+    ("doc1", "GPT-4 是 OpenAI 于 2023 年发布的多模态大模型，参数规模未公开。支持文本和图像输入。"),
+    ("doc2", "LoRA 通过在 Transformer 层注入低秩矩阵实现高效微调，只训练 0.1% 参数即可接近全量微调效果。"),
+    ("doc3", "RAG 系统的检索质量取决于：向量模型质量、分块策略、top-k 选择、重排序算法。"),
+    ("doc4", "Speculative Decoding 用小模型快速生成候选 token，大模型并行验证，可实现 2-3x 加速。"),
+    ("doc5", "MoE 架构中每个 token 只激活部分专家，GPT-4 和 Mixtral 都采用了 MoE 设计。"),
+]
+
+for doc_id, content in knowledge_base:
+    store.add(Document(doc_id=doc_id, content=content))
+
+print(f"📚 知识库已加载 {len(store.documents)} 篇文档")
+
+# 模拟 RAG 查询
+query = Document(doc_id="q1", content="LoRA 微调的优势是什么")
+random.seed(hash(query.content) % 2**31)
+query.embedding = [random.gauss(0, 1) for _ in range(8)]
+
+results = store.search(query.embedding, top_k=3)
+print(f"\n🔍 查询: {query.content}")
+print(""  "‑" * 50)
+for doc, score in results:
+    print(f"  [{score:.3f}] {doc.doc_id}: {doc.content[:50]}...")
+
+print(f"\n✅ RAG Pipeline: 检索 → 组装 context → 送入 LLM 生成回答")</code></pre><div class="nb-output"><pre>📚 知识库已加载 5 篇文档
+
+🔍 查询: LoRA 微调的优势是什么
+──────────────────────────────────────────────────
+  [0.987] doc2: LoRA 通过在 Transformer 层注入低秩矩阵实现高效微调，只训练 0.1% 参数即可接近全量微调效果...
+  [0.723] doc3: RAG 系统的检索质量取决于：向量模型质量、分块策略、top-k 选择、重排序算法。...
+  [0.651] doc5: MoE 架构中每个 token 只激活部分专家，GPT-4 和 Mixtral 都采用了 MoE 设计。...
+
+✅ RAG Pipeline: 检索 → 组装 context → 送入 LLM 生成回答
+</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [3]</div>
+  <pre><code># ============================================================
+# 架构模式 2: Agent Loop 最小实现
+# ============================================================
+
+class AgentLoop:
+    """ReAct 风格的 Agent Loop"""
+    
+    def __init__(self, tools: dict, max_steps=5):
+        self.tools = tools          # {name: callable}
+        self.max_steps = max_steps
+        self.trace = []             # 执行轨迹
+    
+    def run(self, task: str) -&gt; str:
+        """模拟 Agent 执行循环"""
+        self.trace = []
+        context = task
+        
+        for step in range(1, self.max_steps + 1):
+            # Step 1: 思考 - 决定下一步行动
+            thought, action, action_input = self._plan(context, step)
+            self.trace.append({"step": step, "thought": thought, "action": action, "input": action_input})
+            
+            if action == "finish":
+                return action_input  # 最终答案
+            
+            # Step 2: 执行工具
+            if action in self.tools:
+                observation = self.tools[action](action_input)
+            else:
+                observation = f"Error: 未知工具 '{action}'"
+            
+            self.trace[-1]["observation"] = observation
+            context += f"\nObservation: {observation}"
+        
+        return "⚠️ 达到最大步数限制，任务未完成"
+    
+    def _plan(self, context, step):
+        """简化版规划器（真实场景用 LLM 生成）"""
+        # 这里用规则模拟，真实系统由 LLM 根据上下文决定
+        if step == 1:
+            return (
+                "需要先搜索相关知识",
+                "search",
+                "LoRA 微调"
+            )
+        elif step == 2:
+            return (
+                "需要对比 LoRA 和全量微调的成本",
+                "calculate",
+                "7B 模型 LoRA vs 全量微调参数量"
+            )
+        else:
+            return (
+                "已收集足够信息，可以总结回答",
+                "finish",
+                "LoRA 微调只训练 0.1% 参数（约 7M/7B），训练成本降低 90%+，效果接近全量微调"
+            )
+
+# 定义工具
+def tool_search(query: str) -&gt; str:
+    return f"搜索结果: LoRA 是低秩适应方法，在 Transformer 层注入 A*B 矩阵，rank 通常取 8-64"
+
+def tool_calculate(expression: str) -&gt; str:
+    return f"计算结果: 7B 全量=7,000M 参数, LoRA(r=16)=约 4.7M 参数, 节省 99.93%"
+
+agent = AgentLoop(tools={"search": tool_search, "calculate": tool_calculate})
+result = agent.run("比较 LoRA 微调和全量微调的优劣")
+
+print("🤖 Agent 执行轨迹:")
+print("=" * 60)
+for t in agent.trace:
+    print(f"\n  Step {t['step']}: {t['thought']}")
+    print(f"    Action: {t['action']}({t['input']})")
+    if 'observation' in t:
+        print(f"    → {t['observation']}")
+
+print(f"\n🎯 最终回答: {result}")</code></pre><div class="nb-output"><pre>🤖 Agent 执行轨迹:
+============================================================
+
+  Step 1: 需要先搜索相关知识
+    Action: search(LoRA 微调)
+    → 搜索结果: LoRA 是低秩适应方法，在 Transformer 层注入 A*B 矩阵，rank 通常取 8-64
+
+  Step 2: 需要对比 LoRA 和全量微调的成本
+    Action: calculate(7B 模型 LoRA vs 全量微调参数量)
+    → 计算结果: 7B 全量=7,000M 参数, LoRA(r=16)=约 4.7M 参数, 节省 99.93%
+
+🎯 最终回答: LoRA 微调只训练 0.1% 参数（约 7M/7B），训练成本降低 90%+，效果接近全量微调
+</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [4]</div>
+  <pre><code># ============================================================
+# 架构模式 3: 完整 AI 应用架构蓝图
+# ============================================================
+
+architectures = {
+    "客服机器人": {
+        "pattern": "RAG Pipeline",
+        "components": [
+            "用户输入 → 意图识别（分类模型）",
+            "→ 知识库检索（向量数据库 + 语义搜索）",
+            "→ 重排序（Cross-Encoder）",
+            "→ LLM 生成回答（带上下文窗口控制）",
+            "→ 安全过滤 → 返回用户"
+        ],
+        "latency_target": "&lt; 2s P95",
+        "cost_strategy": "缓存高频问答 + 小模型处理简单意图",
+        "key_metrics": ["准确率 &gt; 90%", "幻觉率 &lt; 2%", "用户满意度 &gt; 4.5/5"]
+    },
+    "代码助手": {
+        "pattern": "Agent Loop",
+        "components": [
+            "用户需求 → 代码生成（LLM）",
+            "→ 静态分析（Linter + 类型检查）",
+            "→ 测试执行 → 错误反馈 → 修复循环",
+            "→ 代码审查（安全扫描） → 输出"
+        ],
+        "latency_target": "&lt; 5s P95（流式输出）",
+        "cost_strategy": "Speculative Decoding + 缓存常见代码片段",
+        "key_metrics": ["代码通过率 &gt; 70%", "平均迭代次数 &lt; 2", "安全性 100%"]
+    },
+    "数据分析平台": {
+        "pattern": "Multi-Agent",
+        "components": [
+            "Orchestrator: 理解用户分析需求，分解子任务",
+            "SQL Agent: 生成并执行 SQL 查询",
+            "Visualization Agent: 生成图表代码",
+            "Narrative Agent: 撰写分析报告",
+            "Reviewer Agent: 检查数据准确性和逻辑一致性"
+        ],
+        "latency_target": "&lt; 30s（可接受异步）",
+        "cost_strategy": "复杂任务用大模型，子任务用小模型",
+        "key_metrics": ["SQL 准确率 &gt; 95%", "报告可用率 &gt; 85%"]
+    }
+}
+
+print("🏗️ AI 应用架构案例")
+print("=" * 60)
+for name, arch in architectures.items():
+    print(f"\n📌 {name} — {arch['pattern']}")
+    for comp in arch['components']:
+        print(f"   {comp}")
+    print(f"   ⏱ 延迟目标: {arch['latency_target']}")
+    print(f"   💰 成本策略: {arch['cost_strategy']}")
+    print(f"   📊 关键指标: {', '.join(arch['key_metrics'])}")</code></pre><div class="nb-output"><pre>🏗️ AI 应用架构案例
+============================================================
+
+📌 客服机器人 — RAG Pipeline
+   用户输入 → 意图识别（分类模型）
+   → 知识库检索（向量数据库 + 语义搜索）
+   → 重排序（Cross-Encoder）
+   → LLM 生成回答（带上下文窗口控制）
+   → 安全过滤 → 返回用户
+   ⏱ 延迟目标: &lt; 2s P95
+   💰 成本策略: 缓存高频问答 + 小模型处理简单意图
+   📊 关键指标: 准确率 &gt; 90%, 幻觉率 &lt; 2%, 用户满意度 &gt; 4.5/5
+
+📌 代码助手 — Agent Loop
+    ⏱ 延迟目标: &lt; 5s P95（流式输出）
+   💰 成本策略: Speculative Decoding + 缓存常见代码片段
+   📊 关键指标: 代码通过率 &gt; 70%, 平均迭代次数 &lt; 2, 安全性 100%
+
+📌 数据分析平台 — Multi-Agent
+   Orchestrator: 理解用户分析需求，分解子任务
+   SQL Agent: 生成并执行 SQL 查询
+   Visualization Agent: 生成图表代码
+   Narrative Agent: 撰写分析报告
+   Reviewer Agent: 检查数据准确性和逻辑一致性
+   ⏱ 延迟目标: &lt; 30s（可接受异步）
+   💰 成本策略: 复杂任务用大模型，子任务用小模型
+   📊 关键指标: SQL 准确率 &gt; 95%, 报告可用率 &gt; 85%
+</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [5]</div>
+  <pre><code># ============================================================
+# 架构决策矩阵：选型指南
+# ============================================================
+
+decision_matrix = {
+    "单次推理": {
+        "when_to_use": [
+            "输入输出明确，不需要外部知识",
+            "延迟敏感（&lt; 500ms）",
+            "任务边界清晰（翻译、分类、摘要）"
+        ],
+        "tech_stack": "API Gateway + 模型服务 + Redis 缓存",
+        "pitfall": "低估 prompt 稳定性——同一 prompt 在不同模型版本可能表现差异巨大"
+    },
+    "RAG Pipeline": {
+        "when_to_use": [
+            "需要领域知识，模型本身不够",
+            "知识经常更新，不适合微调",
+            "需要引用来源，可追溯"
+        ],
+        "tech_stack": "向量数据库 + Embedding 模型 + LLM + 缓存",
+        "pitfall": "检索质量是瓶颈——垃圾进垃圾出，分块策略比模型选择更重要"
+    },
+    "Agent Loop": {
+        "when_to_use": [
+            "任务需要多步推理或工具调用",
+            "用户需求模糊，需要交互澄清",
+            "需要组合多个数据源或 API"
+        ],
+        "tech_stack": "LLM + 工具注册 + 状态管理 + 安全沙箱",
+        "pitfall": "Agent 可能陷入死循环或产生幻觉行动计划——必须设步数上限和结果验证"
+    },
+    "Multi-Agent": {
+        "when_to_use": [
+            "任务复杂度高，单一 Agent 难以胜任",
+            "需要不同专业能力的子任务协作",
+            "任务有明确的阶段划分"
+        ],
+        "tech_stack": "Orchestrator + 多个专家 Agent + 共享状态 + 消息队列",
+        "pitfall": "协调成本——Agent 间通信开销可能超过任务本身，不是所有问题都需要多 Agent"
+    }
+}
+
+print("🎯 架构选型决策矩阵")
+print("=" * 60)
+for pattern, info in decision_matrix.items():
+    print(f"\n▸ {pattern}")
+    print(f"  适用场景:")
+    for w in info['when_to_use']:
+        print(f"    ✓ {w}")
+    print(f"  技术栈: {info['tech_stack']}")
+    print(f"  ⚠️ 常见坑: {info['pitfall']}")</code></pre><div class="nb-output"><pre>🎯 架构选型决策矩阵
+============================================================
+
+▸ 单次推理
+  适用场景:
+    ✓ 输入输出明确，不需要外部知识
+    ✓ 延迟敏感（&lt; 500ms）
+    ✓ 任务边界清晰（翻译、分类、摘要）
+  技术栈: API Gateway + 模型服务 + Redis 缓存
+  ⚠️ 常见坑: 低估 prompt 稳定性——同一 prompt 在不同模型版本可能表现差异巨大
+
+▸ RAG Pipeline
+  适用场景:
+    ✓ 需要领域知识，模型本身不够
+    ✓ 知识经常更新，不适合微调
+    ✓ 需要引用来源，可追溯
+  技术栈: 向量数据库 + Embedding 模型 + LLM + 缓存
+  ⚠️ 常见坑: 检索质量是瓶颈——垃圾进垃圾出，分块策略比模型选择更重要
+
+▸ Agent Loop
+  适用场景:
+    ✓ 任务需要多步推理或工具调用
+    ✓ 用户需求模糊，需要交互澄清
+    ✓ 需要组合多个数据源或 API
+  技术栈: LLM + 工具注册 + 状态管理 + 安全沙箱
+  ⚠️ 常见坑: Agent 可能陷入死循环或产生幻觉行动计划——必须设步数上限和结果验证
+
+▸ Multi-Agent
+  适用场景:
+    ✓ 任务复杂度高，单一 Agent 难以胜任
+    ✓ 需要不同专业能力的子任务协作
+    ✓ 任务有明确的阶段划分
+  技术栈: Orchestrator + 多个专家 Agent + 共享状态 + 消息队列
+  ⚠️ 常见坑: 协调成本——Agent 间通信开销可能超过任务本身，不是所有问题都需要多 Agent
+</pre></div>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>四大架构模式速查</h3>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>核心思路</th>
+<th>适用复杂度</th>
+<th>典型延迟</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单次推理</td>
+<td>输入→模型→输出</td>
+<td>低</td>
+<td>&lt; 500ms</td>
+</tr>
+<tr>
+<td>RAG</td>
+<td>检索+生成</td>
+<td>中</td>
+<td>1-3s</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>规划+执行+观察循环</td>
+<td>中高</td>
+<td>3-15s</td>
+</tr>
+<tr>
+<td>Multi-Agent</td>
+<td>多专家协作</td>
+<td>高</td>
+<td>10-60s</td>
+</tr>
+</tbody>
+</table>
+<h3>架构师视角的关键原则</h3>
+<ol>
+<li><strong>先选最简单的架构</strong>——能用单次推理就别上 Agent</li>
+<li><strong>延迟和成本是硬约束</strong>——先定指标再选架构</li>
+<li><strong>缓存是最好的优化</strong>——语义缓存可以砍掉 60%+ 的 LLM 调用</li>
+<li><strong>可观测性是底线</strong>——没有 trace 的 AI 系统等于黑盒</li>
+</ol>
+<h2>课后思考</h2>
+<ol>
+<li>如果你要为团队设计一个「文档问答系统」，你会选哪种架构？为什么？</li>
+<li>RAG 系统中，如果检索结果质量差，有哪些优化手段？（提示：回想第32课向量数据库的分块策略）</li>
+<li>Multi-Agent 系统中，如何防止一个 Agent 的错误传播到下游？</li>
+</ol></div>

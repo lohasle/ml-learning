@@ -1,0 +1,176 @@
+<h1>2026年5月14日 - 第36课：AI 应用架构与案例实战</h1>
+<h2>今日学习主题</h2>
+<p><strong>从模型到产品：掌握 AI 应用的四大架构模式，学会为真实需求选型设计</strong></p>
+<h2>为什么学这个？</h2>
+<p>前 35 课我们系统学习了从线性回归到 MLOps 的完整技术栈。但一个关键问题始终悬着：<strong>当你面对一个真实的业务需求时，如何把这些知识组装成一个可运行的系统？</strong></p>
+<p>作为架构师，你一定能理解——单个组件再强，没有好的架构编排也跑不起来。今天这课就是把前面所有技术「接线」：RAG 连上第19课的检索增强、Agent 对接第20课的智能体、向量数据库用上第32课的知识。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<ul>
+<li><strong>前序知识</strong>：第19课 RAG、第20课 Agent、第32课 向量数据库、第35课 MLOps</li>
+<li><strong>本课</strong>：从模型到产品的架构桥梁——如何选型、如何编排、如何权衡</li>
+<li><strong>历史位置</strong>：2022 年 ChatGPT 引爆 LLM 应用 → 2023 年 LangChain 诞生（Agent 框架）→ 2024 年 RAG 成为标配 → 2025 年 Multi-Agent 框架成熟（CrewAI、AutoGen）→ 2026 年 AI 应用架构师成为热门角色</li>
+<li><strong>后续连接</strong>：第37课将继续深入端到端案例实践</li>
+</ul>
+<h2>核心概念解释</h2>
+<h3>1. 四大架构模式</h3>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>核心思路</th>
+<th>复杂度</th>
+<th>典型延迟</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>单次推理</strong></td>
+<td>输入 → 模型 → 输出</td>
+<td>⭐</td>
+<td>&lt; 500ms</td>
+</tr>
+<tr>
+<td><strong>RAG Pipeline</strong></td>
+<td>检索 + 生成</td>
+<td>⭐⭐</td>
+<td>1-3s</td>
+</tr>
+<tr>
+<td><strong>Agent Loop</strong></td>
+<td>规划 → 执行 → 观察循环</td>
+<td>⭐⭐⭐</td>
+<td>3-15s</td>
+</tr>
+<tr>
+<td><strong>Multi-Agent</strong></td>
+<td>多个专家 Agent 协作</td>
+<td>⭐⭐⭐⭐</td>
+<td>10-60s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>直觉理解</strong>：
+- 单次推理 = 你问一个问题，AI 直接回答
+- RAG = 你让 AI 先翻资料，再回答
+- Agent = AI 自己决定要做什么、用什么工具、做几步
+- Multi-Agent = 一组专家分工协作</p>
+<h3>2. RAG Pipeline 深入</h3>
+<p>RAG 是目前最成熟的 AI 应用架构，核心流程：</p>
+<pre><code>用户问题 → Embedding → 向量检索 → 重排序 → 拼装 Prompt → LLM 生成 → 返回
+</code></pre>
+<p><strong>架构决策关键点</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>决策点</th>
+<th>选项</th>
+<th>选型建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>分块策略</td>
+<td>固定大小 / 语义分块 / 文档结构</td>
+<td>优先语义分块，chunk size 256-512</td>
+</tr>
+<tr>
+<td>向量模型</td>
+<td>OpenAI / BGE / Cohere</td>
+<td>中文场景 BGE 表现好</td>
+</tr>
+<tr>
+<td>检索策略</td>
+<td>稠密检索 / 稀疏检索 / 混合</td>
+<td>混合检索效果最稳</td>
+</tr>
+<tr>
+<td>重排序</td>
+<td>无 / Cross-Encoder / LLM Rerank</td>
+<td>准确率要求高时必须加</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td>精确匹配 / 语义缓存</td>
+<td>语义缓存可砍掉 60%+ 调用</td>
+</tr>
+</tbody>
+</table>
+<h3>3. Agent Loop 设计模式</h3>
+<p>Agent 的核心是 <strong>ReAct 循环</strong>（Reason + Act）：</p>
+<pre><code>Task → Thought → Action → Observation → Thought → ... → Answer
+</code></pre>
+<p><strong>关键设计原则</strong>：
+- 每步必须有明确输出（Observation 不能为空）
+- 设步数上限（防死循环，通常 5-10 步）
+- 工具定义要清晰（名称 + 描述 + 参数 schema）
+- 结果必须有验证机制（不能盲目信任 LLM 输出）</p>
+<h3>4. 架构选型决策树</h3>
+<pre><code>需要外部知识吗？
+├── 否 → 单次推理
+└── 是 → 需要多步推理吗？
+    ├── 否 → RAG Pipeline
+    └── 是 → 需要多种专业能力吗？
+        ├── 否 → Agent Loop
+        └── 是 → Multi-Agent
+</code></pre>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/规则</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>余弦相似度</td>
+<td>cos(a,b) = (a·b)/(|a||b|)</td>
+<td>两个向量的方向一致程度，忽略长度</td>
+</tr>
+<tr>
+<td>RAG 延迟</td>
+<td>T_total = T_embed + T_retrieve + T_rerank + T_generate</td>
+<td>四段累加，瓶颈通常在 generate</td>
+</tr>
+<tr>
+<td>Agent 成本</td>
+<td>Cost = Σ(LLM_calls × token_price)</td>
+<td>步数越多越贵，所以要设上限</td>
+</tr>
+<tr>
+<td>语义缓存命中</td>
+<td>sim(query, cached_q) &gt; threshold</td>
+<td>相似度超过阈值就复用缓存结果</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<p>Notebook 中实现了三个核心模块：</p>
+<ol>
+<li><strong>SimpleVectorStore</strong>：从零实现向量存储和余弦相似度检索，理解 RAG 的检索核心</li>
+<li><strong>AgentLoop</strong>：ReAct 风格的 Agent 循环，模拟 Think → Act → Observe 流程</li>
+<li><strong>架构蓝图</strong>：三个真实案例（客服机器人、代码助手、数据分析平台）的完整组件拆解</li>
+</ol>
+<p><strong>关键参数</strong>：
+- <code>top_k</code>：检索返回数量，通常 3-5，太少信息不足，太多引入噪声
+- <code>max_steps</code>：Agent 最大步数，5 步适合简单任务，复杂任务 10 步
+- <code>chunk_size</code>：分块大小，256-512 token 是常用起点</p>
+<h2>常见问题</h2>
+<p><strong>Q: RAG 和微调该选哪个？</strong>
+A: 需要最新知识或可追溯引用 → RAG；需要改变模型行为风格 → 微调；两者可以叠加使用。</p>
+<p><strong>Q: Agent 总是产生错误的行动计划怎么办？</strong>
+A: 三招——(1) 改进工具描述让 LLM 理解正确用法；(2) 加入 few-shot 示例；(3) 增加结果验证步骤，不符合预期就重试。</p>
+<p><strong>Q: 多 Agent 系统比单 Agent 好在哪里？</strong>
+A: 只有当任务天然可以分解为不同专业领域时才更好。否则多 Agent 的协调开销反而降低质量。不要为了用多 Agent 而用。</p>
+<h2>本课总结</h2>
+<ol>
+<li><strong>四大架构模式</strong>：单次推理 &lt; RAG &lt; Agent &lt; Multi-Agent，复杂度递增但适用场景不同</li>
+<li><strong>架构选型原则</strong>：先选最简单的，延迟和成本是硬约束，缓存是最好的优化</li>
+<li><strong>RAG 是当前最成熟的模式</strong>：90% 的企业 AI 应用可以从 RAG 开始</li>
+<li><strong>可观测性是底线</strong>：没有 trace 和监控的 AI 系统等于黑盒</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课我们将进入 <strong>端侧部署与 TinyML</strong>，学习如何把 AI 模型部署到手机、IoT 设备等资源受限环境——这是 AI 从云端走向边缘的关键一步。</p>
+<hr />
+<p><em>第36课 | 2026-05-14 | 阶段 6：前沿专题</em></p>

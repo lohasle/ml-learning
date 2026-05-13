@@ -1,0 +1,95 @@
+<h1>AI 应用架构与案例实战</h1>
+<h2>概述</h2>
+<p>AI 应用架构是将模型能力转化为可运行产品的桥梁。核心挑战不是模型本身，而是如何编排多个组件、平衡延迟/成本/质量、处理真实世界的异常。</p>
+<h2>四大架构模式</h2>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>核心思路</th>
+<th>复杂度</th>
+<th>典型延迟</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单次推理</td>
+<td>输入→模型→输出</td>
+<td>⭐</td>
+<td>&lt; 500ms</td>
+<td>翻译、分类、摘要</td>
+</tr>
+<tr>
+<td>RAG Pipeline</td>
+<td>检索+生成</td>
+<td>⭐⭐</td>
+<td>1-3s</td>
+<td>知识问答、文档分析</td>
+</tr>
+<tr>
+<td>Agent Loop</td>
+<td>规划→执行→观察循环</td>
+<td>⭐⭐⭐</td>
+<td>3-15s</td>
+<td>多步推理、工具调用</td>
+</tr>
+<tr>
+<td>Multi-Agent</td>
+<td>多专家协作</td>
+<td>⭐⭐⭐⭐</td>
+<td>10-60s</td>
+<td>复杂任务分解</td>
+</tr>
+</tbody>
+</table>
+<h2>关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>余弦相似度</td>
+<td>cos(a,b) = (a·b)/(|a||b|)</td>
+<td>方向一致程度</td>
+</tr>
+<tr>
+<td>RAG 延迟</td>
+<td>T = T_embed + T_retrieve + T_rerank + T_generate</td>
+<td>四段累加</td>
+</tr>
+<tr>
+<td>Agent 成本</td>
+<td>Cost = Σ(calls × price)</td>
+<td>步数越多越贵</td>
+</tr>
+</tbody>
+</table>
+<h2>架构选型决策树</h2>
+<pre><code>需要外部知识？
+├── 否 → 单次推理
+└── 是 → 需要多步推理？
+    ├── 否 → RAG Pipeline
+    └── 是 → 需要多种专业能力？
+        ├── 否 → Agent Loop
+        └── 是 → Multi-Agent
+</code></pre>
+<h2>关联概念</h2>
+<ul>
+<li>[[RAG 检索增强生成]] — RAG Pipeline 的核心原理</li>
+<li>[[Agent 智能体]] — Agent Loop 的理论基础</li>
+<li>[[向量数据库与嵌入检索]] — RAG 的基础设施</li>
+<li>[[MLOps 与 AI 工程化]] — 从架构到生产的工程化</li>
+</ul>
+<h2>关键原则</h2>
+<ol>
+<li>先选最简单的架构</li>
+<li>延迟和成本是硬约束</li>
+<li>缓存是最好的优化</li>
+<li>可观测性是底线</li>
+</ol>
