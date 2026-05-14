@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-13T19:00:42.560Z",
+  "updatedAt": "2026-05-14T19:00:42.931Z",
   "entries": {
     "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1": {
       "key": "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1",
@@ -12957,6 +12957,344 @@
         "三重",
         "版本",
         "管理"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:1:1": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:1:1",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 1,
+      "endLine": 1,
+      "source": "memory",
+      "snippet": "Assistant: Phase 1 通过，无缺口。现在进入 Phase 3，先确认当前学习进度和下一课主题。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "phase",
+        "通过",
+        "缺口",
+        "现在",
+        "进入",
+        "确认",
+        "当前",
+        "学习"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:2:2": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:2:2",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 2,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "Assistant: 现在我来生成第36课的所有内容。今天学的是 **AI 应用架构与案例实战**——把前面35课的知识串联到真实的应用架构中。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "现在",
+        "我来",
+        "生成",
+        "所有",
+        "内容",
+        "今天",
+        "的是",
+        "应用"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:3:3": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:3:3",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 3,
+      "endLine": 3,
+      "source": "memory",
+      "snippet": "Assistant: 现在生成知识笔记和 HTML 片段，以及完成级联同步。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "现在",
+        "生成",
+        "知识",
+        "笔记",
+        "html",
+        "片段",
+        "以及",
+        "完成"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:4:4": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:4:4",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 4,
+      "endLine": 4,
+      "source": "memory",
+      "snippet": "Assistant: 现在生成 HTML 片段并更新所有级联文件：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "现在",
+        "生成",
+        "html",
+        "片段",
+        "更新",
+        "所有",
+        "文件"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:5:5": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:5:5",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 5,
+      "endLine": 5,
+      "source": "memory",
+      "snippet": "Assistant: HTML 片段已生成。现在执行 Phase 4 级联同步——更新 README.md、index.html、notes-lab.html、daily.html。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "readme.md",
+        "index.html",
+        "notes-lab.html",
+        "daily.html",
+        "html",
+        "片段",
+        "生成",
+        "现在"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:6:6": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:6:6",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 6,
+      "endLine": 6,
+      "source": "memory",
+      "snippet": "Assistant: 现在更新 index.html、notes-lab.html 和 daily.html：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "index.html",
+        "notes-lab.html",
+        "daily.html",
+        "现在",
+        "更新",
+        "lab.html"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:7:7": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:7:7",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 7,
+      "endLine": 7,
+      "source": "memory",
+      "snippet": "Assistant: 现在更新 notes-lab.html（菜单树）和 daily.html：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "notes-lab.html",
+        "daily.html",
+        "现在",
+        "更新",
+        "lab.html",
+        "菜单"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:8:8": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:8:8",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 8,
+      "endLine": 8,
+      "source": "memory",
+      "snippet": "Assistant: 更新路线图：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "更新",
+        "路线图"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:9:9": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:9:9",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 9,
+      "endLine": 9,
+      "source": "memory",
+      "snippet": "Assistant: ✅ 验证通过！现在提交并推送。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "验证",
+        "通过",
+        "现在",
+        "提交",
+        "推送"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:10:10": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:10:10",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 10,
+      "endLine": 10,
+      "source": "memory",
+      "snippet": "Assistant: --- 🧠 **今日学习简报** ## 第36课：AI 应用架构与案例实战 ### 为什么学这个？ 前35课学了各种模型和算法，今天把所有知识「接线」——面对一个真实业务需求，如何选择架构模式、编排组件、权衡延迟/成本/质量。 ### 核心要点 **四大架构模式速查**： | 模式 | 思路 | 延迟 | 什么时候用 | |------|------|------|------------| | 单次推理 | 输入→模型→输出 | <500ms | 翻译、分类、摘要 | | RAG Pipeline | 先检索再生成 | 1-3s",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "权衡延迟/成本/质量",
+        "1-3s",
+        "今日",
+        "学习",
+        "简报",
+        "应用",
+        "架构",
+        "案例"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-14.txt:11:11": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-14.txt:11:11",
+      "path": "memory/.dreams/session-corpus/2026-05-14.txt",
+      "startLine": 11,
+      "endLine": 11,
+      "source": "memory",
+      "snippet": "Assistant: 今日新增 - 第36课：AI 应用架构与案例实战 - 新增文件： - `lessons/36_AI应用架构与案例实战.ipynb`（8 cells, 16.7KB） - `daily/2026-05-14.md`（3.1KB） - `notes/AI应用架构.md`（968B） - `docs/nb-36_AI应用架构与案例实战.html` - `docs/daily-2026-05-14.html` - `docs/note-AI应用架构.html` ### 级联同步 - ✅ README.md 课程表格新增第36课 - ✅ do",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-14T19:00:26.979Z",
+      "lastRecalledAt": "2026-05-14T19:00:26.979Z",
+      "queryHashes": [
+        "ebfce2d015c5"
+      ],
+      "recallDays": [
+        "2026-05-15",
+        "2026-05-14"
+      ],
+      "conceptTags": [
+        "lessons/36-ai应用架构与案例实战.ipynb",
+        "16.7kb",
+        "daily/2026-05-14.md",
+        "3.1kb",
+        "notes/ai应用架构.md",
+        "docs/nb-36-ai应用架构与案例实战.html",
+        "docs/daily-2026-05-14.html",
+        "docs/note-ai应用架构.html"
       ]
     }
   }

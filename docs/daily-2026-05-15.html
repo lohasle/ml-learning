@@ -1,0 +1,172 @@
+<h1>2026年5月15日 - 第37课：AI 技术演进史——从图灵到 ChatGPT 的关键里程碑</h1>
+<h2>今日学习主题</h2>
+<p><strong>用 30 分钟走完 AI 70 年——把前 36 课的所有知识点锚定到历史坐标系</strong></p>
+<h2>为什么学这个？</h2>
+<p>前 36 课我们从线性回归一路学到了 AI 应用架构。但有一个重要维度始终缺少：<strong>时间线</strong>。</p>
+<p>不理解历史，就无法判断趋势。作为架构师，你需要知道哪些技术是根基（会长期存在），哪些是浪潮（可能退去），哪些是泡沫（即将破裂）。</p>
+<p>今天这课把前 36 课的所有知识按时间线排列，让你看清 AI 演进的<strong>周期规律</strong>和<strong>底层驱动力</strong>。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<ul>
+<li><strong>前序知识</strong>：第1-36课全部内容</li>
+<li><strong>本课</strong>：所有知识点的历史坐标系——从 1805 年最小二乘法到 2025 年多模态 Agent</li>
+<li><strong>历史位置</strong>：站在 2026 年回望 AI 70 年演进，理解「我们是怎么走到这里的」</li>
+<li><strong>后续连接</strong>：第38课将深入关键论文精读，逐篇拆解最重要的 3-5 篇论文</li>
+</ul>
+<h2>核心概念解释</h2>
+<h3>1. AI 的五次浪潮</h3>
+<table>
+<thead>
+<tr>
+<th>浪潮</th>
+<th>时间</th>
+<th>核心方法</th>
+<th>驱动力</th>
+<th>代表成果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>符号主义</strong></td>
+<td>1956-1974</td>
+<td>逻辑推理、知识表示</td>
+<td>数学逻辑</td>
+<td>Lisp、ELIZA、专家系统雏形</td>
+</tr>
+<tr>
+<td><strong>专家系统</strong></td>
+<td>1980-1987</td>
+<td>规则引擎、知识库</td>
+<td>知识工程商业化</td>
+<td>MYCIN、XCON</td>
+</tr>
+<tr>
+<td><strong>统计学习</strong></td>
+<td>1995-2011</td>
+<td>SVM、随机森林、贝叶斯</td>
+<td>统计理论+小数据</td>
+<td>深蓝、垃圾邮件过滤</td>
+</tr>
+<tr>
+<td><strong>深度学习</strong></td>
+<td>2012-2020</td>
+<td>CNN、RNN、Transformer</td>
+<td>GPU+大数据+算法突破</td>
+<td>AlexNet、AlphaGo、GPT-2</td>
+</tr>
+<tr>
+<td><strong>大模型时代</strong></td>
+<td>2020-至今</td>
+<td>预训练+微调+RLHF</td>
+<td>规模效应+工程化</td>
+<td>GPT-4、LLaMA、推理模型</td>
+</tr>
+</tbody>
+</table>
+<p><strong>直觉理解</strong>：
+- 符号主义 = 人手工教 AI 规则（像写 if-else）
+- 专家系统 = 把专家的经验写成知识库
+- 统计学习 = 让 AI 从数据中自动找规律
+- 深度学习 = 用多层神经网络自动学特征
+- 大模型 = 用超大规模数据训练超大模型，涌现通用能力</p>
+<h3>2. 关键里程碑时间线</h3>
+<pre><code>1950 图灵测试 → 1956 达特茅斯会议 → 1958 感知机
+    ↓ 第一次AI寒冬 (1974-1980)
+1980 专家系统 → 1986 反向传播 → 1989 LeNet
+    ↓ 第二次AI寒冬 (1987-1993)
+1995 SVM → 1997 深蓝 → 2001 随机森林 → 2006 Hinton深度学习复苏
+    ↓ 神经网络低谷期
+2012 AlexNet 🚀 → 2014 GAN/Seq2Seq → 2016 AlphaGo → 2017 Transformer ⭐
+    ↓ 深度学习爆发
+2018 BERT/GPT-1 → 2020 GPT-3 → 2022 ChatGPT 🔥 → 2024 推理模型 → 2025 Agent
+</code></pre>
+<h3>3. 三大驱动力：算法 × 算力 × 数据</h3>
+<table>
+<thead>
+<tr>
+<th>要素</th>
+<th>2012年的突破</th>
+<th>2026年的现状</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>算法</strong></td>
+<td>CNN + ReLU + Dropout</td>
+<td>Transformer + MoE + RLHF</td>
+</tr>
+<tr>
+<td><strong>算力</strong></td>
+<td>单 GPU (GTX 580)</td>
+<td>万卡 GPU 集群 (H100)</td>
+</tr>
+<tr>
+<td><strong>数据</strong></td>
+<td>ImageNet (1400万图)</td>
+<td>全互联网文本 + 合成数据</td>
+</tr>
+</tbody>
+</table>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>核心思想</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>图灵测试</td>
+<td>机器能否欺骗人类评判者</td>
+<td>如果对话分不出人机，就算智能</td>
+</tr>
+<tr>
+<td>感知机</td>
+<td>w·x + b → sign</td>
+<td>画一条线分两类，能学就学，不能就歇</td>
+</tr>
+<tr>
+<td>反向传播</td>
+<td>∂L/∂w 链式法则</td>
+<td>每层分担责任，从后往前传锅</td>
+</tr>
+<tr>
+<td>Transformer</td>
+<td>Self-Attention + FFN</td>
+<td>每个词都能\"看到\"所有其他词</td>
+</tr>
+<tr>
+<td>Scaling Law</td>
+<td>Loss ∝ C^(-α)</td>
+<td>投入越多计算，损失越小，能力越强</td>
+</tr>
+<tr>
+<td>涌现能力</td>
+<td>量变→质变</td>
+<td>小模型做不到，大模型突然就会了</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 中生成了 AI 浪潮可视化图和关键论文影响力散点图</li>
+<li>课程知识锚点代码把 36 课全部映射到了历史坐标系</li>
+<li>AI 寒冬规律分析揭示了 3 次寒冬的共同模式</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: 为什么 2012 年 AlexNet 被称为深度学习元年？</strong>
+A: 因为它是三个要素首次同时到位的时刻——ImageNet 提供了大数据、GPU 提供了算力、深度 CNN 提供了算法。在此之前，至少缺一个。</p>
+<p><strong>Q: Transformer 为什么比 RNN/CNN 更重要？</strong>
+A: 因为它彻底解耦了序列位置和计算。RNN 必须按顺序处理（慢），CNN 只看局部窗口（短视），而 Transformer 的 Self-Attention 让每个位置都能直接看到所有其他位置，且高度可并行。这使得"堆规模"成为可能。</p>
+<p><strong>Q: 当前大模型浪潮会不会也迎来寒冬？</strong>
+A: 不会重复过去的模式。但可能面临：1) 数据墙（高质量数据耗尽）2) 能耗墙（算力成本）3) 收敛墙（Scaling Law 边际递减）。这些正在驱动技术演进方向：效率优化、合成数据、推理增强。</p>
+<h2>本课总结</h2>
+<ol>
+<li><strong>AI 发展呈浪潮式</strong>：5 次浪潮，2 次寒冬，每次复苏都由算法+算力+数据三角驱动</li>
+<li><strong>Transformer 是分水岭</strong>：2017 年之后几乎所有重大突破都基于它</li>
+<li><strong>前 36 课覆盖了 200+ 年的技术演进</strong>：从 1805 最小二乘法到 2025 多模态 Agent</li>
+<li><strong>工程化能力决定技术落地</strong>：算法突破只是起点，工程化才决定谁能用上</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课（第38课）将进行 <strong>关键论文精读</strong>：选择 3-5 篇最值得工程师阅读的论文逐篇拆解，包括 Attention Is All You Need、BERT、InstructGPT 等。</p>

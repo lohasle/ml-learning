@@ -1,0 +1,11 @@
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L13] Assistant: Phase 1 通过，无缺口。现在进入 Phase 3，先确认当前学习进度和下一课主题。
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L38] Assistant: 现在我来生成第36课的所有内容。今天学的是 **AI 应用架构与案例实战**——把前面35课的知识串联到真实的应用架构中。
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L42] Assistant: 现在生成知识笔记和 HTML 片段，以及完成级联同步。
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L44] Assistant: 现在生成 HTML 片段并更新所有级联文件：
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L48] Assistant: HTML 片段已生成。现在执行 Phase 4 级联同步——更新 README.md、index.html、notes-lab.html、daily.html。
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L54] Assistant: 现在更新 index.html、notes-lab.html 和 daily.html：
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L60] Assistant: 现在更新 notes-lab.html（菜单树）和 daily.html：
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L72] Assistant: 更新路线图：
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L78] Assistant: ✅ 验证通过！现在提交并推送。
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L86] Assistant: --- 🧠 **今日学习简报** ## 第36课：AI 应用架构与案例实战 ### 为什么学这个？ 前35课学了各种模型和算法，今天把所有知识「接线」——面对一个真实业务需求，如何选择架构模式、编排组件、权衡延迟/成本/质量。 ### 核心要点 **四大架构模式速查**： | 模式 | 思路 | 延迟 | 什么时候用 | |------|------|------|------------| | 单次推理 | 输入→模型→输出 | <500ms | 翻译、分类、摘要 | 
+[ml-learning-coach/sessions/ml-learning-coach/10801ed8-ad04-4ea2-8980-ef1ec626deeb.jsonl#L86] Assistant: 今日新增 - 第36课：AI 应用架构与案例实战 - 新增文件： - `lessons/36_AI应用架构与案例实战.ipynb`（8 cells, 16.7KB） - `daily/2026-05-14.md`（3.1KB） - `notes/AI应用架构.md`（968B） - `docs/nb-36_AI应用架构与案例实战.html` - `docs/daily-2026-05-14.html` - `docs/note-AI应用架构.html` ### 级联同步 -
