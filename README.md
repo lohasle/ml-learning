@@ -67,19 +67,20 @@
 | 35 | MLOps 与 AI 工程化 | [📖 Notebook](lessons/35_MLOps与AI工程化.ipynb) | [2026-05-13](daily/2026-05-13.md) |
 | 36 | AI 应用架构与案例实战 | [📖 Notebook](lessons/36_AI应用架构与案例实战.ipynb) | [2026-05-14](daily/2026-05-14.md) |
 | 37 | AI 技术演进史关键里程碑 | [📖 Notebook](lessons/37_AI技术演进史关键里程碑.ipynb) | [2026-05-15](daily/2026-05-15.md) |
+| 38 | 关键论文精读（Attention/BERT/InstructGPT） | [📖 Notebook](lessons/38_关键论文精读.ipynb) | [2026-05-17](daily/2026-05-17.md) |
 
 ## 🔗 快速入口
 
 - [🗺️ 学习路线](roadmap/roadmap.md)
 - [📅 每日学习记录](daily/)
-  - 🆕 **第37课：AI 技术演进史关键里程碑** (2026-05-15) 🆕
+  - 🆕 **第38课：关键论文精读（Attention/BERT/InstructGPT）** (2026-05-17) 🆕
+  - **第37课：AI 技术演进史关键里程碑** (2026-05-15)
   - **第36课：AI 应用架构与案例实战** (2026-05-14)
   - **第35课：MLOps 与 AI 工程化** (2026-05-13)
   - **第34课：Prompt Engineering 高级技巧** (2026-05-12)
   - **第33课：AI 安全与对齐** (2026-05-11)
   - **第32课：向量数据库与嵌入检索** (2026-05-10)
   - **第31课：推测解码（Speculative Decoding）** (2026-05-09)
-  - **第29课：知识蒸馏与模型压缩** (2026-05-07)
 - [📊 每周复盘](weekly/)
 - [💡 知识卡片](notes/)
 - [📜 AI 技术演进史](history/ai-evolution.md)

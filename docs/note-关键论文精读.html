@@ -1,0 +1,89 @@
+<h1>关键论文精读</h1>
+<blockquote>
+<p>三篇塑造当今 AI 的里程碑论文：Attention Is All You Need / BERT / InstructGPT</p>
+</blockquote>
+<h2>论文速览</h2>
+<table>
+<thead>
+<tr>
+<th>论文</th>
+<th>年份</th>
+<th>核心创新</th>
+<th>一句话</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Attention Is All You Need</td>
+<td>2017</td>
+<td>Self-Attention 架构</td>
+<td>抛弃 RNN，纯靠注意力</td>
+</tr>
+<tr>
+<td>BERT</td>
+<td>2018</td>
+<td>Masked LM 双向预训练</td>
+<td>完形填空，定义预训练-微调范式</td>
+</tr>
+<tr>
+<td>InstructGPT</td>
+<td>2022</td>
+<td>RLHF 三步流程</td>
+<td>用人类反馈让模型"听话"</td>
+</tr>
+</tbody>
+</table>
+<h2>核心公式</h2>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>出处</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_k}})V$</td>
+<td>Transformer</td>
+<td>每个 token 检索所有 token，加权汇总</td>
+</tr>
+<tr>
+<td>$PE(pos,2i) = sin(pos/10000^{2i/d})$</td>
+<td>Transformer</td>
+<td>位置编码，注入序列位置信息</td>
+</tr>
+<tr>
+<td>MLM Loss = CrossEntropy(masked_tokens)</td>
+<td>BERT</td>
+<td>预测被遮蔽的 token</td>
+</tr>
+<tr>
+<td>$R_{reward} = RM(prompt, response)$</td>
+<td>InstructGPT</td>
+<td>奖励模型给回答打分</td>
+</tr>
+</tbody>
+</table>
+<h2>演进关系</h2>
+<pre><code>Transformer (2017)
+├── BERT (2018): Encoder-only + 双向预训练
+├── GPT-1/2/3 (2018-2020): Decoder-only + 单向生成
+│   └── InstructGPT (2022): GPT-3 + RLHF
+│       └── ChatGPT / GPT-4 / Claude
+└── ViT (2020): Transformer 进军视觉
+</code></pre>
+<h2>关联概念</h2>
+<ul>
+<li><a href="transformer.md">Transformer 架构</a> — 第16课详解</li>
+<li><a href="attention.md">Attention 机制</a> — 第15课详解</li>
+<li><a href="预训练语言模型BERT与GPT.md">预训练语言模型 BERT 与 GPT</a> — 第17课详解</li>
+<li><a href="RLHF与人类对齐.md">RLHF 与人类对齐</a> — 第26课详解</li>
+<li><a href="高效微调技术.md">高效微调技术 LoRA</a> — 第27课详解</li>
+<li><a href="AI技术演进史.md">AI 技术演进史</a> — 第37课全景</li>
+</ul>
+<h2>阅读建议</h2>
+<p>每篇论文读 3 遍：
+1. <strong>第一遍</strong>：Abstract + Introduction + 结论，抓大意
+2. <strong>第二遍</strong>：Method + Experiments，看方法和实验设计
+3. <strong>第三遍</strong>：数学细节 + Appendix，深入理解</p>

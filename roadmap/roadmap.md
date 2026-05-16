@@ -63,5 +63,5 @@
 ## 阶段 7：AI 技术演进全景与综合复盘（进行中）
 
 - [x] AI 技术演进史关键里程碑 (2026-05-15)
-- [ ] 关键论文精读（Attention/BERT/InstructGPT 等）
+- [x] 关键论文精读（Attention/BERT/InstructGPT）(2026-05-17)
 - [ ] 端到端项目实战

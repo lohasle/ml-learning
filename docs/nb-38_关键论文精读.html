@@ -1,0 +1,379 @@
+<div class="nb-cell nb-markdown"><h1>第38课：关键论文精读——Attention Is All You Need / BERT / InstructGPT</h1>
+<blockquote>
+<p><strong>一句话</strong>：逐篇拆解塑造当今 AI 的三篇里程碑论文，读懂它们就读懂了大模型的基因。</p>
+</blockquote>
+<h2>为什么精读论文？</h2>
+<p>前 37 课我们覆盖了从线性回归到 AI 演进史的完整路线。但有一个关键训练一直缺失：<strong>直接读论文</strong>。</p>
+<p>论文是 AI 领域的"源代码"。博客和教程都是论文的"编译产物"——信息必然有损失和变形。作为架构师，你能读懂原论文，就能：
+- 理解技术决策背后的真实动机（而不是二手解读）
+- 快速跟进新突破（新论文出来时不再依赖别人解读）
+- 建立技术判断力（哪些创新是本质性的，哪些是包装）</p>
+<p>今天精读三篇论文，每篇拆为：<strong>背景动机 → 核心创新 → 关键机制 → 影响与局限</strong>。</p></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>论文 1：Attention Is All You Need (2017)</h2>
+<p><strong>作者</strong>：Vaswani et al. (Google Brain + Google Research)<br />
+<strong>引用量</strong>：12万+（截至 2026）<br />
+<strong>核心贡献</strong>：提出 Transformer 架构，彻底抛弃 RNN/CNN，纯靠注意力机制</p>
+<h3>背景动机</h3>
+<p>2017 年之前，序列建模的主流是 <strong>RNN/LSTM + Seq2Seq + Attention</strong>。</p>
+<p>问题在于：
+- RNN 必须<strong>顺序处理</strong>，无法并行 → 训练慢
+- 长序列的<strong>信息遗忘</strong>问题
+- Attention 已经证明有效，但只作为 RNN 的"辅助插件"</p>
+<p>Vaswani 等人问了一个激进的问题：<strong>如果 Attention 本身就够了，为什么还需要 RNN？</strong></p>
+<h3>核心创新：Self-Attention</h3>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>公式</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Query-Key-Value</td>
+<td>Attention(Q,K,V) = softmax(QK^T / sqrt(d_k)) V</td>
+<td>每个 token 问"我需要什么"→ 检索所有位置 → 加权汇总</td>
+</tr>
+<tr>
+<td>Multi-Head</td>
+<td>多组 Q/K/V 并行计算后拼接</td>
+<td>多个"视角"同时看</td>
+</tr>
+<tr>
+<td>Positional Encoding</td>
+<td>PE(pos, 2i) = sin(pos/10000^(2i/d))</td>
+<td>给每个位置注入位置信息</td>
+</tr>
+</tbody>
+</table>
+<h3>关键发现</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WMT 英德翻译 BLEU</td>
+<td>28.4（SOTA，比当时最佳高 2.0）</td>
+</tr>
+<tr>
+<td>训练成本</td>
+<td>8 × P100，3.5 天（远少于竞品）</td>
+</tr>
+<tr>
+<td>长距离依赖</td>
+<td>显著优于 LSTM</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># === 用代码理解 Self-Attention 的核心计算 ===
+import numpy as np
+
+np.random.seed(42)
+
+# 模拟 4 个 token 的嵌入 (seq_len=4, d_model=8)
+d_k = 4
+seq_len = 4
+d_model = 8
+
+X = np.random.randn(seq_len, d_model)
+
+# 线性投影得到 Q, K, V
+W_Q = np.random.randn(d_model, d_k)
+W_K = np.random.randn(d_model, d_k)
+W_V = np.random.randn(d_model, d_k)
+
+Q = X @ W_Q
+K = X @ W_K
+V = X @ W_V
+
+# Scaled Dot-Product Attention
+scores = Q @ K.T / np.sqrt(d_k)
+
+def softmax(x, axis=-1):
+    e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
+    return e_x / e_x.sum(axis=axis, keepdims=True)
+
+attn_weights = softmax(scores)
+output = attn_weights @ V
+
+print(&quot;=== Attention Weights ===&quot;)
+print(np.round(attn_weights, 3))
+print(f&quot;每行之和 = {attn_weights.sum(axis=1)}&quot;)
+print(f&quot;Token 0 最关注 Token {np.argmax(attn_weights[0])} (权重={attn_weights[0].max():.3f})&quot;)</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h3>论文 1 的局限与后续影响</h3>
+<p><strong>局限</strong>：
+- 只在翻译任务上验证
+- 计算复杂度 O(n^2)，长文本成本高
+- 固定正弦位置编码，后被可学习位置编码替代</p>
+<p><strong>后续影响</strong>：
+- BERT（Encoder-only）、GPT（Decoder-only）都是 Transformer 变体
+- ViT 把 Transformer 带入计算机视觉
+- 所有现代大模型的根基</p></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>论文 2：BERT (2018)</h2>
+<p><strong>作者</strong>：Devlin et al. (Google AI Language)<br />
+<strong>全称</strong>：Bidirectional Encoder Representations from Transformers<br />
+<strong>核心贡献</strong>：双向预训练 + 微调范式，定义了 NLP 迁移学习的标准流程</p>
+<h3>背景动机</h3>
+<p>GPT-1 用单向语言模型做预训练，但语言理解天然是双向的。
+"The bank of the river" 中的 bank 需要看到 river 才能确定含义。</p>
+<p>BERT 的核心洞察：<strong>用掩码语言模型（MLM）实现双向编码</strong>。</p>
+<h3>核心创新</h3>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>说明</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MLM</td>
+<td>随机遮住 15% token，让模型预测</td>
+<td>完形填空</td>
+</tr>
+<tr>
+<td>NSP</td>
+<td>判断两个句子是否相邻</td>
+<td>理解句子间关系</td>
+</tr>
+<tr>
+<td>双向编码</td>
+<td>同时利用左右上下文</td>
+<td>GPT 只能往左看</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># === 模拟 BERT 的 MLM 过程 ===
+import random
+random.seed(42)
+
+sentence = &quot;The transformer architecture changed natural language processing forever&quot;.split()
+print(f&quot;原始: {&#x27; &#x27;.join(sentence)}&quot;)
+
+# 随机选 15% 的 token
+n_mask = max(1, int(len(sentence) * 0.15))
+mask_positions = sorted(random.sample(range(len(sentence)), n_mask))
+
+# BERT 遮蔽策略: 80/10/10
+masked = sentence.copy()
+labels = {}
+for pos in mask_positions:
+    r = random.random()
+    if r &lt; 0.8:
+        masked[pos] = &#x27;[MASK]&#x27;
+    elif r &lt; 0.9:
+        masked[pos] = random.choice([w for i, w in enumerate(sentence) if i != pos])
+    labels[pos] = sentence[pos]
+
+print(f&quot;\n遮蔽后: {&#x27; &#x27;.join(masked)}&quot;)
+print(f&quot;\n需要预测:&quot;)
+for pos, label in labels.items():
+    print(f&quot;  位置 {pos}: &#x27;{masked[pos]}&#x27; -&gt; 目标: &#x27;{label}&#x27;&quot;)
+print(f&quot;\n关键: 模型必须理解全局语境才能正确预测。这就是双向编码的力量。&quot;)</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h3>BERT 的结果</h3>
+<table>
+<thead>
+<tr>
+<th>任务</th>
+<th>BERT_large</th>
+<th>提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GLUE 平均</td>
+<td>80.4%</td>
+<td>+7% vs SOTA</td>
+</tr>
+<tr>
+<td>SQuAD v1.1 F1</td>
+<td>93.2</td>
+<td>+1.5</td>
+</tr>
+</tbody>
+</table>
+<h3>局限与后续</h3>
+<ul>
+<li>NSP 后来被发现作用有限（RoBERTa 去掉 NSP 更好）</li>
+<li>Encoder-only 不适合生成任务</li>
+<li>催生了 RoBERTa、ALBERT、DeBERTa 等改进</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>论文 3：InstructGPT (2022)</h2>
+<p><strong>作者</strong>：Ouyang et al. (OpenAI)<br />
+<strong>核心贡献</strong>：建立 RLHF 流程，让大模型"听话"</p>
+<h3>背景动机</h3>
+<p>GPT-3 能力很强但不按指令行事——你让它总结，它可能续写。
+这是<strong>对齐问题</strong>：模型强大但行为与人类期望不一致。</p>
+<h3>三步 RLHF 流程</h3>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>方法</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT</td>
+<td>人类写示范 → 监督微调</td>
+<td>教模型"好回答长什么样"</td>
+</tr>
+<tr>
+<td>Reward Model</td>
+<td>多个回答 → 人类排序 → 训练打分模型</td>
+<td>学会"哪个回答更好"</td>
+</tr>
+<tr>
+<td>PPO</td>
+<td>模型生成 → RM 打分 → 强化学习优化</td>
+<td>用奖励信号引导模型</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># === 模拟 InstructGPT 的 RLHF 三步流程 ===
+print(&quot;=== InstructGPT RLHF 三步流程模拟 ===\n&quot;)
+
+prompt = &quot;用 Python 写一个冒泡排序&quot;
+print(f&quot;用户 Prompt: {prompt}\n&quot;)
+
+print(&quot;=&quot; * 50)
+print(&quot;Step 1: SFT - 人类示范，监督微调&quot;)
+print(&quot;=&quot; * 50)
+print(&quot;用数万条 (prompt, response) 对微调 GPT-3&quot;)
+print(&quot;示例: prompt=&#x27;写排序&#x27; -&gt; 人类写的高质量排序代码\n&quot;)
+
+print(&quot;=&quot; * 50)
+print(&quot;Step 2: Reward Model - 学习人类偏好&quot;)
+print(&quot;=&quot; * 50)
+responses = {
+    &quot;A（正确、清晰）&quot;: 0.92,
+    &quot;B（正确、冗余）&quot;: 0.65,
+    &quot;C（不相关）&quot;: 0.12,
+    &quot;D（有害）&quot;: -0.45,
+}
+for resp, score in responses.items():
+    bar = &#x27;#&#x27; * int((score + 0.5) * 20)
+    print(f&quot;  {resp}: {score:+.2f} {bar}&quot;)
+
+print(f&quot;\n&quot; + &quot;=&quot; * 50)
+print(&quot;Step 3: PPO - 用奖励信号优化&quot;)
+print(&quot;=&quot; * 50)
+iterations = [&quot;初始&quot;, &quot;PPO 10步&quot;, &quot;PPO 50步&quot;, &quot;最终&quot;]
+rewards = [0.45, 0.62, 0.78, 0.88]
+for it, rw in zip(iterations, rewards):
+    bar = &#x27;#&#x27; * int(rw * 30)
+    print(f&quot;  {it:10s}: 奖励={rw:.2f} {bar}&quot;)</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># === 三篇论文关键参数对比 ===
+papers = [
+    {&quot;name&quot;: &quot;Attention Is All You Need (2017)&quot;,
+     &quot;arch&quot;: &quot;Encoder-Decoder Transformer&quot;,
+     &quot;params&quot;: &quot;65M / 213M&quot;,
+     &quot;cost&quot;: &quot;8xP100, 3.5天&quot;,
+     &quot;innovation&quot;: &quot;Self-Attention + Multi-Head + Positional Encoding&quot;,
+     &quot;legacy&quot;: &quot;所有现代 Transformer 的起点&quot;},
+    {&quot;name&quot;: &quot;BERT (2018)&quot;,
+     &quot;arch&quot;: &quot;Encoder-only Transformer&quot;,
+     &quot;params&quot;: &quot;110M / 340M&quot;,
+     &quot;cost&quot;: &quot;4-16xTPU, 4天&quot;,
+     &quot;innovation&quot;: &quot;Masked LM + NSP + 双向编码&quot;,
+     &quot;legacy&quot;: &quot;定义预训练-微调范式&quot;},
+    {&quot;name&quot;: &quot;InstructGPT (2022)&quot;,
+     &quot;arch&quot;: &quot;Decoder-only (GPT-3 变体)&quot;,
+     &quot;params&quot;: &quot;1.3B / 6B / 175B&quot;,
+     &quot;cost&quot;: &quot;未公开&quot;,
+     &quot;innovation&quot;: &quot;SFT -&gt; Reward Model -&gt; PPO (RLHF)&quot;,
+     &quot;legacy&quot;: &quot;ChatGPT 的核心，开创对齐时代&quot;}
+]
+
+for p in papers:
+    print(f&quot;\n{&#x27;=&#x27;*55}&quot;)
+    print(f&quot;  {p[&#x27;name&#x27;]}&quot;)
+    print(f&quot;{&#x27;=&#x27;*55}&quot;)
+    for k, v in p.items():
+        if k != &#x27;name&#x27;:
+            print(f&quot;  {k:14s}: {v}&quot;)</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h3>三篇论文的演进关系</h3>
+<pre><code>Attention Is All You Need (2017)
+    |
+    +---&gt; BERT (2018): 取 Encoder，加双向预训练
+    |
+    +---&gt; GPT-1/2/3 (2018-2020): 取 Decoder，做单向生成
+    |         |
+    |         +---&gt; InstructGPT (2022): GPT-3 + RLHF
+    |                   |
+    |                   +---&gt; ChatGPT / GPT-4 / Claude
+</code></pre>
+<p>三篇论文代表三个范式转移：
+1. <strong>架构革命</strong>（Transformer）：RNN → 注意力
+2. <strong>训练范式</strong>（BERT）：任务特定 → 预训练-微调
+3. <strong>对齐范式</strong>（InstructGPT）：追求能力 → 追求可控</p>
+<h2>本课总结</h2>
+<table>
+<thead>
+<tr>
+<th>论文</th>
+<th>核心公式/机制</th>
+<th>工程师最该记住的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Attention Is All You Need</td>
+<td>Scaled Dot-Product Attention</td>
+<td>Self-Attention = 全连接，O(n^2)</td>
+</tr>
+<tr>
+<td>BERT</td>
+<td>MLM（完形填空）</td>
+<td>预训练-微调范式是现代 AI 起点</td>
+</tr>
+<tr>
+<td>InstructGPT</td>
+<td>SFT → RM → PPO</td>
+<td>RLHF 让模型从"能说"变"听话"</td>
+</tr>
+</tbody>
+</table>
+<h2>下一步</h2>
+<p>第39课将进入<strong>端到端项目实战</strong>——把前 38 课的知识整合到一个完整项目中。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [?]</div>
+  <pre><code># === 论文阅读优先级推荐 ===
+reading_list = [
+    (&quot;***&quot;, &quot;Attention Is All You Need&quot;, &quot;2017&quot;, &quot;Transformer 原始论文&quot;),
+    (&quot;***&quot;, &quot;BERT&quot;, &quot;2018&quot;, &quot;预训练-微调范式&quot;),
+    (&quot;***&quot;, &quot;InstructGPT&quot;, &quot;2022&quot;, &quot;RLHF 核心&quot;),
+    (&quot;**&quot;, &quot;GPT-3: Few-Shot Learners&quot;, &quot;2020&quot;, &quot;In-context learning&quot;),
+    (&quot;**&quot;, &quot;Scaling Laws&quot;, &quot;2020&quot;, &quot;大模型为什么大的理论基础&quot;),
+    (&quot;**&quot;, &quot;LoRA&quot;, &quot;2021&quot;, &quot;最常用的高效微调&quot;),
+    (&quot;*&quot;, &quot;Chain-of-Thought&quot;, &quot;2022&quot;, &quot;推理能力催化剂&quot;),
+    (&quot;*&quot;, &quot;Constitutional AI&quot;, &quot;2022&quot;, &quot;RLHF 进化&quot;),
+]
+
+print(f&quot;{&#x27;优先级&#x27;:6s} {&#x27;论文&#x27;:35s} {&#x27;年份&#x27;:6s} {&#x27;为什么读&#x27;}&quot;)
+print(&quot;-&quot; * 80)
+for p, n, y, w in reading_list:
+    print(f&quot;{p:6s} {n:35s} {y:6s} {w}&quot;)</code></pre>
+</div>

@@ -1,0 +1,20 @@
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L11] Assistant: Phase 1 通过，无缺口。已有 36 课。让我确认当前学习进度和下一课主题。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L15] Assistant: 已有 36 课，roadmap 阶段 6 的最后几个 checkbox 未勾选但文件已存在。今天需要推进第 37 课。让我先看最近的课程和笔记，确定下一主题。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L20] Assistant: 第 37 课应该进入新阶段了。阶段 6 的前沿专题基本覆盖完毕，接下来应该是 **阶段 7：AI 技术演进全景与综合复盘**。第 37 课主题：**AI 技术演进史——从图灵到 ChatGPT 的关键里程碑**。 这是 AGENTS.md 明确要求的"AI 技术演进历史中的关键项目、关键论文、关键系统范式"，也是把前 36 课串联起来的关键一课。 让我先读取模板，然后生成内容。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L26] Assistant: 现在生成第 37 课的全部内容。先搜索一些关键资料来充实内容。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L30] Assistant: 搜索不可用，但 AI 历史课程我有充足的知识储备。直接生成内容。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L32] Assistant: 好，已有 ai-evolution.md。现在开始生成第 37 课的全部文件。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L38] Assistant: 现在生成 HTML 片段并更新级联文件。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L42] Assistant: 转义引号问题。修复 notebook 中的 JSON 转义。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L60] Assistant: 现在我来生成 HTML 片段：
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L62] Assistant: Phase 3 完成。现在进入 Phase 4：级联同步。需要更新 README.md、docs/index.html、docs/notes-lab.html、docs/daily.html。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L66] Assistant: 现在我来更新所有文件。首先更新 `README.md`:
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L68] Assistant: 现在更新 `docs/index.html` - 添加新的课程行:
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L70] Assistant: 现在更新 docs/notes-lab.html - 添加 tree-item:
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L76] Assistant: 现在更新 docs/daily.html:
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L82] Assistant: 我需要找到时间线的开头，来添加最新的条目：
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L90] Assistant: 现在更新路线图：
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L94] Assistant: 第五阶段：最终验证和 Git 操作。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L96] Assistant: 验证通过！现在执行 git 操作。
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L106] Assistant: 全部完成！以下是今日执行报告： --- ## 执行报告 ### validate 结果 - **Phase 1**: ✅ 通过（0 错误） - **Phase 2**: 无需修复 - **Phase 5**: ✅ 通过（37 notebooks, 37 dailies, 0 gaps） ### 今日新增 - **第 37 课：AI 技术演进史关键里程碑** - 新增文件： - `lessons/37_AI技术演进史关键里程碑.ipynb`（8 cells: 4 markd
+[ml-learning-coach/sessions/ml-learning-coach/841f2ac9-c7ae-42a8-a391-29e1bd19371e.jsonl#L106] Assistant: 应用架构的完整技术栈，但缺少一个**时间坐标系**。今天把所有知识锚定到 AI 70 年的演进历史上，帮你分清哪些是根基、哪些是浪潮、哪些是泡沫。 **核心收获**： 1. AI 发展是**五次浪潮**：符号主义 → 专家系统 → 统计学习 → 深度学习 → 大模型 2. 每次爆发都是**算法 × 算力 × 数据**三者同时就位，缺一就寒冬 3. **Transformer 是分水岭**——2017 年之后几乎所有突破都基于它 4. 我们学的前 36 课，覆盖了从 180
