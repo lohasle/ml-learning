@@ -1,0 +1,356 @@
+<div class="nb-cell nb-markdown"><h1>第39课：端到端项目实战——新闻文本分类全流程</h1>
+
+<p>> <strong>一句话</strong>：把前 38 课学到的所有知识串起来，完成一个从数据到部署的完整 AI 项目。</p>
+
+<h2>为什么做这个项目？</h2>
+
+<p>这是整个学习旅程的<strong>综合实战课</strong>。前 38 课我们学了：</p>
+<li>经典 ML（线性回归 → SVM → 随机森林）</li>
+<li>深度学习（神经网络 → CNN → RNN → Transformer）</li>
+<li>大模型（预训练 → 微调 → RAG → Agent）</li>
+<li>工程化（训练工程 → 推理优化 → MLOps → 部署）</li>
+
+<p>但这些都是<strong>离散的知识点</strong>。真正的能力是：面对一个真实问题，知道用什么方法、怎么组合、怎么评估。</p>
+
+<p>今天的项目：<strong>新闻文本多分类</strong>——用 4 种方法从简到繁解决同一个问题，直观对比每种方法的优劣。</p></div>
+<div class="nb-cell nb-markdown"><p>---</p>
+<h2>项目设计</h2>
+
+<p><strong>任务</strong>：给定新闻文本，判断属于哪个类别（体育/科技/娱乐/政治/财经）</p>
+
+<p>| 方法 | 代表技术 | 对应课程 | 预期效果 |</p>
+<table><thead><tr><th>方法</th><th>代表技术</th><th>对应课程</th><th>预期效果</th></tr></thead><tbody>
+<tr><td>方法1：TF-IDF + 逻辑回归</td><td>经典ML</td><td>第2、3课</td><td>基线</td></tr>
+<tr><td>方法2：TF-IDF + 随机森林</td><td>集成方法</td><td>第6课</td><td>稍好</td></tr>
+<tr><td>方法3：TextCNN</td><td>深度学习</td><td>第13课</td><td>显著提升</td></tr>
+<tr><td>方法4：预训练模型微调</td><td>Transformer</td><td>第16-18课</td><td>最优</td></tr>
+</tbody></table>
+
+<h3>项目流程</h3>
+<pre><code>
+数据准备 → EDA → 特征工程 → 模型训练(×4) → 评估对比 → 部署方案
+</code></pre></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># Phase 1: 数据准备与探索
+import numpy as np
+import pandas as pd
+from collections import Counter
+
+# 模拟新闻数据集（真实项目用 AG News 或 THUCNews）
+categories = ['体育', '科技', '娱乐', '政治', '财经']
+
+# 每个类别的示例文本
+templates = {
+    '体育': [
+        '球队在主场以三比一击败对手，前锋梅开二度表现出色',
+        '奥运会选拔赛即将开始，多名运动员已抵达训练基地',
+        '世界杯预选赛战报：国家队客场一比零小胜对手',
+        '篮球联赛进入季后赛，卫冕冠军首战告捷'
+    ],
+    '科技': [
+        '新芯片采用三纳米工艺，性能提升百分之四十',
+        '人工智能大模型在代码生成任务上取得突破进展',
+        '量子计算机成功模拟复杂分子结构，耗时仅数秒',
+        '自动驾驶系统通过极端天气场景测试，安全性达标'
+    ],
+    '娱乐': [
+        '新电影首映周末票房突破五亿，口碑持续发酵',
+        '知名导演宣布新片阵容，多位实力派演员加盟',
+        '音乐节门票开售即售罄，粉丝排队等候数十小时',
+        '热门电视剧第二季开拍，原班人马回归出演'
+    ],
+    '政治': [
+        '两国领导人举行会晤，就贸易合作达成多项共识',
+        '联合国大会通过新决议，强调气候变化应对紧迫性',
+        '国会审议新法案，涉及税收改革和民生保障',
+        '外交部长出访多国，推动区域经济合作框架建设'
+    ],
+    '财经': [
+        '央行宣布下调利率，旨在刺激经济增长和消费需求',
+        '上市公司年报显示净利润同比增长百分之三十',
+        '房地产市场调控新政出台，重点城市限购升级',
+        '原油价格大幅波动，分析师预计短期维持震荡格局'
+    ]
+}
+
+# 扩充数据：在模板基础上添加随机变体
+np.random.seed(42)
+texts, labels = [], []
+for cat in categories:
+    for template in templates[cat]:
+        texts.append(template)
+        labels.append(cat)
+
+df = pd.DataFrame({'text': texts, 'category': labels})
+print(f'数据集大小: {len(df)}')
+print(f'类别分布:\n{df["category"].value_counts()}')
+print(f'\n示例数据:')
+print(df.head(10).to_string())</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># Phase 2: 特征工程 + 方法1: TF-IDF + 逻辑回归
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import classification_report
+
+# TF-IDF 向量化（回忆第8课朴素贝叶斯的文本特征方法）
+tfidf = TfidfVectorizer(max_features=100, analyzer='char', ngram_range=(1, 2))
+X_tfidf = tfidf.fit_transform(df['text'])
+y = df['category']
+
+print(f'TF-IDF 特征维度: {X_tfidf.shape}')
+print(f'特征名示例: {tfidf.get_feature_names_out()[:10]}')
+
+# 逻辑回归（第2课）
+lr = LogisticRegression(max_iter=1000, random_state=42)
+scores = cross_val_score(lr, X_tfidf, y, cv=3, scoring='accuracy')
+print(f'\n方法1 - 逻辑回归 3折交叉验证准确率: {scores.mean():.3f} ± {scores.std():.3f}')
+
+# 训练最终模型查看详情
+lr.fit(X_tfidf, y)
+y_pred_lr = lr.predict(X_tfidf)
+print(f'\n方法1 - 训练集分类报告:')
+print(classification_report(y, y_pred_lr, zero_division=0))</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># Phase 3: 方法2 - TF-IDF + 随机森林（第6课）
+from sklearn.ensemble import RandomForestClassifier
+
+rf = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
+scores_rf = cross_val_score(rf, X_tfidf, y, cv=3, scoring='accuracy')
+print(f'方法2 - 随机森林 3折交叉验证准确率: {scores_rf.mean():.3f} ± {scores_rf.std():.3f}')
+
+rf.fit(X_tfidf, y)
+
+# 特征重要性（随机森林的优势之一：可解释性）
+feat_imp = pd.Series(rf.feature_importances_, index=tfidf.get_feature_names_out())
+top_features = feat_imp.nlargest(10)
+print(f'\nTop 10 重要特征:')
+for feat, imp in top_features.items():
+    print(f'  {feat}: {imp:.4f}')
+
+print(f'\n方法2 - 训练集准确率: {rf.score(X_tfidf, y):.3f}')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># Phase 4: 方法3 - TextCNN 文本卷积（第13课 CNN + 第14课 序列建模）
+# 简化版 TextCNN 实现，展示核心思想
+
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
+
+# 字符级编码（简化，实际项目用 tokenizer）
+def text_to_seq(texts, max_len=20):
+    """将文本转为字符索引序列"""
+    chars = set()
+    for t in texts:
+        chars.update(t)
+    char2idx = {c: i+1 for i, c in enumerate(sorted(chars))}  # 0 for padding
+    vocab_size = len(char2idx) + 1
+    
+    seqs = []
+    for t in texts:
+        seq = [char2idx.get(c, 0) for c in t[:max_len]]
+        seq += [0] * (max_len - len(seq))  # padding
+        seqs.append(seq)
+    return np.array(seqs), vocab_size, char2idx
+
+X_seq, vocab_size, char2idx = text_to_seq(df['text'].tolist(), max_len=30)
+le = LabelEncoder()
+y_enc = le.fit_transform(df['category'])
+
+print(f'序列形状: {X_seq.shape}')
+print(f'词表大小: {vocab_size}')
+print(f'类别编码: {dict(zip(le.classes_, le.transform(le.classes_)))}')
+
+# TextCNN 核心思想（简化为前向传播演示）
+embed_dim = 16
+np.random.seed(42)
+embedding = np.random.randn(vocab_size, embed_dim) * 0.1
+
+# 卷积核（模拟 3-gram 卷积）
+filter_sizes = [2, 3, 4]
+num_filters = 8
+conv_filters = [
+    np.random.randn(fs, embed_dim, num_filters) * 0.1
+    for fs in filter_sizes
+]
+
+def textcnn_forward(X_seq, embedding, conv_filters):
+    """TextCNN 前向传播（纯 numpy）"""
+    batch_size = X_seq.shape[0]
+    all_features = []
+    
+    # Embedding lookup
+    embedded = embedding[X_seq]  # (batch, seq_len, embed_dim)
+    
+    for filt in conv_filters:
+        fs = filt.shape[0]
+        n_filt = filt.shape[2]
+        conv_out = []
+        for i in range(X_seq.shape[1] - fs + 1):
+            window = embedded[:, i:i+fs, :]  # (batch, fs, embed_dim)
+            # 简化卷积：element-wise multiply and sum
+            conv_val = np.tensordot(window, filt, axes=([1,2],[0,1]))  # (batch, num_filters)
+            conv_val = np.maximum(0, conv_val)  # ReLU
+            conv_out.append(conv_val)
+        
+        # Max-over-time pooling
+        conv_stack = np.stack(conv_out, axis=1)  # (batch, positions, num_filters)
+        pooled = np.max(conv_stack, axis=1)  # (batch, num_filters)
+        all_features.append(pooled)
+    
+    # 拼接所有卷积核的输出
+    features = np.concatenate(all_features, axis=1)  # (batch, total_filters)
+    return features
+
+features = textcnn_forward(X_seq, embedding, conv_filters)
+print(f'\nTextCNN 输出特征维度: {features.shape}')
+print(f'(3种卷积核 × {num_filters}个filter = {len(filter_sizes) * num_filters} 维特征)')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># Phase 5: 方法4 - 预训练模型方案 + 综合对比
+
+# 方法4 的思路（实际项目用 HuggingFace Transformers）
+print('='*60)
+print('方法4: 预训练模型微调 (BERT/RoBERTa)')
+print('='*60)
+print('''
+实际实现（需要 GPU + transformers 库）:
+
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import Trainer, TrainingArguments
+
+# 1. 加载预训练模型
+model_name = "bert-base-chinese"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(
+    model_name, num_labels=5
+)
+
+# 2. Tokenize 数据
+def tokenize(batch):
+    return tokenizer(batch['text'], padding=True, truncation=True, max_length=128)
+
+# 3. 微调训练（第18课 LoRA 可大幅降低成本）
+training_args = TrainingArguments(
+    output_dir='./results',
+    num_train_epochs=3,
+    per_device_train_batch_size=16,
+    learning_rate=2e-5,
+    weight_decay=0.01,
+    evaluation_strategy='epoch'
+)
+
+# 4. 评估（第25课 评估体系）
+# Accuracy, F1, Confusion Matrix
+''')
+
+# === 综合对比 ===
+print('\n' + '='*60)
+print('四种方法综合对比')
+print('='*60)
+
+comparison = {
+    '方法': ['TF-IDF + LR', 'TF-IDF + RF', 'TextCNN', 'BERT微调'],
+    '对应课程': ['第2、3课', '第6课', '第13、14课', '第16-18课'],
+    '训练数据需求': ['少', '少', '中等', '中等~多'],
+    '训练速度': ['秒级', '秒级', '分钟级', '小时级'],
+    '推理速度': ['极快', '极快', '快', '较慢'],
+    '预期准确率': ['70-80%', '72-82%', '85-90%', '92-97%'],
+    '可解释性': ['高', '高', '低', '低'],
+    '部署复杂度': ['低', '低', '中', '高'],
+    '适用场景': ['快速基线', '特征分析', '平衡方案', '追求最优']
+}
+
+comp_df = pd.DataFrame(comparison)
+print(comp_df.to_string(index=False))
+
+print(f'\n--- 关键结论 ---')
+print('1. 永远从简单方法开始（TF-IDF + LR 作为基线）')
+print('2. 确定基线后，逐步尝试更复杂的方法')
+print('3. 复杂方法不一定更好——取决于数据量和任务特性')
+print('4. 部署时要考虑推理成本、延迟和可维护性')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># Phase 6: 工程化要点（回顾第22、23、35课）
+
+print('='*60)
+print('从模型到产品：工程化检查清单')
+print('='*60)
+
+checklist = {
+    '阶段': [
+        '数据管理', '数据管理', '数据管理',
+        '模型训练', '模型训练', '模型训练',
+        '模型评估', '模型评估',
+        '部署上线', '部署上线', '部署上线',
+        '监控运维', '监控运维'
+    ],
+    '事项': [
+        '数据版本管理 (DVC)', '数据质量检查', '训练/验证/测试集划分',
+        '实验追踪 (MLflow)', '超参数搜索 (Optuna)', '训练复现性 (seed + config)',
+        '离线指标 (Accuracy/F1)', '在线 A/B 测试',
+        '模型序列化 (ONNX/TorchScript)', 'API 封装 (FastAPI)', '推理优化 (量化/第30课)',
+        '数据漂移检测', '性能监控 (延迟/QPS)'
+    ],
+    '对应课程': [
+        '第35课', '第3课', '第3课',
+        '第35课', '第3、4课', '第12课',
+        '第3、25课', '第25课',
+        '第23课', '第23课', '第30课',
+        '第35课', '第23课'
+    ]
+}
+
+for stage in ['数据管理', '模型训练', '模型评估', '部署上线', '监控运维']:
+    print(f'\n📦 {stage}')
+    for i, s in enumerate(checklist['阶段']):
+        if s == stage:
+            print(f'  ☐ {checklist["事项"][i]} → {checklist["对应课程"][i]}')
+
+# 项目结构建议
+print(f'\n{"="*60}')
+print('推荐项目结构')
+print('='*60)
+print('''
+text-classifier/
+├── config/           # 配置文件（超参数、路径）
+├── data/
+│   ├── raw/          # 原始数据
+│   ├── processed/    # 处理后数据
+│   └── scripts/      # 数据处理脚本
+├── models/           # 模型定义
+├── notebooks/        # 实验笔记本
+├── tests/            # 单元测试
+├── api/              # 推理 API
+├── Dockerfile        # 容器化
+└── README.md
+''')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><p>---</p>
+
+<h2>总结：38课知识在项目中的映射</h2>
+
+<p>| 项目阶段 | 涉及课程 | 核心知识 |</p>
+<table><thead><tr><th>项目阶段</th><th>涉及课程</th><th>核心知识</th></tr></thead><tbody>
+<p>数据探索 | 第1、3课 | 统计基础、EDA |</p>
+<p>特征工程 | 第2、8、10课 | 向量化、TF-IDF、PCA |</p>
+<p>经典ML基线 | 第2、5、6、7课 | LR、决策树、RF、SVM |</p>
+<p>深度学习方案 | 第11-14课 | NN、CNN、RNN |</p>
+<p>预训练方案 | 第15-18课 | Attention、Transformer、BERT、微调 |</p>
+<p>模型评估 | 第3、4、25课 | 交叉验证、正则化、基准测试 |</p>
+<p>训练优化 | 第22、27、28课 | 分布式训练、LoRA、MoE |</p>
+<p>推理部署 | 第23、30、31、35课 | 部署、量化、推测解码、MLOps |</p>
+<p>安全对齐 | 第26、33课 | RLHF、AI安全 |</p>
+</tbody></table>
+
+<p><strong>这，就是 38 课拼成的完整地图。</strong> 🗺️</p>
+
+<p>下一步：带着这个项目框架，选一个你感兴趣的真实数据集，从零到一跑通全流程。这是最好的毕业典礼。</p></div>

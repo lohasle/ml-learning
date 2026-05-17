@@ -1,0 +1,14 @@
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L17] Assistant: Phase 1 通过，37课全部完整。现在进入 Phase 3 — 确定第38课主题。让我查看路线图和 README。
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L25] Assistant: 现在开始生成第38课的所有内容。
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L31] Assistant: 现在生成 HTML 片段（nb-、daily-、note-）。
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L51] Assistant: 现在生成 HTML 片段：
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L53] Assistant: Phase 3 完成。进入 Phase 4 — 级联同步。先同步远端代码再更新文件。
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L55] Assistant: 远端已是最新。现在更新 README.md、index.html、notes-lab.html、daily.html。
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L59] Assistant: 现在更新路线图，标记课程 38：
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L61] Assistant: 现在更新 `index.html` — 添加新课程行：
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L69] Assistant: 现在更新 notes-lab.html — 添加第38个课程的树形项：
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L75] Assistant: 现在更新 daily.html — 添加新的时间线条目：
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L81] Assistant: Phase 4 完成。进入 Phase 5 — 最终验证。
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L83] Assistant: ✅ Phase 5 验证通过！38 notebooks，0 errors，0 warnings。现在提交并推送。
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L89] Assistant: --- ## 📌 今日学习主题 **第38课：关键论文精读——Attention Is All You Need / BERT / InstructGPT** ## 📝 今日学习简报 今天精读三篇塑造当今 AI 的里程碑论文： 1. **Attention Is All You Need (2017)**：Vaswani 等人提出 Transformer，用 Self-Attention 彻底替代 RNN。核心公式 `softmax(QK^T/√d_k)V` 让每个位置
+[ml-learning-coach/sessions/ml-learning-coach/9ac3e17e-9667-4a83-a617-6c3a73b2d9e9.jsonl#L89] Assistant: `lessons/38_关键论文精读.ipynb`（12 cells, 5 code + 7 markdown）| | 新增 | `daily/2026-05-17.md` | | 新增 | `notes/关键论文精读.md` | | 新增 | `docs/nb-38_关键论文精读.html` | | 新增 | `docs/daily-2026-05-17.html` | | 新增 | `docs/note-关键论文精读.html` | | 更新 | `README.md`
