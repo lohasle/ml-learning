@@ -1,0 +1,240 @@
+<h1>2026年5月19日 - 第40课：扩散模型与图像生成</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解扩散模型如何从噪声中「雕刻」出图像——DALL-E、Stable Diffusion、Midjourney 背后的核心范式</strong></p>
+<h2>为什么今天学这个？</h2>
+<p>前 39 课覆盖了经典 ML、CNN、Transformer、LLM、Agent、RAG 等关键范式，但有一个重要的生成式 AI 分支还未触及：<strong>扩散模型</strong>。</p>
+<p>扩散模型是 2022-2024 年图像生成领域最具革命性的突破。DALL-E 2、Stable Diffusion、Midjourney、Sora，它们的底层都是扩散模型。作为架构师，理解这个范式不仅让你看懂 AI 创作工具的原理，更能理解「条件生成」这个通用概念如何贯穿整个 AI 系统。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前序知识</td>
+<td>第21课多模态模型、第22课训练工程、第16课 Transformer</td>
+</tr>
+<tr>
+<td>本课核心</td>
+<td>扩散模型的数学直觉 + U-Net 架构 + 潜空间加速</td>
+</tr>
+<tr>
+<td>演进关系</td>
+<td>GAN（2014）→ VAE（2013）→ 扩散模型（2020-2022）→ 视频扩散（2024）</td>
+</tr>
+<tr>
+<td>后续连接</td>
+<td>AI 编程助手、多模态统一架构</td>
+</tr>
+</tbody>
+</table>
+<h2>核心概念</h2>
+<h3>扩散模型的核心思想</h3>
+<p><strong>直觉类比：从大理石中雕刻</strong></p>
+<p>想象一块粗糙的大理石（纯噪声），雕塑家一刀一刀地去除多余部分（去噪），最终露出精美的雕像（清晰图像）。</p>
+<p>扩散模型做的就是这个过程：</p>
+<ol>
+<li><strong>前向过程（加噪）</strong>：给一张清晰图片逐步加噪声，直到变成纯噪声</li>
+<li><strong>反向过程（去噪）</strong>：训练一个神经网络，学会从噪声中逐步恢复原图</li>
+</ol>
+<pre><code>清晰图像 x₀ → 加噪 x₁ → 加噪 x₂ → ... → 纯噪声 x_T
+   ↑                                            ↓
+   ←←←←←←←← 反向去噪（神经网络学习）←←←←←←←←←←
+</code></pre>
+<h3>关键公式直觉</h3>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式</th>
+<th>直觉理解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前向加噪</td>
+<td>x_t = √ᾱ_t · x₀ + √(1-ᾱ_t) · ε</td>
+<td>原图和噪声的加权混合，ᾱ_t 越小噪声越多</td>
+</tr>
+<tr>
+<td>训练目标</td>
+<td>L = E[MSE(ε, ε_θ(x_t, t))]</td>
+<td>网络学会识别「掺了什么噪声」</td>
+</tr>
+<tr>
+<td>反向去噪</td>
+<td>x_{t-1} = 去噪(x_t, t)</td>
+<td>每步去掉一点噪声，T 步后恢复原图</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么训练目标是预测噪声而不是预测图像？</strong></p>
+<p>因为噪声是「干净的」数学对象（高斯分布），网络更容易学习。直接预测图像信息太多，训练不稳定。</p>
+<h3>U-Net：扩散模型的核心引擎</h3>
+<p>U-Net 是一个编码器-解码器架构，最早用于医学图像分割。扩散模型用它来做去噪：</p>
+<ul>
+<li><strong>编码器</strong>：逐步提取多尺度特征（下采样）</li>
+<li><strong>解码器</strong>：逐步恢复空间分辨率（上采样）</li>
+<li><strong>跳跃连接</strong>：编码器特征直接传给解码器对应层，保留细节</li>
+<li><strong>时间嵌入</strong>：将时间步 t 编码为向量注入每一层，让网络知道「现在在第几步」</li>
+<li><strong>自注意力</strong>：在低分辨率层加入 Attention，捕获全局语义</li>
+</ul>
+<h3>Stable Diffusion 的关键创新：潜空间扩散</h3>
+<p>原始扩散模型在像素空间操作（3×512×512 = 786,432 维），计算量巨大。</p>
+<p>Stable Diffusion 的创新：<strong>在潜空间做扩散</strong>（4×64×64 = 16,384 维），缩小 48 倍！</p>
+<p>三大组件：
+1. <strong>VAE</strong>：像素 ↔ 潜空间的编解码器
+2. <strong>U-Net + Cross-Attention</strong>：去噪网络 + 文本条件引导
+3. <strong>CLIP Text Encoder</strong>：文本 → 语义嵌入</p>
+<h3>Classifier-Free Guidance（CFG）</h3>
+<p>让图像更贴合文本提示的核心技巧：</p>
+<pre><code>ε_guided = ε_uncond + s × (ε_cond - ε_uncond)
+</code></pre>
+<ul>
+<li>ε_cond：有文本条件时的噪声预测</li>
+<li>ε_uncond：无文本条件时的噪声预测</li>
+<li>s：引导强度（通常 7-12）</li>
+</ul>
+<p>直觉：<code>ε_cond - ε_uncond</code> 是「文本提示额外贡献的方向」，乘以 s 放大它。</p>
+<h3>生成模型演进对比</h3>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>原理</th>
+<th>优点</th>
+<th>缺点</th>
+<th>代表</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VAE</td>
+<td>编码+解码+KL约束</td>
+<td>潜空间结构好</td>
+<td>生成偏模糊</td>
+<td>VQ-VAE</td>
+</tr>
+<tr>
+<td>GAN</td>
+<td>生成器vs判别器</td>
+<td>生成锐利</td>
+<td>训练不稳定</td>
+<td>StyleGAN</td>
+</tr>
+<tr>
+<td><strong>扩散</strong></td>
+<td><strong>迭代去噪</strong></td>
+<td><strong>训练稳定+质量高</strong></td>
+<td><strong>采样慢</strong></td>
+<td><strong>SD/DALL-E</strong></td>
+</tr>
+</tbody>
+</table>
+<p>扩散模型胜出原因：训练目标简单（MSE）、不需要对抗训练、生成多样性好、条件控制容易。</p>
+<h2>关键项目与论文</h2>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>里程碑</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2015</td>
+<td>Diffusion Probabilistic Models</td>
+<td>理论奠基</td>
+</tr>
+<tr>
+<td>2020</td>
+<td>DDPM (Ho et al.)</td>
+<td>证明扩散模型可媲美 GAN</td>
+</tr>
+<tr>
+<td>2022</td>
+<td>Latent Diffusion / Stable Diffusion</td>
+<td>潜空间加速，开源</td>
+</tr>
+<tr>
+<td>2022</td>
+<td>DALL-E 2 (OpenAI)</td>
+<td>扩散+CLIP，质量飞跃</td>
+</tr>
+<tr>
+<td>2023</td>
+<td>DALL-E 3, SDXL</td>
+<td>更强文本理解</td>
+</tr>
+<tr>
+<td>2024</td>
+<td>Sora (OpenAI)</td>
+<td>视频扩散，DiT 架构</td>
+</tr>
+<tr>
+<td>2024</td>
+<td>Flux, SD3</td>
+<td>MMDiT 架构，更高质量</td>
+</tr>
+</tbody>
+</table>
+<h2>与之前课程的连接</h2>
+<table>
+<thead>
+<tr>
+<th>课程</th>
+<th>关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第13课 CNN</td>
+<td>U-Net 是编码器-解码器 CNN</td>
+</tr>
+<tr>
+<td>第15课 Attention</td>
+<td>U-Net 中用自注意力和交叉注意力</td>
+</tr>
+<tr>
+<td>第16课 Transformer</td>
+<td>DiT 用 Transformer 替代 U-Net</td>
+</tr>
+<tr>
+<td>第17课 预训练模型</td>
+<td>CLIP 是预训练视觉-语言模型</td>
+</tr>
+<tr>
+<td>第21课 多模态</td>
+<td>文本→图像是最经典的多模态任务</td>
+</tr>
+<tr>
+<td>第22课 训练工程</td>
+<td>扩散模型需要大规模分布式训练</td>
+</tr>
+</tbody>
+</table>
+<h2>实践建议</h2>
+<ol>
+<li><strong>在线体验</strong>：去 <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui">Stable Diffusion WebUI</a> 或 <a href="https://github.com/comfyanonymous/ComfyUI">ComfyUI</a> 本地部署体验</li>
+<li><strong>调参数直觉</strong>：试着改变 cfg_scale（7→15）和 steps（20→50），感受生成质量变化</li>
+<li><strong>架构视角</strong>：VAE + U-Net + CLIP 的组合，就是一个典型的「管道架构」——每个组件各司其职</li>
+</ol>
+<h2>今天学完后应该记住什么</h2>
+<ol>
+<li><strong>扩散 = 加噪 + 去噪</strong>：前向是固定的，反向是学出来的</li>
+<li><strong>训练目标 = 预测噪声</strong>：比直接预测图像更稳定</li>
+<li><strong>U-Net 是核心</strong>：带时间嵌入和跳跃连接</li>
+<li><strong>潜空间是加速关键</strong>：缩小 48 倍维度</li>
+<li><strong>CFG 控制生成质量</strong>：引导强度决定图文匹配度</li>
+<li><strong>扩散已取代 GAN</strong>：成为图像/视频生成主流</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课将学习 <strong>AI 编程助手与代码生成</strong>——理解 Copilot、Cursor 等工具背后的技术原理，以及 LLM 如何理解和生成代码。</p>
+<hr />
+<blockquote>
+<p>🧠 今日关键词：扩散模型、DDPM、U-Net、潜空间、Stable Diffusion、Classifier-Free Guidance、DiT</p>
+</blockquote>

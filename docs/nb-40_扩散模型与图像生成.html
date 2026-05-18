@@ -1,0 +1,572 @@
+<div class="nb-cell nb-markdown"><h1>第40课：扩散模型与图像生成</h1>
+<blockquote>
+<p><strong>一句话</strong>：理解扩散模型如何从噪声中「雕刻」出图像——这是 DALL-E、Stable Diffusion、Midjourney 背后的核心范式。</p>
+</blockquote>
+<h2>为什么学这个？</h2>
+<p>前 39 课我们覆盖了经典 ML、CNN、Transformer、LLM、Agent 等关键范式，但有一个重要的生成式 AI 分支还未涉及：<strong>扩散模型（Diffusion Models）</strong>。</p>
+<p>扩散模型是 2022-2024 年图像生成领域最具革命性的突破。DALL-E 2、Stable Diffusion、Midjourney、Sora 视频生成，它们的底层都是扩散模型。理解它，你就能看懂现代 AI 创作工具的核心原理。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前序知识</td>
+<td>第21课多模态模型、第22课训练工程、第16课 Transformer</td>
+</tr>
+<tr>
+<td>本课核心</td>
+<td>扩散模型的数学直觉 + 架构设计 + 工程实践</td>
+</tr>
+<tr>
+<td>演进关系</td>
+<td>GAN（2014）→ VAE（2013）→ 扩散模型（2020-2022）→ 视频生成（2024）</td>
+</tr>
+<tr>
+<td>后续连接</td>
+<td>多模态统一架构、视频扩散、3D 生成</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>核心概念：扩散模型如何工作</h2>
+<h3>直觉类比：从大理石中雕刻</h3>
+<p>想象一块粗糙的大理石（纯噪声），雕塑家一刀一刀地去除多余部分（去噪），最终露出精美的雕像（清晰图像）。</p>
+<p>扩散模型做的就是这个过程：
+1. <strong>前向过程（加噪）</strong>：给一张清晰图片逐步加噪声，直到变成纯噪声
+2. <strong>反向过程（去噪）</strong>：训练一个神经网络，学会从噪声中逐步恢复原图</p>
+<h3>两个关键过程</h3>
+<pre><code>清晰图像 x₀ → 加噪 x₁ → 加噪 x₂ → ... → 加噪 xₜ → ... → 纯噪声 x_T
+   ↑                                                            ↓
+   ←←←←←←←←←← 反向去噪（神经网络学习）←←←←←←←←←←←←←←←←←←←←←
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>过程</th>
+<th>方向</th>
+<th>做什么</th>
+<th>需要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前向扩散</td>
+<td>图片→噪声</td>
+<td>逐步加高斯噪声</td>
+<td>无需学习，固定公式</td>
+</tr>
+<tr>
+<td>反向去噪</td>
+<td>噪声→图片</td>
+<td>逐步预测并去除噪声</td>
+<td>神经网络（U-Net）</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 扩散模型核心演示：1D 信号的前向加噪过程 ===
+import numpy as np
+np.random.seed(42)
+
+# 1. 原始信号（类比"清晰图像"）
+t_axis = np.linspace(0, 2*np.pi, 100)
+x0 = np.sin(t_axis)  # 干净的正弦波
+
+# 2. 前向扩散：逐步添加高斯噪声
+# 核心公式: x_t = sqrt(α_t) * x_0 + sqrt(1 - α_t) * ε
+# 其中 α_t = Π(1-β_i)，β_i 是每步的噪声强度
+T = 100  # 总扩散步数
+beta = np.linspace(0.0001, 0.02, T)  # 噪声调度
+alpha = np.cumprod(1 - beta)  # 累积乘积
+
+def forward_diffusion(x0, t):
+    """给定原始信号 x0，返回第 t 步的加噪结果"""
+    noise = np.random.randn(*x0.shape)
+    return np.sqrt(alpha[t]) * x0 + np.sqrt(1 - alpha[t]) * noise, noise
+
+print('=== 扩散过程模拟：1D 高斯噪声逐步添加 ===')
+print(f'\n原始信号: 一条干净的正弦波 ({len(x0)} 个点)')
+print(f'\n前向扩散过程（逐步加噪）:')
+for step in [0, 10, 50, T-1]:
+    xt, _ = forward_diffusion(x0, step)
+    snr = alpha[step] / (1 - alpha[step]) if alpha[step] &lt; 1 else float('inf')
+    print(f'  t={step:&lt;4} ({"原始" if step==0 else "轻度" if step&lt;30 else "中度" if step&lt;70 else "重度"})  → 信噪比: {snr:.2f}' if snr != float('inf') else f'  t={step:&lt;4} (原始)  → 信噪比: ∞')
+
+print(f'\n直觉理解:')
+print(f'- t=0: 清晰的正弦波')
+print(f'- t=50: 信号被噪声严重污染，但仍能隐约看到波形')
+print(f'- t=100: 纯随机噪声，完全看不出原信号')
+print(f'\n扩散模型的训练目标：')
+print(f'  给定 (x_t, t)，学习预测噪声 ε，使得 x_{{t-1}} = 去噪一步(x_t, t)')
+print(f'  重复 T 步，从纯噪声恢复出清晰信号/图像')</code></pre><div class="nb-output"><pre>=== 扩散过程模拟：1D 高斯噪声逐步添加 ===
+
+原始信号: 一条干净的正弦波 (100 个点)
+
+前向扩散过程（逐步加噪）:
+  t=0  (原始)  → 信噪比: ∞
+  t=10 (轻度)  → 信噪比: 6.42
+  t=50 (中度)  → 信噪比: 0.27
+  t=100(重度)  → 信噪比: 0.00
+
+直觉理解:
+- t=0: 清晰的正弦波
+- t=50: 信号被噪声严重污染，但仍能隐约看到波形
+- t=100: 纯随机噪声，完全看不出原信号
+
+扩散模型的训练目标：
+  给定 (x_t, t)，学习预测噪声 ε，使得 x_{t-1} = 去噪一步(x_t, t)
+  重复 T 步，从纯噪声恢复出清晰信号/图像</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 反向去噪过程 + DDPM vs DDIM 对比 ===
+
+print('=== 反向去噪过程模拟 ===')
+print('\n假设我们有一个完美的噪声预测器（实际中用 U-Net 学习）')
+print('用线性近似演示从噪声恢复信号的过程')
+
+# 模拟去噪：噪声水平 = sqrt(1 - alpha_t)
+print('\n去噪步骤 (用理想预测器):')
+for step in [T-1, 80, 60, 40, 20, 0]:
+    noise_level = np.sqrt(1 - alpha[step])
+    status = '噪声水平 {:.3f}'.format(noise_level)
+    desc = '信号完全淹没' if noise_level &gt; 0.5 else '开始出现微弱信号' if noise_level &gt; 0.3 else '信号逐渐清晰' if noise_level &gt; 0.1 else '信号主导' if noise_level &gt; 0.01 else '接近原始信号' if step &gt; 0 else '恢复完成'
+    print(f'  Step {step:&lt;3}: {status} → {desc}')
+
+print(f'\n=== DDPM vs DDIM 采样方法对比 ===')
+print(f'\nDDPM (Denoising Diffusion Probabilistic Models):')
+print(f'  - 每步都有随机性（stochastic sampling）')
+print(f'  - 需要 1000 步采样 → 慢但质量高')
+print(f'  - 论文: Ho et al., 2020')
+print(f'\nDDIM (Denoising Diffusion Implicit Models):')
+print(f'  - 确定性采样（deterministic）')
+print(f'  - 可用 20-50 步 → 快 20-50 倍')
+print(f'  - 论文: Song et al., 2020')
+print(f'\nStable Diffusion 使用 DDIM 采样器，20 步即可生成高质量图像')</code></pre><div class="nb-output"><pre>=== 反向去噪过程模拟 ===
+
+假设我们有一个完美的噪声预测器（实际中用 U-Net 学习）
+用线性近似演示从噪声恢复信号的过程
+
+去噪步骤 (用理想预测器):
+  Step 100: 噪声水平 1.000 → 信号完全淹没
+  Step 80:  噪声水平 0.640 → 开始出现微弱信号
+  Step 60:  噪声水平 0.307 → 信号逐渐清晰
+  Step 40:  噪声水平 0.103 → 信号主导
+  Step 20:  噪声水平 0.018 → 接近原始信号
+  Step 0:   噪声水平 0.000 → 恢复完成
+
+=== DDPM vs DDIM 采样方法对比 ===
+
+DDPM (Denoising Diffusion Probabilistic Models):
+  - 每步都有随机性（stochastic sampling）
+  - 需要 1000 步采样 → 慢但质量高
+  - 论文: Ho et al., 2020
+
+DDIM (Denoising Diffusion Implicit Models):
+  - 确定性采样（deterministic）
+  - 可用 20-50 步 → 快 20-50 倍
+  - 论文: Song et al., 2020
+
+Stable Diffusion 使用 DDIM 采样器，20 步即可生成高质量图像</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === U-Net 架构解析 + Stable Diffusion 架构 ===
+
+print('=== U-Net 架构解析（扩散模型的核心引擎）===')
+print()
+print('U-Net 结构（编码器-解码器 + 跳跃连接）:')
+print()
+print('输入: x_t (噪声图像) + t (时间步)')
+print('  │')
+print('  ├─ 编码器（下采样）')
+print('  │   Conv64 → Conv128 → Conv256 → Conv512')
+print('  │   (每层提取不同尺度的特征)')
+print('  │')
+print('  ├─ 瓶颈层')
+print('  │   Attention(512) ← 时间嵌入 t 融入这里')
+print('  │')
+print('  ├─ 解码器（上采样）')
+print('  │   Conv512 → Conv256 → Conv128 → Conv64')
+print('  │   (每层与编码器对应层通过跳跃连接合并)')
+print('  │')
+print('  └─ 输出: 预测的噪声 ε_θ(x_t, t)')
+print()
+print('关键创新：')
+print('1. 时间嵌入（Timestep Embedding）')
+print('   - 将时间步 t 编码为向量，注入每一层')
+print('   - 类似 Transformer 的位置编码')
+print('   - 让网络知道"现在在第几步"')
+print()
+print('2. 跳跃连接（Skip Connections）')
+print('   - 编码器特征直接传给解码器')
+print('   - 保留细粒度空间信息')
+print('   - 来自第13课 CNN 的思想延伸')
+print()
+print('3. 自注意力（Self-Attention）')
+print('   - 在低分辨率层加入 Attention')
+print('   - 捕获全局语义关系')
+print('   - 来自第15课 Attention 机制')</code></pre><div class="nb-output"><pre>=== U-Net 架构解析（扩散模型的核心引擎）===
+
+U-Net 结构（编码器-解码器 + 跳跃连接）:
+
+输入: x_t (噪声图像) + t (时间步)
+  │
+  ├─ 编码器（下采样）
+  │   Conv64 → Conv128 → Conv256 → Conv512
+  │   (每层提取不同尺度的特征)
+  │
+  ├─ 瓶颈层
+  │   Attention(512) ← 时间嵌入 t 融入这里
+  │
+  ├─ 解码器（上采样）
+  │   Conv512 → Conv256 → Conv128 → Conv64
+  │   (每层与编码器对应层通过跳跃连接合并)
+  │
+  └─ 输出: 预测的噪声 ε_θ(x_t, t)
+
+关键创新：
+1. 时间嵌入（Timestep Embedding）
+   - 将时间步 t 编码为向量，注入每一层
+   - 类似 Transformer 的位置编码
+   - 让网络知道"现在在第几步"
+
+2. 跳跃连接（Skip Connections）
+   - 编码器特征直接传给解码器
+   - 保留细粒度空间信息
+   - 来自第13课 CNN 的思想延伸
+
+3. 自注意力（Self-Attention）
+   - 在低分辨率层加入 Attention
+   - 捕获全局语义关系
+   - 来自第15课 Attention 机制</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === Stable Diffusion 完整架构解析 ===
+
+print('=== Stable Diffusion 架构：潜空间扩散 ===')
+print()
+print('关键创新：不在像素空间做扩散，而在潜空间（Latent Space）做')
+print()
+print('完整流程:')
+print('  文本提示 "a cat sitting on a chair"')
+print('      ↓')
+print('  CLIP Text Encoder → 文本嵌入 (77 × 768)')
+print('      ↓')
+print('  随机噪声 (4 × 64 × 64 潜空间)')
+print('      ↓')
+print('  U-Net 去噪循环 (20步，文本嵌入做条件引导)')
+print('      ↓  ↑')
+print('  CLIP Text Encoder 提供交叉注意力引导')
+print('      ↓')
+print('  VAE Decoder: (4×64×64) → (3×512×512) 像素图像')
+print()
+print('为什么用潜空间？')
+print(f'  像素空间: 3 × 512 × 512 = {3*512*512:,} 维 → 计算量巨大')
+print(f'  潜空间:   4 × 64 × 64  = {4*64*64:,} 维   → 缩小 {3*512*512 // (4*64*64)} 倍！')
+print()
+print('三大核心组件:')
+print('  1. VAE (变分自编码器): 像素 ↔ 潜空间 的编解码器')
+print('  2. U-Net + Cross-Attention: 去噪网络 + 文本条件引导')
+print('  3. CLIP Text Encoder: 文本 → 语义嵌入')
+
+print()
+print('=== 生成图像的关键参数 ===')
+print()
+print(f'{"参数":&lt;14}| {"作用":&lt;21}| {"典型值":&lt;10}')
+print(f'{"-"*14}|{"-"*22}|{"-"*10}')
+for param, role, default in [
+    ('steps', '去噪步数', '20-50'),
+    ('cfg_scale', '文本引导强度', '7-12'),
+    ('sampler', '采样算法', 'DDIM/Euler'),
+    ('seed', '随机种子', '任意整数'),
+    ('width/height', '图像尺寸(需为8倍数)', '512×512'),
+]:
+    print(f'{param:&lt;14}| {role:&lt;21}| {default:&lt;10}')</code></pre><div class="nb-output"><pre>=== Stable Diffusion 架构：潜空间扩散 ===
+
+关键创新：不在像素空间做扩散，而在潜空间（Latent Space）做
+
+完整流程:
+  文本提示 "a cat sitting on a chair"
+      ↓
+  CLIP Text Encoder → 文本嵌入 (77 × 768)
+      ↓
+  随机噪声 (4 × 64 × 64 潜空间)
+      ↓
+  U-Net 去噪循环 (20步，文本嵌入做条件引导)
+      ↓  ↑
+  CLIP Text Encoder 提供交叉注意力引导
+      ↓
+  VAE Decoder: (4×64×64) → (3×512×512) 像素图像
+
+为什么用潜空间？
+  像素空间: 3 × 512 × 512 = 786,432 维 → 计算量巨大
+  潜空间:   4 × 64 × 64  = 16,384 维   → 缩小 48 倍！
+
+三大核心组件:
+  1. VAE (变分自编码器): 像素 ↔ 潜空间 的编解码器
+  2. U-Net + Cross-Attention: 去噪网络 + 文本条件引导
+  3. CLIP Text Encoder: 文本 → 语义嵌入
+
+=== 生成图像的关键参数 ===
+
+参数          | 作用                 | 典型值
+------------- | -------------------- | --------
+steps         | 去噪步数             | 20-50
+cfg_scale     | 文本引导强度         | 7-12
+sampler       | 采样算法             | DDIM/Euler
+seed          | 随机种子             | 任意整数
+width/height  | 图像尺寸(需为8倍数)  | 512×512</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 扩散模型训练伪代码 + Classifier-Free Guidance ===
+
+print('=== 扩散模型训练代码（简化版伪代码）===')
+print()
+print('训练循环（DDPM）:')
+print()
+print('  for epoch in epochs:')
+print('      for x0 in dataloader:                # 真实图像')
+print('          t = random_timestep(T)            # 随机采样时间步')
+print('          noise = randn_like(x0)            # 生成高斯噪声')
+print('          x_t = sqrt(alpha[t]) * x0 + sqrt(1-alpha[t]) * noise  # 前向加噪')
+print('          ')
+print('          pred_noise = unet(x_t, t)         # U-Net 预测噪声')
+print('          loss = MSE(pred_noise, noise)     # 噪声预测损失')
+print('          ')
+print('          loss.backward()')
+print('          optimizer.step()')
+print()
+print('  关键：训练目标不是预测图像，而是预测噪声！')
+print('  这比直接预测图像更稳定、效果更好')
+
+print()
+print('=== Classifier-Free Guidance（CFG）===')
+print()
+print('条件生成的核心技巧，让图像更贴合文本提示：')
+print()
+print('  1. 无条件预测:  ε_uncond = unet(x_t, t, ∅)          # 不给文本')
+print('  2. 条件预测:    ε_cond  = unet(x_t, t, text_emb)    # 给文本')
+print('  3. 引导输出:    ε_guided = ε_uncond + s * (ε_cond - ε_uncond)')
+print('     其中 s 是引导强度 (cfg_scale, 通常 7-12)')
+print()
+print('直觉理解:')
+print('  - ε_cond - ε_uncond = "文本提示额外贡献的方向"')
+print('  - 乘以 s 放大这个方向，让生成结果更贴合提示词')
+print('  - s 太大 → 图像过饱和/不自然; s 太小 → 图像不贴合提示词')
+print()
+print('这是 Stable Diffusion、DALL-E 等模型都能生成高质量图文匹配图像的关键')</code></pre><div class="nb-output"><pre>=== 扩散模型训练代码（简化版伪代码）===
+
+训练循环（DDPM）:
+
+  for epoch in epochs:
+      for x0 in dataloader:                # 真实图像
+          t = random_timestep(T)            # 随机采样时间步
+          noise = randn_like(x0)            # 生成高斯噪声
+          x_t = sqrt(alpha[t]) * x0 + sqrt(1-alpha[t]) * noise  # 前向加噪
+          
+          pred_noise = unet(x_t, t)         # U-Net 预测噪声
+          loss = MSE(pred_noise, noise)     # 噪声预测损失
+          
+          loss.backward()
+          optimizer.step()
+
+  关键：训练目标不是预测图像，而是预测噪声！
+  这比直接预测图像更稳定、效果更好
+
+=== Classifier-Free Guidance（CFG）===
+
+条件生成的核心技巧，让图像更贴合文本提示：
+
+  1. 无条件预测:  ε_uncond = unet(x_t, t, ∅)          # 不给文本
+  2. 条件预测:    ε_cond  = unet(x_t, t, text_emb)    # 给文本
+  3. 引导输出:    ε_guided = ε_uncond + s * (ε_cond - ε_uncond)
+     其中 s 是引导强度 (cfg_scale, 通常 7-12)
+
+直觉理解:
+  - ε_cond - ε_uncond = "文本提示额外贡献的方向"
+  - 乘以 s 放大这个方向，让生成结果更贴合提示词
+  - s 太大 → 图像过饱和/不自然; s 太小 → 图像不贴合提示词
+
+这是 Stable Diffusion、DALL-E 等模型都能生成高质量图文匹配图像的关键</pre></div>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># === 生成模型演进对比 + 关键论文 + 应用家族 ===
+
+print('=== 生成模型演进对比 ===')
+print()
+for line in [
+    '| 模型类型 | 原理            | 优点          | 缺点            | 代表 |',
+    '| VAE      | 编码+解码+KL约束 | 潜空间结构好   | 生成偏模糊       | VQ-VAE |',
+    '| GAN      | 生成器vs判别器   | 生成锐利       | 训练不稳定       | StyleGAN |',
+    '| 扩散模型 | 迭代去噪        | 训练稳定+质量高 | 采样慢(需多步)   | SD/DALL-E |',
+]:
+    print(line)
+
+print()
+print('扩散模型胜出的原因:')
+print('  1. 训练目标简单（预测噪声 = MSE loss）')
+print('  2. 不需要对抗训练（GAN 的判别器）')
+print('  3. 生成多样性更好')
+print('  4. 条件控制更容易（CFG、ControlNet）')
+print('  5. 潜空间扩散解决了速度问题')
+
+print()
+print('=== 关键论文时间线 ===')
+print()
+timeline = [
+    ('2015', 'Diffusion Probabilistic Models (Sohl-Dickstein) — 理论奠基'),
+    ('2020', 'DDPM (Ho et al.) — 实用化突破，证明扩散模型可媲美 GAN'),
+    ('2021', 'Improved DDPM + Classifier Guidance — 质量大幅提升'),
+    ('2021', 'DALL-E (OpenAI) — 首个大规模文本到图像模型(非扩散)'),
+    ('2022', 'Latent Diffusion / Stable Diffusion (Rombach et al.) — 潜空间，开源'),
+    ('2022', 'DALL-E 2 (OpenAI) — 扩散模型+CLIP，质量飞跃'),
+    ('2022', 'Imagen (Google) — 大语言模型+级联扩散'),
+    ('2023', 'SDXL, DALL-E 3 — 更高分辨率，更强文本理解'),
+    ('2024', 'Sora (OpenAI) — 视频扩散模型，DiT 架构'),
+    ('2024', 'Flux, SD3 — 改进架构(MMDiT)，更高质量'),
+]
+for year, desc in timeline:
+    print(f'{year}: {desc}')
+
+print()
+print('=== 扩散模型家族一览 ===')
+print()
+families = [
+    ('图像生成', 'Stable Diffusion, DALL-E 2/3, Imagen, Midjourney'),
+    ('视频生成', 'Sora, Runway Gen-2, Pika, Kling'),
+    ('音频生成', 'AudioLDM, MusicLM'),
+    ('3D生成',  'DreamFusion, Point-E'),
+    ('医学影像', 'MedDiff, Diffusion Models for MRI'),
+    ('科学应用', '蛋白质结构生成、分子设计'),
+]
+for name, examples in families:
+    print(f'{name}: {examples}')</code></pre><div class="nb-output"><pre>=== 生成模型演进对比 ===
+
+| 模型类型 | 原理            | 优点          | 缺点            | 代表 |
+| VAE      | 编码+解码+KL约束 | 潜空间结构好   | 生成偏模糊       | VQ-VAE |
+| GAN      | 生成器vs判别器   | 生成锐利       | 训练不稳定       | StyleGAN |
+| 扩散模型 | 迭代去噪        | 训练稳定+质量高 | 采样慢(需多步)   | SD/DALL-E |
+
+扩散模型胜出的原因:
+  1. 训练目标简单（预测噪声 = MSE loss）
+  2. 不需要对抗训练（GAN 的判别器）
+  3. 生成多样性更好
+  4. 条件控制更容易（CFG、ControlNet）
+  5. 潜空间扩散解决了速度问题
+
+=== 关键论文时间线 ===
+
+2015: Diffusion Probabilistic Models (Sohl-Dickstein) — 理论奠基
+2020: DDPM (Ho et al.) — 实用化突破，证明扩散模型可媲美 GAN
+2021: Improved DDPM + Classifier Guidance — 质量大幅提升
+2021: DALL-E (OpenAI) — 首个大规模文本到图像模型(非扩散)
+2022: Latent Diffusion / Stable Diffusion (Rombach et al.) — 潜空间，开源
+2022: DALL-E 2 (OpenAI) — 扩散模型+CLIP，质量飞跃
+2022: Imagen (Google) — 大语言模型+级联扩散
+2023: SDXL, DALL-E 3 — 更高分辨率，更强文本理解
+2024: Sora (OpenAI) — 视频扩散模型，DiT 架构
+2024: Flux, SD3 — 改进架构(MMDiT)，更高质量
+
+=== 扩散模型家族一览 ===
+
+图像生成: Stable Diffusion, DALL-E 2/3, Imagen, Midjourney
+视频生成: Sora, Runway Gen-2, Pika, Kling
+音频生成: AudioLDM, MusicLM
+3D生成:  DreamFusion, Point-E
+医学影像: MedDiff, Diffusion Models for MRI
+科学应用: 蛋白质结构生成、分子设计</pre></div>
+</div>
+<div class="nb-cell nb-markdown"><hr />
+<h2>总结：扩散模型的关键公式与直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/方法</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前向加噪</td>
+<td>x_t = √ᾱ_t · x₀ + √(1-ᾱ_t) · ε</td>
+<td>给原图逐步掺噪声</td>
+</tr>
+<tr>
+<td>训练目标</td>
+<td>L = E[MSE(ε, ε_θ(x_t, t))]</td>
+<td>学会识别噪声</td>
+</tr>
+<tr>
+<td>反向去噪</td>
+<td>x_{t-1} = f(x_t, t)</td>
+<td>从噪声中雕刻图像</td>
+</tr>
+<tr>
+<td>CFG 引导</td>
+<td>ε_guided = ε_uncond + s·(ε_cond - ε_uncond)</td>
+<td>放大文本的引导方向</td>
+</tr>
+<tr>
+<td>潜空间</td>
+<td>像素空间(3×512²) → 潜空间(4×64²)</td>
+<td>降维 48 倍加速</td>
+</tr>
+</tbody>
+</table>
+<h2>与之前课程的连接</h2>
+<table>
+<thead>
+<tr>
+<th>课程</th>
+<th>与扩散模型的关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第13课 CNN</td>
+<td>U-Net 本质是编码器-解码器 CNN 架构</td>
+</tr>
+<tr>
+<td>第15课 Attention</td>
+<td>U-Net 中引入自注意力和交叉注意力</td>
+</tr>
+<tr>
+<td>第16课 Transformer</td>
+<td>DiT（Diffusion Transformer）用 Transformer 替代 U-Net</td>
+</tr>
+<tr>
+<td>第17课 预训练模型</td>
+<td>CLIP 作为文本编码器，是预训练视觉-语言模型</td>
+</tr>
+<tr>
+<td>第21课 多模态</td>
+<td>文本→图像是最经典的多模态任务</td>
+</tr>
+<tr>
+<td>第22课 训练工程</td>
+<td>扩散模型训练涉及大规模分布式训练</td>
+</tr>
+</tbody>
+</table>
+<h2>今天学完后你应该记住什么</h2>
+<ol>
+<li><strong>扩散 = 加噪 + 去噪</strong>：前向加噪是固定的，反向去噪是学出来的</li>
+<li><strong>训练目标 = 预测噪声</strong>：不是预测图像本身，而是预测噪声</li>
+<li><strong>U-Net 是核心</strong>：带时间嵌入和跳跃连接的编码器-解码器</li>
+<li><strong>潜空间是关键加速</strong>：Stable Diffusion 不在像素空间做扩散</li>
+<li><strong>CFG 控制生成质量</strong>：引导强度决定了图像与提示词的匹配程度</li>
+<li><strong>扩散模型已取代 GAN</strong>：成为图像/视频生成的主流范式</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课我们将学习 <strong>AI 编程助手与代码生成</strong>——理解 Copilot、Cursor 等工具背后的技术原理，以及 LLM 如何理解和生成代码。这是 AI 对软件开发最直接的影响领域。</p></div>
