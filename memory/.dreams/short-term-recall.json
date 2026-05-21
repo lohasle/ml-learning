@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-18T19:00:52.532Z",
+  "updatedAt": "2026-05-19T19:00:52.665Z",
   "entries": {
     "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1": {
       "key": "memory:memory/.dreams/session-corpus/2026-04-13.txt:1:1",
@@ -14892,6 +14892,433 @@
         "39/39",
         "项目",
         "实战"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:1:1": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:1:1",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 1,
+      "endLine": 1,
+      "source": "memory",
+      "snippet": "Assistant: Phase 1 通过，无缺口。已有 39 课，今天生成第 40 课。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "phase",
+        "通过",
+        "缺口",
+        "已有",
+        "今天",
+        "生成"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:2:2": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:2:2",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 2,
+      "endLine": 2,
+      "source": "memory",
+      "snippet": "Assistant: 已确定路线图全部 7 个阶段完成，第 40 课需要一个新主题。我选择 **扩散模型与图像生成** —— 这是课程中尚未覆盖的重要 AI 范式，也是 2022-2024 年最具影响力的技术之一。 先搜索最新资料辅助内容生成：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "2022-2024",
+        "确定",
+        "路线图",
+        "全部",
+        "阶段",
+        "完成",
+        "需要",
+        "一个"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:3:3": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:3:3",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 3,
+      "endLine": 3,
+      "source": "memory",
+      "snippet": "Assistant: web_search 不可用，我将基于已有知识生成课程内容。让我先看看现有 notebook 的结构作为参考：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "web-search",
+        "不可",
+        "基于",
+        "已有",
+        "知识",
+        "生成",
+        "课程",
+        "内容"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:4:4": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:4:4",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 4,
+      "endLine": 4,
+      "source": "memory",
+      "snippet": "Assistant: 好，现在我了解了结构。开始生成第 40 课的全部文件。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "现在",
+        "了解",
+        "结构",
+        "开始",
+        "生成",
+        "全部",
+        "文件"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:5:5": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:5:5",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 5,
+      "endLine": 5,
+      "source": "memory",
+      "snippet": "Assistant: 现在生成 HTML 片段：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "现在",
+        "生成",
+        "html",
+        "片段"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:6:6": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:6:6",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 6,
+      "endLine": 6,
+      "source": "memory",
+      "snippet": "Assistant: HTML 片段生成完成。现在进入 Phase 4：级联同步。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "html",
+        "片段",
+        "生成",
+        "完成",
+        "现在",
+        "进入",
+        "phase",
+        "同步"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:7:7": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:7:7",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 7,
+      "endLine": 7,
+      "source": "memory",
+      "snippet": "Assistant: 先 git pull 同步远端，然后更新 README.md：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "readme.md",
+        "git",
+        "pull",
+        "同步",
+        "远端",
+        "然后",
+        "更新"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:8:8": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:8:8",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 8,
+      "endLine": 8,
+      "source": "memory",
+      "snippet": "Assistant: 好，远端已同步，现在更新 README.md：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "readme.md",
+        "远端",
+        "同步",
+        "现在",
+        "更新"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:9:9": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:9:9",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 9,
+      "endLine": 9,
+      "source": "memory",
+      "snippet": "Assistant: 现在更新 docs/index.html、docs/notes-lab.html 和 docs/daily.html：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "docs/index.html",
+        "docs/notes-lab.html",
+        "docs/daily.html",
+        "现在",
+        "更新",
+        "docs",
+        "index.html",
+        "lab.html"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:10:10": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:10:10",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 10,
+      "endLine": 10,
+      "source": "memory",
+      "snippet": "Assistant: 现在更新 roadmap：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "现在",
+        "更新",
+        "roadmap"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:11:11": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:11:11",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 11,
+      "endLine": 11,
+      "source": "memory",
+      "snippet": "Assistant: Phase 5：最终验证。",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "phase",
+        "最终",
+        "验证"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:12:12": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:12:12",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 12,
+      "endLine": 12,
+      "source": "memory",
+      "snippet": "Assistant: Phase 5 验证通过！40 notebooks, 40 dailies, 0 gaps。执行 git push：",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "phase",
+        "验证",
+        "通过",
+        "notebooks",
+        "dailies",
+        "gaps",
+        "执行",
+        "git"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:13:13": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:13:13",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 13,
+      "endLine": 13,
+      "source": "memory",
+      "snippet": "Assistant: --- ## 🧠 今日学习简报：第40课——扩散模型与图像生成 ### 为什么今天学这个？ 前 39 课覆盖了经典 ML → CNN → Transformer → LLM → Agent → RAG 的完整链路，但**生成式 AI 中最重要的范式——扩散模型**一直没覆盖。DALL-E、Stable Diffusion、Midjourney、Sora，它们的底层都是扩散模型。 ### 核心一句话 **扩散模型 = 给图像加噪声（固定的） + 学会去噪声（学出来的）。** 从噪声中「雕刻」出图像，就像雕塑家从大理石中刻出雕像。 #",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "dall-e",
+        "今日",
+        "学习",
+        "简报",
+        "扩散",
+        "模型",
+        "图像",
+        "生成"
+      ]
+    },
+    "memory:memory/.dreams/session-corpus/2026-05-19.txt:14:14": {
+      "key": "memory:memory/.dreams/session-corpus/2026-05-19.txt:14:14",
+      "path": "memory/.dreams/session-corpus/2026-05-19.txt",
+      "startLine": 14,
+      "endLine": 14,
+      "source": "memory",
+      "snippet": "Assistant: ### validate 结果 - Phase 1: ✅ 通过（0 错误） - Phase 2: 无需修复 - Phase 5: ✅ 通过（40 notebooks, 40 dailies, 0 gaps） ### 今日新增 - **第 40 课：扩散模型与图像生成** - 新增文件： - `lessons/40_扩散模型与图像生成.ipynb`（9 cells, 6 代码 + 3 markdown） - `daily/2026-05-19.md` - `notes/扩散模型与图像生成.md` - `docs/nb-40_扩散模型与",
+      "recallCount": 0,
+      "dailyCount": 1,
+      "groundedCount": 0,
+      "totalScore": 0.58,
+      "maxScore": 0.58,
+      "firstRecalledAt": "2026-05-19T19:00:47.726Z",
+      "lastRecalledAt": "2026-05-19T19:00:47.726Z",
+      "queryHashes": [
+        "2fd3160a10b6"
+      ],
+      "recallDays": [
+        "2026-05-20",
+        "2026-05-19"
+      ],
+      "conceptTags": [
+        "lessons/40-扩散模型与图像生成.ipynb",
+        "daily/2026-05-19.md",
+        "notes/扩散模型与图像生成.md",
+        "docs/nb-40-扩散模型与",
+        "validate",
+        "结果",
+        "phase",
+        "通过"
       ]
     }
   }

@@ -1,0 +1,143 @@
+<h1>2026年5月22日 - 第41课：AI 编程助手与代码生成</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解 AI 编程助手的技术内核：从代码补全到 Agent 自主编程，Copilot / Cursor / Claude Code 背后的架构设计</strong></p>
+<h2>为什么今天学这个？</h2>
+<p>你已经掌握了 Transformer、LLM、RAG、Agent 等核心概念。现在要把这些技术「组装」起来，看它们如何构建出你可能每天都在用的工具——AI 编程助手。</p>
+<p>作为架构师，你不只是使用者，更要理解它的技术栈：代码 Tokenizer 怎么处理缩进？FIM 训练目标为什么比续写更适合代码？RAG 在代码场景有什么特殊设计？Agent 模式的循环是怎么跑起来的？</p>
+<p><strong>与前一课的关系：</strong> 第40课学了扩散模型（图像生成），本课转向代码生成——另一个生成式 AI 的重要应用，也是离你日常工作最近的 AI 系统。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前序知识</td>
+<td>第12课 Transformer、第15课 RAG、第16课 Agent、第21课 多模态</td>
+</tr>
+<tr>
+<td>本课核心</td>
+<td>代码 Tokenizer + FIM + 代码 RAG + Agent 循环</td>
+</tr>
+<tr>
+<td>演进关系</td>
+<td>Codex (2021) → Copilot (2022) → Cursor (2023) → Claude Code (2024)</td>
+</tr>
+<tr>
+<td>后续连接</td>
+<td>多模态统一架构、AI 系统综合复盘</td>
+</tr>
+</tbody>
+</table>
+<h2>核心概念解释</h2>
+<h3>1. 代码 Tokenizer — 代码不是普通文本</h3>
+<p>普通文本 Tokenizer 把句子切成词。但代码有独特结构：</p>
+<ul>
+<li><strong>缩进有语法意义</strong>（Python 中 4 空格 = 代码块）</li>
+<li><strong>空行分隔逻辑段落</strong></li>
+<li><strong>关键字高频出现</strong>（<code>def</code>、<code>class</code>、<code>return</code> 应该用短 token）</li>
+</ul>
+<p>代码专用 Tokenizer 在 BPE 基础上增加了缩进编码、空行保留、关键字优先策略。</p>
+<p><strong>直觉类比：</strong> 切代码像切乐高——沿着凸起和凹槽切，而不是随意下刀。</p>
+<h3>2. FIM（Fill-in-the-Middle）— 补全不是续写</h3>
+<p>光标在函数体中间时，模型需要看到光标前后的代码。FIM 训练目标：</p>
+<pre><code>输入: &lt;PREFIX&gt; 前半段代码 &lt;SUFFIX&gt; 后半段代码
+输出: 光标位置应插入的代码
+</code></pre>
+<p><strong>直觉类比：</strong> 完形填空——给你文章的上半段和下半段，猜中间被挖空的部分。</p>
+<p>这是 Codex 系列的核心训练任务，比纯续写更适合代码场景。</p>
+<h3>3. 代码 RAG — 让助手理解你的项目</h3>
+<p>Copilot Chat / Cursor 的核心技术之一。与通用 RAG 的关键差异：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>通用 RAG</th>
+<th>代码 RAG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>索引单位</td>
+<td>固定长度文本块</td>
+<td>函数/类/模块</td>
+</tr>
+<tr>
+<td>检索策略</td>
+<td>语义相似度</td>
+<td>语义 + AST 结构 + 依赖关系</td>
+</tr>
+<tr>
+<td>上下文组装</td>
+<td>Top-K 拼接</td>
+<td>函数 + 依赖 + 类型定义</td>
+</tr>
+</tbody>
+</table>
+<h3>4. Agent 模式 — 自主编程的循环</h3>
+<pre><code>Plan → Code → Execute → Fix（循环直到成功或达到上限）
+</code></pre>
+<p>Claude Code / Devin 的工作方式：
+1. <strong>Plan</strong>：将任务分解为子步骤
+2. <strong>Code</strong>：逐步生成代码
+3. <strong>Execute</strong>：在沙箱中运行，收集错误
+4. <strong>Fix</strong>：根据错误信息修复代码，回到 Execute</p>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>核心机制</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>代码 Tokenizer</td>
+<td>BPE + 缩进 token + 关键字短编码</td>
+<td>像为代码定制的「语言切割器」</td>
+</tr>
+<tr>
+<td>FIM 目标</td>
+<td>P(middle | prefix, suffix)</td>
+<td>给你上下文猜中间，而非给你开头猜结尾</td>
+</tr>
+<tr>
+<td>代码 RAG</td>
+<td>Embedding 检索 + AST 感知 + 依赖追踪</td>
+<td>不只找「看起来像」的代码，还找「逻辑上相关」的</td>
+</tr>
+<tr>
+<td>Agent 循环</td>
+<td>max_rounds: Plan→Code→Execute→Fix</td>
+<td>像一个初级程序员：写代码→运行→看报错→改→再运行</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 中的 <code>SimpleCodeTokenizer</code> 演示了缩进和关键字的特殊处理</li>
+<li><code>fim_completion</code> 模拟了 FIM 补全的核心逻辑</li>
+<li><code>CodeRAG</code> 展示了函数级索引 + 依赖追踪的检索策略</li>
+<li><code>MiniCodeAgent</code> 实现了 Plan → Code → Execute → Fix 的完整循环</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: Copilot 补全和 ChatGPT 生成代码有什么本质区别？</strong>
+A: 补全用 FIM 目标训练，理解光标前后上下文；ChatGPT 是纯续写模式。此外 Copilot 有代码库上下文（RAG），ChatGPT 只有对话历史。</p>
+<p><strong>Q: Agent 模式安全吗？让 AI 自主执行代码？</strong>
+A: 安全防护是多层的：沙箱隔离（Docker）、权限控制（只读文件系统）、人工确认（关键操作需审批）、预算限制（最大执行轮数）。Claude Code 默认需要用户确认才能执行命令。</p>
+<p><strong>Q: Cursor 的 @file / @folder 功能是怎么实现的？</strong>
+A: 本质是手动触发的 RAG——用户指定文件，系统将该文件内容注入 LLM 上下文。这比自动检索更精准，但需要用户知道该看哪些文件。</p>
+<h2>本课总结</h2>
+<ol>
+<li>AI 编程助手 = 代码 LLM + FIM 训练 + 代码 RAG + Agent 框架，四层技术栈</li>
+<li>代码 Tokenizer 针对代码结构优化，不是简单套用文本 Tokenizer</li>
+<li>FIM 是代码补全的核心训练目标，让模型能「填空」而非仅「续写」</li>
+<li>Agent 模式通过 Plan→Code→Execute→Fix 循环实现自主编程</li>
+<li>选型建议：补全用 Copilot，理解项目用 Cursor，复杂任务用 Claude Code</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课将学习 <strong>扩散模型实战（Stable Diffusion 部署与调参）</strong>，从第40课的理论走向实际部署，亲手搭建一个图像生成 pipeline。</p>

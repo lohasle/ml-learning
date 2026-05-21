@@ -1,0 +1,568 @@
+<div class="nb-cell nb-markdown"><h1>第41课：AI 编程助手与代码生成</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 AI 编程助手的技术架构：从代码补全到 Agent 模式</li>
+<li>掌握代码生成模型的核心机制：Tokenizer、上下文窗口、填充目标</li>
+<li>动手实现一个最小化的代码补全引擎</li>
+<li>理解 RAG + 代码 LLM 的组合如何构建编程助手</li>
+<li>了解 Copilot / Cursor / Claude Code 等工具的技术差异</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<h3>从自动补全到 AI 编程助手</h3>
+<p>传统 IDE 的自动补全基于<strong>语法分析 + 关键词匹配</strong>（如 IntelliSense），只能建议已定义的变量和函数。</p>
+<p>AI 编程助手则基于<strong>大语言模型的代码理解能力</strong>，能够：
+- 根据上下文生成整段代码
+- 理解自然语言注释并转化为代码
+- 跨文件理解项目结构
+- 自主规划、编写、测试、修复代码（Agent 模式）</p>
+<h3>技术演进路线</h3>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>代表产品</th>
+<th>核心能力</th>
+<th>技术特征</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0 补全</td>
+<td>GitHub Copilot (2021)</td>
+<td>行/函数级补全</td>
+<td>单文件上下文 + Codex</td>
+</tr>
+<tr>
+<td>2.0 对话</td>
+<td>Cursor, Copilot Chat</td>
+<td>自然语言交互</td>
+<td>多文件上下文 + RAG</td>
+</tr>
+<tr>
+<td>3.0 Agent</td>
+<td>Claude Code, Devin</td>
+<td>自主编程</td>
+<td>工具调用 + 执行环境 + 规划</td>
+</tr>
+</tbody>
+</table></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code>import random
+import re
+from collections import Counter
+import json
+
+print('第41课：AI 编程助手与代码生成')
+print('=' * 50)</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h3>概念1：代码 Tokenizer — 代码不是普通文本</h3>
+<p>代码有独特的结构：缩进有意义、变量名携带语义、括号必须匹配。
+代码专用 Tokenizer 在 BPE 基础上增加了：
+- <strong>空行保留</strong>：空行在 Python 中有语法意义
+- <strong>缩进编码</strong>：将 4 空格作为独立 token
+- <strong>代码词频优化</strong>：<code>def</code>、<code>class</code>、<code>return</code> 等关键字用更短的 token</p>
+<p>直觉类比：普通文本 Tokenizer 把句子切成「词」，代码 Tokenizer 把代码切成「语法构件」。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 简化版代码 Tokenizer 演示
+
+class SimpleCodeTokenizer:
+    """一个极简的代码 Tokenizer，演示核心思想"""
+    
+    def __init__(self):
+        # 特殊 token
+        self.special_tokens = {
+            '&lt;PAD&gt;': 0, '&lt;BOS&gt;': 1, '&lt;EOS&gt;': 2, '&lt;UNK&gt;': 3,
+            '&lt;INDENT&gt;': 4, '&lt;DEDENT&gt;': 5, '&lt;NEWLINE&gt;': 6,
+            '&lt;EMPTY&gt;': 7,  # 空行
+        }
+        # 代码关键字用较短 ID
+        keywords = ['def', 'class', 'return', 'if', 'else', 'for', 'while',
+                    'import', 'from', 'try', 'except', 'with', 'as', 'in',
+                    'print', 'self', 'None', 'True', 'False', 'lambda']
+        self.vocab = dict(self.special_tokens)
+        idx = len(self.vocab)
+        for kw in keywords:
+            self.vocab[kw] = idx
+            idx += 1
+        self.vocab[' '] = idx  # 单空格
+        idx += 1
+        self.vocab['    '] = idx  # 缩进作为独立 token
+        idx += 1
+        
+    def tokenize(self, code: str) -&gt; list:
+        """将代码字符串分割成 token 列表"""
+        tokens = []
+        i = 0
+        while i &lt; len(code):
+            # 匹配缩进（行首空格）
+            indent_match = re.match(r'^( {4}+)', code[i:])
+            if indent_match and (i == 0 or code[i-1] == '\n'):
+                n = len(indent_match.group(1)) // 4
+                tokens.extend(['    '] * n)
+                i += n * 4
+                continue
+            # 匹配标识符/关键字
+            id_match = re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*', code[i:])
+            if id_match:
+                word = id_match.group(0)
+                tokens.append(word)
+                i += len(word)
+                continue
+            # 换行
+            if code[i] == '\n':
+                # 检查下一行是否为空行
+                if i + 1 &lt; len(code) and code[i+1] == '\n':
+                    tokens.append('&lt;NEWLINE&gt;')
+                    tokens.append('&lt;EMPTY&gt;')
+                    i += 2
+                    continue
+                tokens.append('&lt;NEWLINE&gt;')
+                i += 1
+                continue
+            # 其他字符原样保留
+            tokens.append(code[i])
+            i += 1
+        return tokens
+    
+    def encode(self, tokens: list) -&gt; list:
+        """将 token 列表转为 ID 列表"""
+        return [self.vocab.get(t, self.vocab['&lt;UNK&gt;']) for t in tokens]
+
+# 测试
+tokenizer = SimpleCodeTokenizer()
+sample_code = '''def hello(name):
+    print(f"Hello {name}")
+    return name'''
+
+tokens = tokenizer.tokenize(sample_code)
+ids = tokenizer.encode(tokens)
+print('原始代码:')
+print(sample_code)
+print(f'\nTokens ({len(tokens)}个): {tokens}')
+print(f'\nToken IDs: {ids}')
+print(f'\n💡 关键观察：')
+print(f'  - "    "（缩进）被识别为独立 token')
+print(f'  - 关键字 def/return/print 使用预定义短 ID')
+print(f'  - 代码结构被完整保留')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h3>概念2：填充目标（Fill-in-the-Middle, FIM）</h3>
+<p>代码补全不是「续写」，而是「填空」。</p>
+<p>当光标在函数体中间时，模型需要看到光标前后的代码，预测光标位置的内容。</p>
+<p><strong>FIM 目标函数：</strong></p>
+<pre><code>输入: &lt;PREFIX&gt; 代码前半段 &lt;SUFFIX&gt; 代码后半段
+输出: 光标位置应插入的代码
+</code></pre>
+<p>直觉类比：完形填空 —— 给你文章的上半段和下半段，让你猜中间被挖空的部分。</p>
+<p>这是 Codex/GPT-Code 系列训练时的核心任务之一。</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟 FIM（Fill-in-the-Middle）补全
+
+def fim_completion(prefix: str, suffix: str, model_pool: dict) -&gt; str:
+    """
+    模拟代码模型的 Fill-in-the-Middle 补全。
+    真实模型会用 Transformer 编码 prefix+suffix，这里用规则模拟。
+    """
+    # 分析 prefix 中的上下文信息
+    context = {
+        'has_for': 'for ' in prefix,
+        'has_if': 'if ' in prefix,
+        'has_def': 'def ' in prefix,
+        'indent_level': len(prefix.split('\n')[-1]) // 4 if prefix else 0,
+        'var_names': re.findall(r'[a-z_][a-z0-9_]*(?=\s*[=,])', prefix),
+    }
+    
+    # 在 model_pool 中查找最匹配的补全模板
+    best_match = None
+    best_score = 0
+    for pattern, completion in model_pool.items():
+        score = 0
+        if pattern == 'loop_body' and context['has_for']:
+            score = 10
+        elif pattern == 'condition_body' and context['has_if']:
+            score = 10
+        elif pattern == 'function_body' and context['has_def']:
+            score = 10
+        elif pattern == 'sort_pattern' and ('sort' in suffix.lower() or 'sort' in prefix.lower()):
+            score = 15
+        elif pattern == 'sum_pattern' and ('sum' in suffix.lower() or 'total' in prefix.lower()):
+            score = 15
+        
+        # 缩进匹配加分
+        expected_indent = completion.count('    ')
+        if abs(expected_indent - context['indent_level']) &lt;= 1:
+            score += 3
+        
+        if score &gt; best_score:
+            best_score = score
+            best_match = completion
+    
+    return best_match if best_match else '# TODO: implement'
+
+# 定义补全模板库（模拟模型的「知识」）
+model_pool = {
+    'sort_pattern': '        result.sort()\n        return result',
+    'sum_pattern': '        total = 0\n        for item in items:\n            total += item\n        return total',
+    'loop_body': '        item = items[i]\n        if item &gt; threshold:\n            result.append(item)',
+    'function_body': '    result = []\n    for item in data:\n        if condition(item):\n            result.append(item)\n    return result',
+    'condition_body': '        return True\n    else:\n        return False',
+}
+
+# 测试 FIM 补全
+print('📝 Fill-in-the-Middle 补全演示')
+print('=' * 50)
+
+# 场景1：排序函数
+prefix1 = 'def sort_results(results):\n    filtered = [r for r in results if r.valid]\n    '
+suffix1 = '\n\nprint(sort_results(data))'
+completion1 = fim_completion(prefix1, suffix1, model_pool)
+print(f'场景1 - 排序函数:')
+print(f'  Prefix: ...{prefix1[-40:]}')
+print(f'  补全: {completion1.strip()}')
+print()
+
+# 场景2：循环体
+prefix2 = 'def filter_items(items, threshold):\n    result = []\n    for i in range(len(items)):\n        '
+suffix2 = '\n    return result'
+completion2 = fim_completion(prefix2, suffix2, model_pool)
+print(f'场景2 - 循环体:')
+print(f'  Prefix: ...{prefix2[-50:]}')
+print(f'  补全: {completion2.strip()}')
+
+print(f'\n💡 FIM 的核心价值：')
+print(f'  - 不是从左到右续写，而是理解光标位置两侧的上下文')
+print(f'  - 让补全既符合前面的逻辑，又和后面的代码衔接')
+print(f'  - 真实模型用注意力机制同时编码 prefix 和 suffix')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h3>概念3：RAG + 代码 — 让助手理解你的项目</h3>
+<p>Copilot Chat / Cursor 的核心技术之一：<strong>代码库级别的 RAG</strong>。</p>
+<p><strong>工作流程：</strong>
+1. 用户提问「怎么修改用户认证逻辑？」
+2. 助手将问题转为 embedding，在代码库向量索引中检索相关代码片段
+3. 将检索到的代码片段 + 用户问题一起发给 LLM
+4. LLM 基于项目上下文生成回答</p>
+<p><strong>与通用 RAG 的差异：</strong>
+- 索引单位是「函数/类」而非固定长度 chunk
+- 检索时考虑 AST 结构和依赖关系
+- 需要处理多文件之间的引用关系</p></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 模拟代码库级别的 RAG 检索
+
+class CodeRAG:
+    """极简版代码 RAG 引擎，演示核心思想"""
+    
+    def __init__(self, codebase: dict):
+        """
+        codebase: {函数名: {code: 源码, doc: 文档, deps: [依赖函数]}}
+        """
+        self.codebase = codebase
+        # 构建简单的关键词索引（真实系统用 embedding）
+        self.index = self._build_index()
+    
+    def _build_index(self) -&gt; dict:
+        """为每个函数构建关键词倒排索引"""
+        index = {}
+        for name, info in self.codebase.items():
+            # 提取关键词：函数名、文档字符串、代码中的标识符
+            keywords = set()
+            keywords.add(name.lower())
+            # 函数名分词：authenticate_user -&gt; authenticate, user
+            parts = re.findall(r'[a-z]+', name.lower())
+            keywords.update(parts)
+            # 文档中的关键词
+            if info.get('doc'):
+                keywords.update(re.findall(r'[a-z]{3,}', info['doc'].lower()))
+            # 代码中的标识符
+            identifiers = re.findall(r'[a-z_][a-z0-9_]{2,}', info['code'].lower())
+            keywords.update(identifiers)
+            
+            for kw in keywords:
+                if kw not in index:
+                    index[kw] = []
+                index[kw].append(name)
+        return index
+    
+    def search(self, query: str, top_k: int = 3) -&gt; list:
+        """检索与查询相关的代码片段"""
+        query_keywords = set(re.findall(r'[a-z]{3,}', query.lower()))
+        scores = Counter()
+        
+        for kw in query_keywords:
+            if kw in self.index:
+                for func_name in self.index[kw]:
+                    scores[func_name] += 1
+        
+        # 同时检索依赖函数
+        results = []
+        seen = set()
+        for func_name, score in scores.most_common(top_k):
+            info = self.codebase[func_name]
+            if func_name not in seen:
+                results.append({
+                    'name': func_name,
+                    'code': info['code'],
+                    'score': score,
+                    'type': 'direct'
+                })
+                seen.add(func_name)
+            # 追加依赖
+            for dep in info.get('deps', []):
+                if dep not in seen and dep in self.codebase:
+                    results.append({
+                        'name': dep,
+                        'code': self.codebase[dep]['code'],
+                        'score': score - 0.5,
+                        'type': 'dependency'
+                    })
+                    seen.add(dep)
+        
+        return results
+
+# 模拟一个小型代码库
+mock_codebase = {
+    'authenticate_user': {
+        'code': 'def authenticate_user(username, password):\n    user = db.find_user(username)\n    if user and verify_password(password, user.password_hash):\n        return create_token(user.id)\n    return None',
+        'doc': 'Authenticate user with username and password, return JWT token',
+        'deps': ['verify_password', 'create_token']
+    },
+    'verify_password': {
+        'code': 'def verify_password(plain, hashed):\n    return bcrypt.checkpw(plain.encode(), hashed.encode())',
+        'doc': 'Verify password against bcrypt hash',
+        'deps': []
+    },
+    'create_token': {
+        'code': 'def create_token(user_id):\n    payload = {"sub": user_id, "exp": time.time() + 3600}\n    return jwt.encode(payload, SECRET_KEY)',
+        'doc': 'Create JWT token for authenticated user',
+        'deps': []
+    },
+    'get_user_profile': {
+        'code': 'def get_user_profile(user_id):\n    user = db.find_user_by_id(user_id)\n    return {"name": user.name, "email": user.email}',
+        'doc': 'Get user profile information',
+        'deps': []
+    }
+}
+
+# 测试 RAG 检索
+rag = CodeRAG(mock_codebase)
+print('🔍 代码 RAG 检索演示')
+print('=' * 50)
+
+query = 'How does user authentication work?'
+results = rag.search(query, top_k=3)
+print(f'查询: "{query}"')
+print(f'\n检索到 {len(results)} 个相关代码片段:')\n
+for r in results:
+    tag = '🎯' if r['type'] == 'direct' else '🔗'
+    print(f'{tag} [{r["type"]}] {r["name"]} (score: {r["score"]})')
+    print(f'   {r["code"][:80]}...')
+    print()
+
+print('💡 关键观察:')
+print('  - authenticate_user 被直接命中（关键词匹配）')
+print('  - verify_password 和 create_token 被依赖关系带入')
+print('  - 这样 LLM 能看到完整的认证链路，而不仅仅是匹配到的函数')</code></pre>
+</div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 演示 Agent 模式的核心循环：Plan → Code → Execute → Fix
+
+class MiniCodeAgent:
+    """极简版 AI 编程 Agent，演示核心循环"""
+    
+    def __init__(self):
+        self.max_fix_rounds = 3
+        self.execution_log = []
+    
+    def plan(self, task: str) -&gt; list:
+        """将任务分解为步骤（真实 Agent 用 LLM 生成）"""
+        plan_templates = {
+            'sort': [
+                'Define sort function with list parameter',
+                'Implement comparison logic',
+                'Return sorted result'
+            ],
+            'calculate': [
+                'Parse input numbers',
+                'Apply calculation',
+                'Format and return result'
+            ]
+        }
+        for key, steps in plan_templates.items():
+            if key in task.lower():
+                return steps
+        return ['Understand requirement', 'Write code', 'Test code']
+    
+    def generate_code(self, steps: list) -&gt; str:
+        """根据步骤生成代码（模拟）"""
+        if any('sort' in s.lower() for s in steps):
+            return 'def sort_numbers(nums):\n    return sorted(nums)'
+        return 'def calculate(expr):\n    return eval(expr)'
+    
+    def execute(self, code: str, test_input=None) -&gt; dict:
+        """在沙箱中执行代码"""
+        try:
+            local_vars = {}
+            exec(code, {"__builtins__": {}}, local_vars)
+            # 找到函数并执行
+            func_name = [k for k in local_vars if callable(local_vars[k])]
+            if func_name and test_input:
+                result = local_vars[func_name[0]](test_input)
+                return {'success': True, 'result': result}
+            return {'success': True, 'result': 'Code compiled OK'}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+    
+    def fix_code(self, code: str, error: str) -&gt; str:
+        """根据错误信息修复代码（模拟）"""
+        if 'NameError' in error:
+            # 模拟修复：添加缺失的 import
+            return code  # 简化处理
+        return code
+    
+    def run(self, task: str, test_input=None):
+        """完整 Agent 循环"""
+        print(f'🎯 任务: {task}')
+        print('-' * 40)
+        
+        # Step 1: Plan
+        steps = self.plan(task)
+        print(f'📋 计划: {steps}')
+        
+        # Step 2: Generate
+        code = self.generate_code(steps)
+        print(f'\n💻 生成代码:\n{code}')
+        
+        # Step 3: Execute + Fix loop
+        for round_num in range(self.max_fix_rounds):
+            result = self.execute(code, test_input)
+            print(f'\n▶️ 执行 (第{round_num+1}次): {"✅ 成功" if result["success"] else "❌ 失败"}')
+            if result['success']:
+                print(f'   结果: {result.get("result", "N/A")}')
+                return {'status': 'success', 'code': code, 'rounds': round_num + 1}
+            else:
+                print(f'   错误: {result["error"]}')
+                code = self.fix_code(code, result['error'])
+                print(f'   🔧 尝试修复...')
+        
+        return {'status': 'failed', 'code': code, 'rounds': self.max_fix_rounds}
+
+# 运行 Agent
+agent = MiniCodeAgent()
+result = agent.run('Sort a list of numbers', test_input=[3, 1, 4, 1, 5, 9])
+print(f'\n{"=" * 40}')
+print(f'📊 Agent 执行报告: {result["status"]}, 用了 {result["rounds"]} 轮')
+print(f'\n💡 Agent 模式的核心循环: Plan → Code → Execute → Fix')
+print(f'   Claude Code / Devin 都遵循这个模式，只是规划能力更强')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>各代 AI 编程助手对比</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Copilot (补全)</th>
+<th>Copilot Chat / Cursor</th>
+<th>Claude Code / Devin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>交互模式</strong></td>
+<td>内联补全</td>
+<td>对话 + 补全</td>
+<td>自主 Agent</td>
+</tr>
+<tr>
+<td><strong>上下文范围</strong></td>
+<td>当前文件</td>
+<td>多文件 + 项目索引</td>
+<td>完整项目 + 执行环境</td>
+</tr>
+<tr>
+<td><strong>核心模型</strong></td>
+<td>Codex → GPT-4</td>
+<td>GPT-4 / Claude</td>
+<td>Claude / 专用模型</td>
+</tr>
+<tr>
+<td><strong>代码理解</strong></td>
+<td>单文件语法树</td>
+<td>RAG + 全局索引</td>
+<td>RAG + 运行时反馈</td>
+</tr>
+<tr>
+<td><strong>执行能力</strong></td>
+<td>无</td>
+<td>有限（预览）</td>
+<td>完整沙箱执行</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>快速补全</td>
+<td>探索/重构</td>
+<td>复杂任务/全栈开发</td>
+</tr>
+</tbody>
+</table>
+<h3>架构师视角：选型建议</h3>
+<ul>
+<li><strong>日常编码</strong>：Copilot 补全就够了（最快，干扰最少）</li>
+<li><strong>理解新项目</strong>：Cursor / Copilot Chat（多文件上下文）</li>
+<li><strong>复杂任务</strong>：Claude Code（自主执行 + 迭代修复）</li>
+<li><strong>最佳实践</strong>：三者组合使用，根据任务复杂度切换</li>
+</ul></div>
+<div class="nb-cell nb-code">
+  <div class="nb-label">In [None]</div>
+  <pre><code># 可视化：AI 编程助手的技术栈层级
+
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, ax = plt.subplots(1, 1, figsize=(12, 7))
+
+# 绘制技术栈层级
+layers = [
+    ('应用层\nCopilot / Cursor / Claude Code', '#C96442', 0.95),
+    ('Agent 框架层\nPlan → Code → Execute → Fix', '#D4845E', 0.75),
+    ('RAG 层\n代码索引 + 语义检索 + 上下文组装', '#E8A87C', 0.55),
+    ('模型层\n代码 LLM + FIM 训练 + 代码 Tokenizer', '#A8C686', 0.35),
+    ('基础设施层\nGPU 集群 / 模型服务 / 沙箱运行时', '#7FB685', 0.15),
+]
+
+for i, (label, color, y) in enumerate(layers):
+    rect = mpatches.FancyBboxPatch(
+        (0.5, y - 0.08), 9, 0.15,
+        boxstyle="round,pad=0.1",
+        facecolor=color, edgecolor='#333', linewidth=1.5, alpha=0.85
+    )
+    ax.add_patch(rect)
+    ax.text(5, y, label, ha='center', va='center',
+            fontsize=11, fontweight='bold', color='white' if i &lt; 2 else '#333')
+
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 1.1)
+ax.set_title('AI 编程助手技术栈层级', fontsize=14, fontweight='bold', pad=15)
+ax.axis('off')
+
+plt.tight_layout()
+plt.savefig('ai_coding_stack.png', dpi=100, bbox_inches='tight')
+plt.show()
+print('📊 AI 编程助手是多层技术栈的组合：模型能力 + RAG + Agent 框架 + 应用交互')</code></pre>
+</div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>今日要点</h3>
+<ol>
+<li><strong>代码 Tokenizer</strong> 不等于文本 Tokenizer——缩进、空行、关键字都有特殊处理</li>
+<li><strong>FIM（Fill-in-the-Middle）</strong> 是代码补全的核心训练目标，让模型能「填空」而非仅「续写」</li>
+<li><strong>代码 RAG</strong> 让助手理解你的项目，关键在函数级索引 + 依赖追踪</li>
+<li><strong>Agent 模式</strong> 的核心循环是 Plan → Code → Execute → Fix，让 AI 能自主完成复杂任务</li>
+<li><strong>选型建议</strong>：补全用 Copilot，理解项目用 Cursor，复杂任务用 Claude Code</li>
+</ol>
+<h3>课后思考</h3>
+<ol>
+<li>你日常使用的编程助手中，哪些功能用到了 FIM？哪些只是简单的续写？</li>
+<li>如果要为你的团队搭建一个内部代码助手，RAG 层的索引策略该如何设计？</li>
+<li>Agent 模式的「自主执行」带来了哪些安全风险？应该如何防护？</li>
+</ol></div>
