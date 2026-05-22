@@ -1,0 +1,139 @@
+<h1>2026年5月23日 - 第42课：扩散模型实战 — Stable Diffusion 部署与调参</h1>
+<h2>今日学习主题</h2>
+<p><strong>把第40课的扩散模型理论落地：拆解 Stable Diffusion 的三大组件，掌握推理管线与关键调参技巧</strong></p>
+<h2>为什么学这个？</h2>
+<p>第40课学了扩散模型的数学原理——前向加噪、反向去噪。但理论到实战之间有巨大鸿沟：你知道 DDPM 的公式，但怎么把 prompt 变成一张图？CFG Scale 调多少合适？为什么 SD 要在潜在空间做扩散？</p>
+<p>本课就是填补这个鸿沟。作为架构师，你不需要训练模型，但需要理解部署时每个组件的角色和调参逻辑。</p>
+<p><strong>与前一课的关系：</strong> 第41课学了 AI 编程助手（代码生成），本课回到视觉生成，深入扩散模型的工程实践。</p>
+<h2>这个知识点在 AI 演进中的位置</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前序知识</td>
+<td>第40课 扩散模型理论、第11课 CNN、第13课 Attention</td>
+</tr>
+<tr>
+<td>本课核心</td>
+<td>VAE 压缩 + UNet 去噪 + CLIP 文本条件 + CFG 调参</td>
+</tr>
+<tr>
+<td>演进关系</td>
+<td>DDPM (2020) → Latent Diffusion (2021) → SD 1.5 (2022) → SDXL (2023) → SD3 (2024)</td>
+</tr>
+<tr>
+<td>后续连接</td>
+<td>视频生成与 DiT 架构、多模态统一架构</td>
+</tr>
+</tbody>
+</table>
+<h2>核心概念解释</h2>
+<h3>1. 潜在空间扩散（Latent Diffusion）</h3>
+<p>传统扩散在像素空间操作（512×512×3 = 786K 维），计算量巨大。Stable Diffusion 的核心创新：<strong>先用 VAE 把图像压缩到 64×64×4 的潜在空间（16K 维），在这里做扩散，再用 VAE 解码回像素空间</strong>。</p>
+<ul>
+<li>压缩比：48 倍</li>
+<li>效果：消费级 GPU 就能推理，训练也变得可行</li>
+<li>代价：VAE 的压缩会丢失少量高频细节</li>
+</ul>
+<h3>2. UNet 去噪架构</h3>
+<p>UNet 不是普通的 CNN，它有三个关键设计：
+- <strong>对称的编码-解码结构</strong>：下采样提取特征，上采样恢复分辨率
+- <strong>跳跃连接</strong>：保留低层细节（边缘、纹理）
+- <strong>Cross-Attention 层</strong>：在中间注入文本条件，让生成内容听从 prompt</p>
+<p>每一步去噪，UNet 都要做一次前向传播——这就是为什么 Steps 越多越慢。</p>
+<h3>3. CFG（Classifier-Free Guidance）</h3>
+<p>CFG 是 Stable Diffusion 最精妙的调参机制：</p>
+<pre><code>noise_pred = noise_uncond + cfg_scale × (noise_cond - noise_uncond)
+</code></pre>
+<p>直觉理解：无条件预测是「模型的默认倾向」，条件预测是「带 prompt 的方向」。放大两者之差，就像在说「我不仅要往 prompt 走，还要走得比默认远」。</p>
+<table>
+<thead>
+<tr>
+<th>CFG Scale</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>完全自由，忽略 prompt</td>
+</tr>
+<tr>
+<td>7-9</td>
+<td>平衡区，最佳效果</td>
+</tr>
+<tr>
+<td>15+</td>
+<td>过度遵从，图像崩坏</td>
+</tr>
+</tbody>
+</table>
+<h3>4. LoRA 微调</h3>
+<p>冻结 UNet 原始权重，只在 Cross-Attention 层旁添加低秩矩阵（rank 4-64）。几 MB 权重就能学到新风格/新角色，部署时可以动态合并。</p>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/机制</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VAE 压缩</td>
+<td>512³→64²×4</td>
+<td>把高清图压成缩略图级别的小矩阵</td>
+</tr>
+<tr>
+<td>UNet 去噪</td>
+<td>x_{t-1} = x_t - ε_θ(x_t, t, c)</td>
+<td>猜测噪声长什么样，减掉它</td>
+</tr>
+<tr>
+<td>CFG 引导</td>
+<td>uncond + s×(cond - uncond)</td>
+<td>放大「你要的」和「默认的」之差</td>
+</tr>
+<tr>
+<td>DDPM 调度</td>
+<td>β_t 从小到大</td>
+<td>一开始慢慢加噪，后面加快</td>
+</tr>
+<tr>
+<td>LoRA</td>
+<td>W' = W + AB (rank r)</td>
+<td>在原权重旁搭一条小路</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li><strong>Steps 调参</strong>：从 20 开始，看效果再加。50 步以上边际收益很小</li>
+<li><strong>CFG Scale</strong>：7.5 是 SD 1.5 的甜点。不同模型甜点不同</li>
+<li><strong>Negative Prompt</strong>：不只是排除，实际参与 CFG 计算，非常关键</li>
+<li><strong>Sampler 选择</strong>：Euler A 通用快速，DPM++ 2M Karras 细节更丰富</li>
+<li><strong>显存优化</strong>：fp16 精度、xFormers 注意力优化、VAE 切片解码</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: 为什么 SD 要在潜在空间做扩散，不直接在像素空间？</strong>
+A: 像素空间维度太高（786K vs 16K），每一步 UNet 都要处理高维张量。潜在空间把计算量降了 48 倍，让消费级 GPU 也能跑。代价是 VAE 可能丢失少量高频细节。</p>
+<p><strong>Q: CFG Scale 为什么不是越大越好？</strong>
+A: CFG 放大的是「条件方向」和「无条件方向」之差。当 scale 过大，这个差被过度放大，导致颜色过饱和、结构崩坏。就像把音量开到最大——信号在放大，但噪声也在放大，最终失真。</p>
+<p><strong>Q: LoRA 微调和全量微调有什么区别？</strong>
+A: 全量微调需要更新 UNet 全部 860M 参数，需要大量 GPU 显存和数据。LoRA 只训练旁路的低秩矩阵（几 MB），用少量图片就能学到新风格。代价是表达能力有限，不能学太复杂的概念。</p>
+<h2>本课总结</h2>
+<ol>
+<li><strong>Stable Diffusion = VAE + UNet + CLIP</strong> 三个组件的协同工作</li>
+<li><strong>潜在空间扩散</strong>是让扩散模型在消费级硬件上可行的关键创新</li>
+<li><strong>CFG Scale</strong> 是最重要的调参旋钮，7-9 是最佳区间</li>
+<li><strong>LoRA</strong> 让微调变得轻量，几 MB 权重即可个性化</li>
+<li>部署时关注：fp16 精度、注意力优化、VAE 切片解码</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课将学习<strong>视频生成与 DiT 架构</strong>——看扩散模型如何从静态图像走向动态视频，以及 DiT（Diffusion Transformer）如何用 Transformer 替代 UNet，开启 Sora 等视频生成系统的新范式。</p>

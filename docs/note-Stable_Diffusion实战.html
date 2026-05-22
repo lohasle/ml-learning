@@ -1,0 +1,74 @@
+<h1>Stable Diffusion 实战：部署与调参</h1>
+<h2>核心架构</h2>
+<p>Stable Diffusion 由三大组件组成：</p>
+<ol>
+<li><strong>VAE（变分自编码器）</strong>：图像 ↔ 潜在空间的桥梁</li>
+<li>编码器：512×512×3 → 64×64×4（压缩 48 倍）</li>
+<li>
+<p>解码器：64×64×4 → 512×512×3</p>
+</li>
+<li>
+<p><strong>UNet</strong>：去噪引擎</p>
+</li>
+<li>接收：带噪声的 latent + 时间步 t + 文本条件</li>
+<li>输出：预测的噪声</li>
+<li>
+<p>关键结构：对称编码-解码 + 跳跃连接 + Cross-Attention</p>
+</li>
+<li>
+<p><strong>CLIP Text Encoder</strong>：文本理解</p>
+</li>
+<li>将 prompt 编码为 768 维向量</li>
+<li>通过 Cross-Attention 注入 UNet</li>
+</ol>
+<h2>推理管线</h2>
+<pre><code>Prompt → CLIP → text_embedding
+噪声 latent → UNet × N steps → 去噪 latent → VAE Decoder → 图像
+</code></pre>
+<h2>关键调参</h2>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>推荐范围</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Steps</td>
+<td>20-30</td>
+<td>去噪精度</td>
+</tr>
+<tr>
+<td>CFG Scale</td>
+<td>7-9</td>
+<td>Prompt 遵循度</td>
+</tr>
+<tr>
+<td>Sampler</td>
+<td>Euler A / DPM++ 2M Karras</td>
+<td>去噪算法</td>
+</tr>
+<tr>
+<td>Negative Prompt</td>
+<td>必填</td>
+<td>排除不想要的内容</td>
+</tr>
+</tbody>
+</table>
+<h2>CFG 公式</h2>
+<pre><code>noise_pred = noise_uncond + cfg_scale × (noise_cond - noise_uncond)
+</code></pre>
+<h2>LoRA 微调</h2>
+<ul>
+<li>冻结 UNet，在 Cross-Attention 层添加低秩矩阵</li>
+<li>只需几 MB 权重，少量图片即可学到新风格</li>
+</ul>
+<h2>关联概念</h2>
+<ul>
+<li>第40课：扩散模型理论（DDPM/DDIM）</li>
+<li>第11课：CNN（UNet 的基础）</li>
+<li>第13课：Attention（Cross-Attention 机制）</li>
+<li>第24课：LoRA（低秩适配）</li>
+</ul>

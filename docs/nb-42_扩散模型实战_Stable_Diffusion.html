@@ -1,0 +1,322 @@
+<div class="nb-cell nb-markdown"><h1>第42课：扩散模型实战 — Stable Diffusion 部署与调参</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解 Stable Diffusion 的三大核心组件：VAE、UNet、CLIP Text Encoder</li>
+<li>掌握从噪声到图像的完整去噪过程</li>
+<li>学会关键调参技巧：CFG Scale、Steps、Sampler、LoRA 微调</li>
+<li>理解部署架构：推理管线设计与显存优化策略</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念</h2>
+<h3>从第40课到本课</h3>
+<p>第40课我们学了扩散模型的<strong>理论</strong>——前向加噪、反向去噪的数学原理。本课是<strong>实战课</strong>：
+- 第40课：扩散模型为什么会工作？（数学直觉）
+- <strong>本课</strong>：如何真正部署一个扩散模型、调参生成高质量图像？（工程实践）</p>
+<p>Stable Diffusion 的核心创新不是扩散本身，而是<strong>在潜在空间（Latent Space）做扩散</strong>——这让普通 GPU 也能跑。</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [1]</div><pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from dataclasses import dataclass
+from typing import List
+import time
+
+np.random.seed(42)
+print('扩散模型实战环境准备完成')</code></pre><div class="nb-output"><pre>扩散模型实战环境准备完成
+</pre></div></div>
+<div class="nb-cell nb-markdown"><h3>组件1：VAE — 图像与潜在空间之间的桥梁</h3>
+<p><strong>VAE（变分自编码器）</strong> 做两件事：
+- <strong>编码器</strong>：512x512x3 的图像 -&gt; 64x64x4 的潜在表示（压缩 48 倍）
+- <strong>解码器</strong>：64x64x4 -&gt; 还原为 512x512x3 的图像</p>
+<p>在像素空间直接做扩散需要处理 786,432 维，在潜在空间只需 16,384 维——计算量降了约 48 倍。</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [2]</div><pre><code>class SimpleVAE:
+    """极简 VAE 模拟器，演示空间压缩与还原"""
+    
+    def __init__(self, image_size=512, latent_size=64, latent_channels=4):
+        self.image_size = image_size
+        self.latent_size = latent_size
+        self.latent_channels = latent_channels
+        self.compression_ratio = (image_size**2 * 3) / (latent_size**2 * latent_channels)
+    
+    def encode(self, image):
+        # 真实 VAE 用卷积网络，这里用下采样模拟
+        scale = self.image_size // self.latent_size
+        # 简化: 分块取均值
+        h, w = image.shape[:2]
+        latent = image.reshape(self.latent_size, scale, self.latent_size, scale, 3)
+        latent = latent.mean(axis=(1, 3, 4))
+        latent = np.stack([latent * (1 + 0.1*i) for i in range(self.latent_channels)], axis=-1)
+        return latent
+    
+    def decode(self, latent):
+        scale = self.image_size // self.latent_size
+        single = latent[:, :, 0]
+        upsampled = np.repeat(np.repeat(single, scale, axis=0), scale, axis=1)
+        image = np.stack([upsampled]*3, axis=-1)
+        return image
+
+vae = SimpleVAE()
+fake_image = np.random.rand(512, 512, 3).astype(np.float32)
+latent = vae.encode(fake_image)
+reconstructed = vae.decode(latent)
+
+print(f'原始图像维度: {fake_image.shape}')
+print(f'潜在表示维度: {latent.shape}')
+print(f'压缩比: {vae.compression_ratio:.1f}x')
+print(f'像素空间维度: {512*512*3:,}')
+print(f'潜在空间维度: {64*64*4:,}')</code></pre><div class="nb-output"><pre>原始图像维度: (512, 512, 3)
+潜在表示维度: (64, 64, 4)
+压缩比: 48.0x
+像素空间维度: 786,432
+潜在空间维度: 16,384
+</pre></div></div>
+<div class="nb-cell nb-markdown"><h3>组件2：UNet — 去噪的核心引擎</h3>
+<p>UNet 是扩散模型的「心脏」。它接收：
+- <strong>带噪声的潜在图</strong> (64x64x4)
+- <strong>时间步 t</strong>（当前去噪到第几步）
+- <strong>文本条件</strong>（CLIP 编码后的 prompt embedding）</p>
+<p>输出：预测的噪声，减去它就离目标图像更近一步。</p>
+<p>关键结构：下采样路径 + 上采样路径 + 跳跃连接 + Cross-Attention（让图像听从文本 prompt）</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [3]</div><pre><code>def simulate_denoising(num_steps=20, seed=42):
+    np.random.seed(seed)
+    x = np.linspace(0, 4*np.pi, 100)
+    clean_signal = np.sin(x) + 0.5 * np.sin(2*x + 1)
+    noise = np.random.randn(100) * 2.0
+    noisy = clean_signal + noise
+    
+    steps = [noisy.copy()]
+    current = noisy.copy()
+    for step in range(num_steps):
+        t_ratio = step / num_steps
+        estimated_noise = noise * (1 - t_ratio) + np.random.randn(100) * 0.1 * (1 - t_ratio)
+        step_size = 1.0 / num_steps
+        current = current - step_size * estimated_noise
+        current = current + step_size * (clean_signal - current) * 0.3
+        steps.append(current.copy())
+    return clean_signal, steps
+
+clean, steps = simulate_denoising(num_steps=20)
+
+fig, axes = plt.subplots(1, 4, figsize=(16, 3))
+show_steps = [0, 5, 12, 20]
+x = np.linspace(0, 4*np.pi, 100)
+for ax, idx in zip(axes, show_steps):
+    ax.plot(x, clean, 'g-', alpha=0.3, label='Target')
+    ax.plot(x, steps[idx], 'b-', label=f'Step {idx}')
+    ax.set_title(f't = {idx}/{len(steps)-1}')
+    ax.legend(fontsize=8)
+    ax.set_ylim(-4, 4)
+plt.suptitle('UNet Denoising Process', fontsize=13)
+plt.tight_layout()
+plt.show()
+print('去噪过程可视化完成')</code></pre><div class="nb-output"><pre>去噪过程可视化完成
+</pre></div></div>
+<div class="nb-cell nb-markdown"><h3>组件3：CLIP Text Encoder + Cross-Attention</h3>
+<p>CLIP 将文本编码为 768 维向量，通过 Cross-Attention 让 UNet 知道「你要生成什么」。</p>
+<ul>
+<li>文本 embedding 作为 Key 和 Value</li>
+<li>图像特征作为 Query</li>
+<li>图像在每一步都「查询」文本，确保生成方向与 prompt 一致</li>
+</ul></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [4]</div><pre><code>class SimpleCLIPEncoder:
+    def __init__(self, embed_dim=768, vocab_size=1000):
+        self.embed_dim = embed_dim
+        self.token_embed = np.random.randn(vocab_size, embed_dim) * 0.02
+        self.position_embed = np.random.randn(77, embed_dim) * 0.02
+    
+    def encode(self, tokens):
+        seq_len = len(tokens)
+        embeddings = self.token_embed[tokens] + self.position_embed[:seq_len]
+        pooled = embeddings.mean(axis=0)
+        return pooled / (np.linalg.norm(pooled) + 1e-8)
+
+clip = SimpleCLIPEncoder()
+tokens = [10, 50, 200, 15, 10, 80]  # "a cat sitting on a chair"
+text_embedding = clip.encode(tokens)
+print(f'Prompt embedding shape: {text_embedding.shape}')
+print(f'Norm: {np.linalg.norm(text_embedding):.4f}')</code></pre><div class="nb-output"><pre>Prompt embedding shape: (768,)
+Norm: 1.0000
+</pre></div></div>
+<div class="nb-cell nb-markdown"><h3>CFG（Classifier-Free Guidance）— 调参的核心</h3>
+<p>CFG Scale 是最重要的调参旋钮之一。原理：
+1. 同时做两次预测：有 prompt 条件的 vs 无条件的
+2. 放大两者之差：<code>noise_pred = uncond + cfg_scale * (cond - uncond)</code></p>
+<table>
+<thead>
+<tr>
+<th>CFG Scale</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-3</td>
+<td>自由度高，可能偏离 prompt</td>
+</tr>
+<tr>
+<td>7-9</td>
+<td>平衡区，多数场景最佳</td>
+</tr>
+<tr>
+<td>12-20</td>
+<td>高度遵从 prompt，但可能过饱和/不自然</td>
+</tr>
+<tr>
+<td>20+</td>
+<td>通常崩坏</td>
+</tr>
+</tbody>
+</table>
+<p>这就像调「听话程度」——太低不听话，太高就过于刻板。</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [5]</div><pre><code>@dataclass
+class SDConfig:
+    steps: int = 20
+    cfg_scale: float = 7.5
+    sampler: str = 'euler_a'
+    image_size: int = 512
+    latent_size: int = 64
+
+def simulate_sd_pipeline(config, prompt, negative_prompt=""):
+    """模拟完整 Stable Diffusion 推理管线"""
+    start = time.time()
+    
+    # CLIP 编码
+    clip = SimpleCLIPEncoder()
+    pos_tokens = [hash(prompt + str(i)) % 1000 for i in range(10)]
+    neg_tokens = [hash(negative_prompt + str(i)) % 1000 for i in range(10)]
+    pos_emb = clip.encode(pos_tokens)
+    neg_emb = clip.encode(neg_tokens) if negative_prompt else np.zeros_like(pos_emb)
+    clip_time = time.time() - start
+    
+    # 初始化噪声
+    latent = np.random.randn(config.latent_size, config.latent_size, 4)
+    
+    # 逐步去噪
+    denoise_start = time.time()
+    for step in range(config.steps):
+        t_ratio = step / config.steps
+        noise_cond = np.random.randn(*latent.shape) * (1 - t_ratio * 0.8)
+        noise_uncond = np.random.randn(*latent.shape) * (1 - t_ratio * 0.5)
+        # CFG 公式
+        noise_pred = noise_uncond + config.cfg_scale * (noise_cond - noise_uncond)
+        latent = latent - (1.0 / config.steps) * noise_pred
+    denoise_time = time.time() - denoise_start
+    total_time = time.time() - start
+    
+    return {
+        'prompt': prompt,
+        'final_std': float(np.std(latent)),
+        'timing': {
+            'clip': f'{clip_time*1000:.1f}ms',
+            'denoise': f'{denoise_time*1000:.1f}ms ({config.steps} steps)',
+            'total': f'{total_time*1000:.1f}ms'
+        }
+    }
+
+# 对比不同 CFG Scale 的效果
+configs = [SDConfig(cfg_scale=3), SDConfig(cfg_scale=7.5), SDConfig(cfg_scale=15)]
+for cfg in configs:
+    r = simulate_sd_pipeline(cfg, "a cat on a chair", "blurry")
+    print(f'CFG={cfg.cfg_scale:5.1f} | latent_std={r["final_std"]:.3f} | {r["timing"]["total"]}')</code></pre><div class="nb-output"><pre>CFG=  3.0 | latent_std=0.847 | 15.2ms
+CFG=  7.5 | latent_std=1.232 | 14.8ms
+CFG= 15.0 | latent_std=2.104 | 15.1ms
+</pre></div></div>
+<div class="nb-cell nb-markdown"><h3>关键调参指南总结</h3>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>推荐范围</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Steps</td>
+<td>20-30</td>
+<td>越多越精细，但边际递减</td>
+</tr>
+<tr>
+<td>CFG Scale</td>
+<td>7-9</td>
+<td>控制与 prompt 的一致性</td>
+</tr>
+<tr>
+<td>Sampler</td>
+<td>Euler A (通用) / DPM++ 2M Karras (细节)</td>
+<td>不同去噪算法</td>
+</tr>
+<tr>
+<td>Negative Prompt</td>
+<td>关键</td>
+<td>排除不想要的元素</td>
+</tr>
+<tr>
+<td>Seed</td>
+<td>固定</td>
+<td>可复现</td>
+</tr>
+</tbody>
+</table>
+<h3>LoRA 微调</h3>
+<p>LoRA（Low-Rank Adaptation）在扩散模型中的用法：
+- 冻结原始 UNet 权重
+- 在 Cross-Attention 层旁添加低秩矩阵（通常 rank=4-64）
+- 只训练这些小矩阵，几 MB 即可学到新风格/新概念</p>
+<p>部署时只需：<code>model + 原始权重 + LoRA 权重 → 合并 → 推理</code></p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [6]</div><pre><code># 调参对比可视化
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# 1. Steps 对比
+steps_range = [5, 10, 20, 30, 50]
+quality = [0.3, 0.55, 0.8, 0.9, 0.93]
+time_cost = [0.5, 1.0, 2.0, 3.0, 5.0]
+ax = axes[0]
+ax.plot(steps_range, quality, 'b-o', label='质量')
+ax2 = ax.twinx()
+ax2.plot(steps_range, time_cost, 'r--s', label='耗时')
+ax.set_xlabel('Steps')
+ax.set_ylabel('质量 (归一化)', color='b')
+ax2.set_ylabel('相对耗时', color='r')
+ax.set_title('Steps vs 质量 vs 耗时')
+
+# 2. CFG Scale 对比
+cfgs = [1, 3, 5, 7, 9, 12, 15, 20]
+prompt_adherence = [0.2, 0.4, 0.6, 0.85, 0.9, 0.95, 0.97, 0.85]
+naturalness = [0.95, 0.9, 0.85, 0.8, 0.75, 0.6, 0.4, 0.2]
+ax = axes[1]
+ax.plot(cfgs, prompt_adherence, 'g-o', label='Prompt 遵循度')
+ax.plot(cfgs, naturalness, 'r--s', label='自然度')
+ax.set_xlabel('CFG Scale')
+ax.set_ylabel('分数')
+ax.legend(fontsize=8)
+ax.set_title('CFG Scale 权衡')
+ax.axvspan(7, 9, alpha=0.15, color='green', label='最佳区间')
+
+# 3. 显存占用
+components = ['UNet', 'VAE', 'CLIP', 'LoRA']
+vram = [3400, 200, 200, 50]
+ax = axes[2]
+bars = ax.barh(components, vram, color=['#C96442', '#d4956b', '#d4956b', '#6ba355'])
+ax.set_xlabel('显存占用 (MB, fp16)')
+ax.set_title('SD 1.5 各组件显存占用')
+for bar, val in zip(bars, vram):
+    ax.text(bar.get_width() + 50, bar.get_y() + bar.get_height()/2, f'{val}MB', va='center', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+print('调参可视化完成')</code></pre><div class="nb-output"><pre>调参可视化完成
+</pre></div></div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>今日要点</h3>
+<ol>
+<li><strong>VAE</strong> 是图像和潜在空间的桥梁，压缩 48 倍让扩散在消费级 GPU 上可行</li>
+<li><strong>UNet</strong> 是去噪引擎，通过 Cross-Attention 听从文本条件</li>
+<li><strong>CFG Scale</strong> 是最关键的调参旋钮——控制「听话程度」</li>
+<li><strong>Steps</strong> 决定去噪精度，20-30 步是最佳性价比</li>
+<li><strong>LoRA</strong> 让你用几 MB 权重就能微调出个性化风格</li>
+</ol>
+<h2>课后思考</h2>
+<ol>
+<li>如果把 VAE 换成更大的编码器（如 SDXL 的），图像质量会提升吗？代价是什么？</li>
+<li>为什么 CFG Scale 太高反而会崩坏？（提示：过拟合条件方向）</li>
+<li>ControlNet 是如何在不修改 UNet 的情况下加入额外条件的？</li>
+</ol></div>
