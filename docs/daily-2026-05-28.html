@@ -1,0 +1,89 @@
+<h1>2026年5月28日 - 第43课：视频生成与 DiT 架构</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解 DiT（Diffusion Transformer）如何将 Transformer 引入扩散模型，实现高质量视频生成</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课我们学了扩散模型的实战部署。扩散模型传统的去噪网络是 U-Net，但从 2022 年的 DiT 论文开始，Transformer 开始替代 U-Net。2024 年 OpenAI 的 Sora 证明了这条路线的巨大潜力——DiT 成了视频生成的核心架构。理解 DiT 是理解当前视频生成前沿的关键一步。</p>
+<p>在 AI 演进中的位置：
+- <strong>上游</strong>：扩散模型（第40课）、Transformer（第16课）
+- <strong>本课</strong>：DiT = 扩散 + Transformer 的融合，视频生成的核心架构
+- <strong>下游</strong>：多模态统一架构（GPT-4V/Gemini）</p>
+<h2>核心概念解释</h2>
+<h3>1. 从 U-Net 到 Transformer：为什么换？</h3>
+<p><strong>直觉类比</strong>：
+- U-Net 像一个「放大镜工匠」——拿着放大镜逐区域精修纹理，擅长局部细节
+- Transformer 像一个「全局规划师」——站在高处同时看到所有区域的关系</p>
+<p>对于<strong>视频生成</strong>，全局规划更重要：一秒钟的 24 帧必须保持动作连贯，这就需要模型能"同时看到"所有帧的关系。</p>
+<h3>2. DiT 的核心架构</h3>
+<pre><code>噪声图像 x_t → Patchify → +位置编码 → Transformer Blocks → Unpatchify → 预测噪声
+                                 ↑
+                            时间步编码 (AdaLN)
+</code></pre>
+<p><strong>关键创新：AdaLN-Zero</strong>
+- 标准Transformer 的 LayerNorm 参数是固定的
+- DiT 用时间步 embedding 动态生成归一化的 scale 和 shift 参数
+- 残差初始化为 0 → 训练开始时 Transformer block 相当于恒等映射 → 训练更稳定</p>
+<h3>3. 视频扩展：3D Patchify</h3>
+<p>图像 DiT：<code>(B, C, H, W)</code> → 2D patch → <code>(B, num_patches, D)</code></p>
+<p>视频 DiT：<code>(B, C, T, H, W)</code> → 3D patch → <code>(B, num_spatiotemporal_patches, D)</code></p>
+<p>Sora 的做法：先用 VAE 压缩到潜空间，再做 3D patchify，大幅降低 token 数量。</p>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/机制</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>扩散损失</td>
+<td>L = E[‖ε - ε_θ(x_t, t)‖²]</td>
+<td>让模型学会从噪声图中"认出"原始噪声</td>
+</tr>
+<tr>
+<td>Patchify</td>
+<td>x → Conv2d(k=p, s=p) → flatten</td>
+<td>用卷积把图像切成小方块，每个方块变成一个 token</td>
+</tr>
+<tr>
+<td>AdaLN</td>
+<td>y = γ(t)·Norm(x) + β(t)</td>
+<td>时间步告诉你"现在噪声有多强"，归一化参数随之调整</td>
+</tr>
+<tr>
+<td>3D Patchify</td>
+<td>x → Conv3d(k=(tp,p,p))</td>
+<td>在时空三个维度同时切块，统一处理视频</td>
+</tr>
+<tr>
+<td>去噪步</td>
+<td>x_{t-1} = (x_t - σ_t·ε_θ) / α_t</td>
+<td>用模型预测的噪声，从当前状态"减去噪声"回退一步</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<ul>
+<li>Notebook 中实现了完整的 SimplifiedDiT：Patchify → AdaLN Transformer → Unpatchify</li>
+<li>AdaLN-Zero 的关键：<code>nn.init.zeros_()</code> 确保初始时残差为零</li>
+<li>patch_size 的选择：4×4 是常用的，越小 token 越多质量越好但越慢</li>
+<li>视频生成在实际中需要先在潜空间(latent)操作，而非像素空间</li>
+</ul>
+<h2>常见问题</h2>
+<p><strong>Q: DiT 比 U-Net 好在哪里？</strong>
+A: 两个核心优势：(1) 全局注意力天然处理长距离依赖，对视频时序一致性更友好；(2) Transformer 的 Scaling Law 更明确——增大模型/数据量，效果可预测地提升。U-Net 的扩展性较差。</p>
+<p><strong>Q: Sora 为什么那么强？只是因为 DiT 吗？</strong>
+A: DiT 是骨架，但 Sora 还依赖：(1) 大规模视频-文本配对数据；(2) 潜空间压缩降低计算量；(3) 可能的多个 DiT 模型级联。架构只是成功因素之一。</p>
+<p><strong>Q: 为什么 AdaLN-Zero 初始化很重要？</strong>
+A: 如果初始化不好，Transformer 的输出可能扰乱去噪过程。初始化为恒等映射让模型从"不改变输入"开始，逐步学会去噪。这是深层网络训练稳定的经典技巧。</p>
+<h2>本课总结</h2>
+<ol>
+<li>DiT 用 Transformer 替代 U-Net 做扩散去噪，核心是 Patchify + AdaLN-Zero + Transformer Blocks</li>
+<li>全局注意力让 DiT 在视频生成（需要时序一致性）中比 U-Net 更有优势</li>
+<li>视频扩展通过 3D Patchify 统一处理时空维度</li>
+<li>Sora、SD3、CogVideoX 等前沿模型都基于 DiT 架构</li>
+<li>Scaling Law 使 DiT 在大规模下效果可预测地提升</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课：<strong>多模态统一架构（GPT-4V/Gemini）</strong>——看看如何将文本、图像、视频、音频统一到同一个模型中处理。DiT 是视觉生成的核心，而多模态统一架构则将视觉与语言深度融合。</p>

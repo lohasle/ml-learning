@@ -1,0 +1,335 @@
+<div class="nb-cell nb-markdown"><h1>第43课：视频生成与 DiT 架构</h1>
+<h2>学习目标</h2>
+<ul>
+<li>理解视频生成的核心挑战：时序一致性与空间质量的双重约束</li>
+<li>掌握 DiT（Diffusion Transformer）的架构设计思想：用 Transformer 替代 U-Net 做扩散去噪</li>
+<li>理解 Patch 化 + 位置编码如何让 Transformer 处理图像/视频</li>
+<li>了解 Sora、CogVideo 等代表性系统如何基于 DiT 实现视频生成</li>
+<li>动手用 PyTorch 实现一个简化版 DiT 去噪网络</li>
+</ul></div>
+<div class="nb-cell nb-markdown"><h2>核心概念介绍</h2>
+<h3>从图像生成到视频生成</h3>
+<p>上一课我们学了扩散模型——通过逐步去噪从随机噪声生成图像。但视频是<strong>时空联合体</strong>：每一帧要像照片一样清晰，相邻帧之间还要动作连贯。</p>
+<h3>DiT 的核心思想</h3>
+<p>传统扩散模型用 <strong>U-Net</strong> 做去噪网络。DiT 的突破在于：<strong>用 Transformer 替代 U-Net</strong>。</p>
+<p>直觉类比：
+- U-Net 就像一个「局部放大镜」，擅长处理局部纹理
+- Transformer 就像一个「全局规划师」，能同时看到所有区域的关系
+- 对于视频这种需要<strong>全局时序一致性</strong>的任务，全局规划师更有优势</p>
+<h3>DiT 的关键步骤</h3>
+<ol>
+<li><strong>Patchify</strong>：把图像/视频切成小方块（类似 ViT）</li>
+<li><strong>加位置编码</strong>：让模型知道每个 patch 的空间/时间位置</li>
+<li><strong>Transformer 去噪</strong>：多层 Self-Attention + MLP 预测噪声</li>
+<li><strong>Unpatchify</strong>：把输出重组为图像/视频</li>
+</ol>
+<h3>在学习路线中的位置</h3>
+<ul>
+<li>前置：扩散模型（第40课）、Transformer（第16课）</li>
+<li>本课：DiT = 扩散模型 + Transformer 的融合</li>
+<li>后续：多模态统一架构会将视频、图像、文本统一处理</li>
+</ul></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>import torch
+import torch.nn as nn
+import math
+
+print('PyTorch version:', torch.__version__)
+print('CUDA available:', torch.cuda.is_available())
+
+# 设备选择
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f'Using device: {device}')</code></pre></div>
+<div class="nb-cell nb-markdown"><h2>核心实现：简化版 DiT 去噪网络</h2>
+<p>我们实现 DiT 的核心组件：
+1. Patch Embedding：将图像 patch 转为向量
+2. Transformer Block：带自适应层归一化（AdaLN）的注意力层
+3. DiT 模型：完整的 patchify → transformer → unpatchify 流程</p></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>class PatchEmbedding(nn.Module):
+    """将图像切成 patch 并嵌入为向量，类似 ViT"""
+    def __init__(self, img_size=32, patch_size=4, in_channels=3, embed_dim=256):
+        super().__init__()
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.num_patches = (img_size // patch_size) ** 2
+        # 用卷积实现 patch 切分 + 线性投影
+        self.proj = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
+    
+    def forward(self, x):
+        # x: (B, C, H, W) -&gt; (B, num_patches, embed_dim)
+        x = self.proj(x)  # (B, embed_dim, H/P, W/P)
+        x = x.flatten(2).transpose(1, 2)  # (B, num_patches, embed_dim)
+        return x
+
+
+class AdaLN(nn.Module):
+    """自适应层归一化 - DiT 的关键创新
+    用时间步 embedding 调制归一化参数（scale 和 shift）
+    这样模型能根据噪声水平调整去噪策略"""
+    def __init__(self, embed_dim, cond_dim):
+        super().__init__()
+        self.norm = nn.LayerNorm(embed_dim, elementwise_affine=False)
+        self.linear = nn.Linear(cond_dim, 6 * embed_dim)  # 6 个参数: gamma1, beta1, alpha1, gamma2, beta2, alpha2
+        nn.init.zeros_(self.linear.weight)
+        nn.init.zeros_(self.linear.bias)
+    
+    def forward(self, x, cond):
+        # cond: 时间步条件 (B, cond_dim)
+        params = self.linear(cond).unsqueeze(1)  # (B, 1, 6*D)
+        gamma1, beta1, alpha1, gamma2, beta2, alpha2 = params.chunk(6, dim=-1)
+        return gamma1, beta1, alpha1, gamma2, beta2, alpha2
+
+
+class DiTBlock(nn.Module):
+    """DiT Transformer Block
+    与标准 Transformer 的区别：用 AdaLN 替代固定 LayerNorm
+    归一化参数由时间步 embedding 动态生成"""
+    def __init__(self, embed_dim=256, num_heads=4, cond_dim=256, mlp_ratio=4):
+        super().__init__()
+        self.adaln = AdaLN(embed_dim, cond_dim)
+        self.attn = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)
+        self.mlp = nn.Sequential(
+            nn.Linear(embed_dim, embed_dim * mlp_ratio),
+            nn.GELU(),
+            nn.Linear(embed_dim * mlp_ratio, embed_dim)
+        )
+        self.norm1 = nn.LayerNorm(embed_dim, elementwise_affine=False)
+        self.norm2 = nn.LayerNorm(embed_dim, elementwise_affine=False)
+    
+    def forward(self, x, cond):
+        g1, b1, a1, g2, b2, a2 = self.adaln(x, cond)
+        
+        # Self-Attention with AdaLN
+        h = self.norm1(x) * (1 + g1) + b1
+        attn_out, _ = self.attn(h, h, h)
+        x = x + a1 * attn_out
+        
+        # MLP with AdaLN
+        h = self.norm2(x) * (1 + g2) + b2
+        mlp_out = self.mlp(h)
+        x = x + a2 * mlp_out
+        return x
+
+
+# 测试 DiT Block
+block = DiTBlock(embed_dim=256, num_heads=4, cond_dim=256).to(device)
+dummy_x = torch.randn(2, 64, 256).to(device)  # batch=2, 64 patches, embed_dim=256
+dummy_cond = torch.randn(2, 256).to(device)
+out = block(dummy_x, dummy_cond)
+print(f'DiTBlock: input {dummy_x.shape} -&gt; output {out.shape}')
+print(f'参数量: {sum(p.numel() for p in block.parameters()):,}')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>class SimpleDiT(nn.Module):
+    """完整简化版 DiT 去噪网络
+    
+    架构流程：
+    1. 输入噪声图像 x_t 和时间步 t
+    2. Patchify -&gt; 加位置编码 -&gt; Transformer Blocks -&gt; Unpatchify
+    3. 输出预测的噪声 ε_θ(x_t, t)
+    """
+    def __init__(self, img_size=32, patch_size=4, in_channels=3,
+                 embed_dim=256, num_heads=4, num_blocks=4):
+        super().__init__()
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.num_patches = (img_size // patch_size) ** 2
+        self.embed_dim = embed_dim
+        
+        # 1. Patch Embedding
+        self.patch_embed = PatchEmbedding(img_size, patch_size, in_channels, embed_dim)
+        
+        # 2. 位置编码（可学习）
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim))
+        nn.init.trunc_normal_(self.pos_embed, std=0.02)
+        
+        # 3. 时间步编码（正弦位置编码 + MLP）
+        self.time_embed = nn.Sequential(
+            nn.Linear(embed_dim, embed_dim),
+            nn.SiLU(),
+            nn.Linear(embed_dim, embed_dim)
+        )
+        
+        # 4. Transformer Blocks
+        self.blocks = nn.ModuleList([
+            DiTBlock(embed_dim, num_heads, cond_dim=embed_dim)
+            for _ in range(num_blocks)
+        ])
+        
+        # 5. 输出头：预测噪声
+        self.head = nn.Sequential(
+            nn.LayerNorm(embed_dim, elementwise_affine=False),
+            nn.Linear(embed_dim, patch_size * patch_size * in_channels)
+        )
+        
+        # AdaLN for final layer norm
+        self.final_adaln = AdaLN(embed_dim, embed_dim)
+    
+    def timestep_embedding(self, t, dim):
+        """正弦时间步编码"""
+        half = dim // 2
+        freqs = torch.exp(-math.log(10000) * torch.arange(half, device=t.device) / half)
+        args = t[:, None].float() * freqs[None]
+        return torch.cat([args.cos(), args.sin()], dim=-1)
+    
+    def unpatchify(self, x):
+        """将 patch 序列重组为图像"""
+        B, N, C = x.shape
+        P = self.patch_size
+        H = W = self.img_size // P
+        x = x.reshape(B, H, W, P, P, 3)
+        x = x.permute(0, 5, 1, 3, 2, 4).reshape(B, 3, self.img_size, self.img_size)
+        return x
+    
+    def forward(self, x, t):
+        """
+        x: 噪声图像 (B, C, H, W)
+        t: 时间步 (B,)
+        返回: 预测的噪声 (B, C, H, W)
+        """
+        # 时间步编码
+        t_emb = self.timestep_embedding(t, self.embed_dim)
+        t_emb = self.time_embed(t_emb)
+        
+        # Patchify + 位置编码
+        x = self.patch_embed(x) + self.pos_embed
+        
+        # Transformer Blocks
+        for block in self.blocks:
+            x = block(x, t_emb)
+        
+        # Final AdaLN + Linear
+        g, b, a, _, _, _ = self.final_adaln(x, t_emb)
+        x = self.head(x * (1 + g) + b)
+        
+        # Unpatchify
+        x = self.unpatchify(x)
+        return x
+
+
+# 创建模型并测试
+model = SimpleDiT(img_size=32, patch_size=4, in_channels=3, embed_dim=256, num_heads=4, num_blocks=4).to(device)
+dummy_img = torch.randn(2, 3, 32, 32).to(device)
+dummy_t = torch.randint(0, 1000, (2,)).to(device)
+
+output = model(dummy_img, dummy_t)
+total_params = sum(p.numel() for p in model.parameters())
+
+print(f'输入: 噪声图像 {dummy_img.shape}, 时间步 {dummy_t.shape}')
+print(f'输出: 预测噪声 {output.shape}')
+print(f'总参数量: {total_params:,}')
+print(f'模型大小: {total_params * 4 / 1024 / 1024:.1f} MB (fp32)')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code>import matplotlib.pyplot as plt
+import numpy as np
+
+# 可视化 DiT 的去噪过程模拟
+# 这里展示从纯噪声逐步恢复图像的概念（非真实推理）
+
+fig, axes = plt.subplots(1, 6, figsize=(18, 3))
+np.random.seed(42)
+
+# 创建一个简单的目标图案（数字 '4'）
+target = np.zeros((32, 32))
+target[8:24, 10:14] = 1  # 竖线
+target[8:16, 10:22] = 1  # 横线
+target[14:24, 18:22] = 1  # 竖线
+
+steps = [1000, 800, 600, 400, 200, 0]
+for i, t in enumerate(steps):
+    noise_level = t / 1000.0
+    noisy = target * (1 - noise_level) + np.random.randn(32, 32) * noise_level
+    axes[i].imshow(noisy, cmap='gray', vmin=-1, vmax=2)
+    axes[i].set_title(f't={t} (noise={noise_level:.1f})', fontsize=10)
+    axes[i].axis('off')
+
+axes[0].set_ylabel('DiT 去噪过程', fontsize=11)
+plt.suptitle('扩散模型去噪：从纯噪声逐步恢复目标 (概念演示)', fontsize=12, y=1.05)
+plt.tight_layout()
+plt.savefig('dit_denoising_demo.png', dpi=100, bbox_inches='tight')
+plt.show()
+print('去噪过程可视化完成')
+
+# 可视化 DiT 架构的信息流
+fig2, ax2 = plt.subplots(figsize=(14, 4))
+
+components = ['输入\n噪声图像', 'Patchify\n(切分)', '位置编码\n(+时间步)', 'Transformer\nBlock ×N', 'Unpatchify\n(重组)', '输出\n预测噪声']
+x_pos = np.arange(len(components))
+colors = ['#C96442', '#D4845A', '#E8A87C', '#C96442', '#D4845A', '#C96442']
+
+bars = ax2.barh([0]*len(components), [1]*len(components), left=x_pos, 
+                color=colors, edgecolor='#8B4513', linewidth=1.5, height=0.6)
+
+for i, comp in enumerate(components):
+    ax2.text(i + 0.5, 0, comp, ha='center', va='center', fontsize=10, fontweight='bold', color='white')
+
+# 画箭头
+for i in range(len(components)-1):
+    ax2.annotate('', xy=(i+1, 0), xytext=(i+0.05, 0),
+                arrowprops=dict(arrowstyle='-&gt;', color='#8B4513', lw=2))
+
+ax2.set_xlim(-0.3, len(components) + 0.3)
+ax2.set_ylim(-0.8, 0.8)
+ax2.axis('off')
+ax2.set_title('DiT 架构信息流', fontsize=14, fontweight='bold', pad=15)
+plt.tight_layout()
+plt.savefig('dit_architecture_flow.png', dpi=100, bbox_inches='tight')
+plt.show()
+print('架构信息流可视化完成')</code></pre></div>
+<div class="nb-cell nb-code"><div class="nb-label">In [?]</div><pre><code># 对比 DiT 与 U-Net 在扩散模型中的差异
+
+print("=" * 70)
+print("DiT vs U-Net：扩散去噪网络对比")
+print("=" * 70)
+
+comparison = """
+| 维度           | U-Net                    | DiT                        |
+|---------------|--------------------------|----------------------------|
+| 核心结构       | 编码器-解码器 + 跳跃连接    | 纯 Transformer Blocks       |
+| 感受野         | 受限于卷积核大小           | 全局 Self-Attention         |
+| 扩展性         | 随深度增加设计复杂          | 增加层数/维度即可扩展        |
+| 条件注入       | 交叉注意力/AdaIN           | AdaLN-Zero                 |
+| 视频生成       | 需要额外时序模块            | 天然支持时空 patch 统一处理  |
+| 代表模型       | Stable Diffusion 1.x/2.x  | Sora, SD3, PixArt          |
+| 参数效率       | 较好（小规模）             | 大规模下更优                |
+"""
+print(comparison)
+
+# DiT 的关键设计决策
+print("\nDiT 的三个关键设计决策:")
+print("1. AdaLN-Zero: 用时间步动态调制归一化参数，残差初始化为 0 → 训练更稳定")
+print("2. Patch 大小可调: patch_size 越小 → patch 越多 → 更精细但更慢")
+print("3. 无需 U-Net 跳跃连接: Transformer 的全局注意力隐式完成了多尺度信息融合")
+
+# 视频生成扩展：3D Patch
+print("\n" + "=" * 70)
+print("从图像 DiT 到视频 DiT")
+print("=" * 70)
+print("图像 DiT: 输入 (B, C, H, W) → patch → (B, num_spatial_patches, D)")
+print("视频 DiT: 输入 (B, C, T, H, W) → 3D patch → (B, num_spatiotemporal_patches, D)")
+print("")
+print("关键区别:")
+print("- 3D 卷积做 patchify: kernel=(t_patch, p, p), stride=(t_patch, p, p)")
+print("- 时空联合位置编码: 让模型区分空间位置和时间位置")
+print("- 帧数越多 → patch 数线性增长 → 注意力计算量二次增长")
+print("- Sora 的解法: 压缩到潜空间(latent space) 再做 patchify")</code></pre></div>
+<div class="nb-cell nb-markdown"><h2>总结</h2>
+<h3>核心要点</h3>
+<ol>
+<li><strong>DiT = Diffusion + Transformer</strong>：用 Transformer 替代 U-Net 做扩散模型的去噪网络</li>
+<li><strong>Patchify 是桥梁</strong>：将图像/视频切成 patch 序列，让 Transformer 能处理视觉数据</li>
+<li><strong>AdaLN-Zero 是灵魂</strong>：时间步条件通过自适应归一化注入，残差初始化为零保证训练稳定</li>
+<li><strong>视频 = 3D Patchify</strong>：将时空联合切分为 patch，统一处理帧间和帧内的关系</li>
+<li><strong>Sora 的启示</strong>：先压缩到潜空间再做 DiT，大幅降低计算量</li>
+</ol>
+<h3>关键项目</h3>
+<ul>
+<li><strong>DiT (2022)</strong>: William Peebles &amp; Saining Xie，首次证明 Transformer 可以替代 U-Net</li>
+<li><strong>Sora (2024)</strong>: OpenAI 的视频生成模型，基于 DiT + 潜空间压缩</li>
+<li><strong>Stable Diffusion 3 (2024)</strong>: 采用 MM-DiT（多模态 DiT）架构</li>
+<li><strong>CogVideoX (2024)</strong>: 智谱的视频生成模型，3D 注意力 + 专家 Transformer</li>
+</ul>
+<h3>课后思考</h3>
+<ol>
+<li>DiT 为什么在大规模下比 U-Net 更有优势？（提示：Scaling Law）</li>
+<li>视频生成的时序一致性为什么对 Transformer 更友好？（提示：全局注意力 vs 局部卷积）</li>
+<li>如果要生成 10 秒 1080p 视频，需要多少个时空 patch？计算量瓶颈在哪里？</li>
+</ol>
+<h3>下一步预告</h3>
+<p>下一课我们将学习「多模态统一架构」——看看 GPT-4V、Gemini 等系统如何将文本、图像、视频、音频统一到同一个 Transformer 中处理。</p></div>

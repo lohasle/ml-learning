@@ -174,3 +174,6 @@
 {"type":"memory.recall.recorded","timestamp":"2026-05-22T19:00:32.622Z","query":"__dreaming_sessions__:2026-05-22","resultCount":1,"results":[{"path":"memory/.dreams/session-corpus/2026-05-22.txt","startLine":13,"endLine":13,"score":0.58}]}
 {"type":"memory.dream.completed","timestamp":"2026-05-22T19:00:32.622Z","phase":"rem","reportPath":"/home/lohasle/.openclaw/workspace-ml-learning/memory/dreaming/rem/2026-05-23.md","lineCount":10,"storageMode":"separate"}
 {"type":"memory.dream.completed","timestamp":"2026-05-22T19:00:32.622Z","phase":"deep","reportPath":"/home/lohasle/.openclaw/workspace-ml-learning/memory/dreaming/deep/2026-05-23.md","lineCount":3,"storageMode":"separate"}
+{"type":"memory.dream.completed","timestamp":"2026-05-28T13:45:45.523Z","phase":"light","reportPath":"/home/lohasle/.openclaw/workspace-ml-learning/memory/dreaming/light/2026-05-28.md","lineCount":1,"storageMode":"separate"}
+{"type":"memory.dream.completed","timestamp":"2026-05-28T13:45:45.523Z","phase":"rem","reportPath":"/home/lohasle/.openclaw/workspace-ml-learning/memory/dreaming/rem/2026-05-28.md","lineCount":18,"storageMode":"separate"}
+{"type":"memory.dream.completed","timestamp":"2026-05-28T13:45:45.523Z","phase":"deep","reportPath":"/home/lohasle/.openclaw/workspace-ml-learning/memory/dreaming/deep/2026-05-28.md","lineCount":2,"storageMode":"separate"}

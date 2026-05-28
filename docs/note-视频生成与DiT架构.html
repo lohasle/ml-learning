@@ -1,0 +1,63 @@
+<h1>视频生成与 DiT 架构</h1>
+<h2>🎯 核心概念</h2>
+<h3>1. 基础定义</h3>
+<ul>
+<li><strong>类型</strong>：生成模型 / 扩散模型变体</li>
+<li><strong>适用场景</strong>：图像生成、视频生成、多模态内容创作</li>
+<li><strong>一句话定义</strong>：用 Transformer 替代 U-Net 做扩散模型的去噪网络，实现视觉内容的生成</li>
+</ul>
+<h3>2. 核心架构</h3>
+<ul>
+<li><strong>DiT = Diffusion + Transformer</strong></li>
+<li>Patchify 将图像/视频转为 token 序列</li>
+<li>AdaLN-Zero 用时间步条件动态调制归一化参数</li>
+<li>Transformer Blocks 做全局自注意力去噪</li>
+<li>Unpatchify 将输出重组为图像/视频</li>
+</ul>
+<h3>3. 实践要点</h3>
+<ul>
+<li>patch_size 选择：4×4 常用，更小更精细但更慢</li>
+<li>大规模训练需要潜空间压缩（如 VAE）</li>
+<li>视频生成需 3D patchify 处理时空联合维度</li>
+<li>扩散步数通常 50-1000 步</li>
+</ul>
+<h2>📊 关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>含义</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L = E[‖ε - ε_θ(x_t, t)‖²]</td>
+<td>扩散训练损失</td>
+<td>让模型从噪声图中认出原始噪声</td>
+</tr>
+<tr>
+<td>x → Conv2d(k=p, s=p) → flatten</td>
+<td>Patchify</td>
+<td>把图像切成小方块变成 token</td>
+</tr>
+<tr>
+<td>y = γ(t)·Norm(x) + β(t)</td>
+<td>AdaLN</td>
+<td>时间步告诉噪声多强，调整归一化</td>
+</tr>
+<tr>
+<td>x → Conv3d(k=(tp,p,p))</td>
+<td>3D Patchify</td>
+<td>在时空三维同时切块处理视频</td>
+</tr>
+</tbody>
+</table>
+<h2>🔗 关联概念</h2>
+<ul>
+<li>前置知识：扩散模型、Transformer、ViT</li>
+<li>后续应用：多模态统一架构、AI 视频创作</li>
+<li>同类对比：U-Net（传统扩散去噪网络）</li>
+</ul>
+<h2>💡 记忆技巧</h2>
+<p>DiT 就是把扩散模型的「放大镜工匠」U-Net 换成「全局规划师」Transformer——先切 patch 再全局看，像拼图一样从噪声中还原画面。</p>
