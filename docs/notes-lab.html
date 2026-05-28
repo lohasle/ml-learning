@@ -335,8 +335,27 @@
     }
   }
 
-  // 自动点击第一个
-  document.querySelector('.tree-item.active')?.click();
+  // 恢复 localStorage 中保存的活跃笔记
+  const savedNote = localStorage.getItem('activeNote');
+  const savedNb = localStorage.getItem('activeNb');
+  const savedTitle = localStorage.getItem('activeTitle');
+
+  if (savedNote) {
+    const target = document.querySelector(`.tree-item[data-note="${savedNote}"]`);
+    if (target) {
+      document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+      target.classList.add('active');
+      target.click();
+      // 清理，避免刷新后仍定位到旧笔记
+      localStorage.removeItem('activeNote');
+      localStorage.removeItem('activeNb');
+      localStorage.removeItem('activeTitle');
+    } else {
+      document.querySelector('.tree-item.active')?.click();
+    }
+  } else {
+    document.querySelector('.tree-item.active')?.click();
+  }
   </script>
 </body>
 </html>
