@@ -1,0 +1,69 @@
+<h1>多模态统一架构</h1>
+<h2>🎯 核心概念</h2>
+<h3>1. 基础定义</h3>
+<ul>
+<li><strong>类型</strong>：多模态模型架构 / 视觉-语言融合</li>
+<li><strong>适用场景</strong>：图文对话、视觉问答（VQA）、文档理解、多模态助手</li>
+<li><strong>一句话定义</strong>：把图像、文本、音频统一编码成 token 序列，交给同一个 Transformer 处理</li>
+</ul>
+<h3>2. 数学原理</h3>
+<ul>
+<li>视觉 token 化：图像 → ViT(patch) → 投影层 → 视觉 token 向量</li>
+<li>投影层：$z_v = W_{proj} \cdot v_{vit}$（把视觉特征翻译成语言模型维度）</li>
+<li>统一序列：$X = [z_{v_1},...,z_{v_N}, t_1,...,t_M]$（视觉与文本拼接）</li>
+<li>跨模态注意力：文本 token 通过自注意力自动「看」视觉 token</li>
+</ul>
+<h3>3. 实践要点</h3>
+<ul>
+<li>投影层用 2 层 MLP（LLaVA-1.5）比单层 Linear 融合更好</li>
+<li>视觉 token 过多时用 Q-Former 压缩到固定数量（BLIP-2 用 32 个 query）</li>
+<li>原生多模态训练需解决不同模态的梯度尺度、数据配比问题</li>
+</ul>
+<h2>📊 关键公式</h2>
+<table>
+<thead>
+<tr>
+<th>公式</th>
+<th>含义</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>图像 → ViT → Projector → 视觉token</td>
+<td>视觉 token 化流程</td>
+<td>把一张图切成小块，每块变成一个向量，像「图块句子」</td>
+</tr>
+<tr>
+<td>$z_v = W_{proj} \cdot v_{vit}$</td>
+<td>投影层</td>
+<td>把视觉特征翻译成语言模型能理解的维度</td>
+</tr>
+<tr>
+<td>$X = [z_{v_1..N}, t_{1..M}]$</td>
+<td>统一序列拼接</td>
+<td>视觉和文本 token 不分你我，拼成一条</td>
+</tr>
+<tr>
+<td>$\text{Attn}(T_i, V_j)$</td>
+<td>跨模态注意力</td>
+<td>文本 token 自动「看」视觉 token</td>
+</tr>
+<tr>
+<td>$L = -\sum \log P(t_k</td>
+<td>X_{&lt;k})$</td>
+<td>语言建模目标</td>
+</tr>
+</tbody>
+</table>
+<h2>🔗 关联概念</h2>
+<ul>
+<li><strong>前置知识</strong>：Transformer 自注意力（第16课）、CLIP 对比学习（第21课）、ViT 视觉 Transformer</li>
+<li><strong>后续应用</strong>：Any-to-Any 模型（Chameleon）、多模态 Agent、文档理解系统</li>
+<li><strong>同类对比</strong>：</li>
+<li>vs CLIP：CLIP 只对齐（检索），统一架构能生成（对话）</li>
+<li>vs DiT：DiT 做视觉生成，统一架构做视觉理解</li>
+<li>三路线递进：LLaVA 拼接 → GPT-4V 深度联合 → Gemini 原生统一</li>
+</ul>
+<h2>💡 记忆技巧</h2>
+<p><strong>「一切皆 token」</strong>——Transformer 是个只认 token 序列的机器。文本有 tokenizer，图像有 ViT+投影层。把两者拼成一条序列，自注意力会自动让它们「互相看见」。投影层就是那个翻译官。</p>

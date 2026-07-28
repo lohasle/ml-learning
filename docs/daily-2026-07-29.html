@@ -1,0 +1,128 @@
+<h1>2026年7月29日 - 第44课：多模态统一架构（GPT-4V / Gemini）</h1>
+<h2>今日学习主题</h2>
+<p><strong>理解「一切皆 token」——GPT-4V / Gemini 如何把图像、文本、音频统一到同一个 Transformer 中处理</strong></p>
+<h2>为什么学这个？</h2>
+<p>上一课（第43课）我们学了 DiT——用 Transformer 做视觉生成。但 DiT 解决的是「从噪声生成图像」，还没解决「<strong>看懂图像并用语言回答</strong>」这件事。</p>
+<p>回溯更早：第21课的多模态范式里，CLIP 让图文在同一个嵌入空间对齐（能做图文检索），但 CLIP <strong>不会对话</strong>——你没法让它「看图回答问题」。从 CLIP 到 GPT-4V，缺的恰恰是今天这节课：<strong>把视觉和语言真正统一起来，交给同一个模型处理</strong>。</p>
+<p>在 AI 演进中的位置：
+- <strong>上游</strong>：第21课 多模态模型范式（CLIP 对比学习）、第43课 视频生成与 DiT
+- <strong>本课</strong>：从「能对齐」到「能统一处理」——视觉与语言深度融合，这是现代 AI 助手（GPT-4V、Gemini、LLaVA）的骨架
+- <strong>下游</strong>：AI 系统综合复盘——全路线收束</p>
+<h2>核心概念解释</h2>
+<h3>1. 为什么需要「统一架构」？</h3>
+<p>CLIP 解决了一半问题：图文对齐（检索、打分）。但真正的多模态助手要的是：<strong>给一张图，模型像读文字一样读懂它，再用语言回答</strong>。</p>
+<p>关键障碍：语言模型（GPT 类）只认 token 序列，图像是像素矩阵。两者「语言不通」。</p>
+<h3>2. 关键洞察：一切皆 token</h3>
+<p>Transformer 本质上只认一件事——<strong>token 序列</strong>。</p>
+<ul>
+<li>文本经过 tokenizer 变成 token</li>
+<li>图像经过视觉编码器（ViT）+ 投影层（Projector）也能变成 token</li>
+</ul>
+<p>只要把它们拼成一条序列，Transformer 就能统一处理。这就是 LLaVA / GPT-4V / Gemini 共同的底层逻辑。</p>
+<pre><code>文本: [你好, 这张, 图里, 有, 什么]        ← 文本 tokenizer
+图像: [v0, v1, v2, ..., vN]              ← ViT + 投影层 → 视觉 token
+拼成: [&lt;img&gt;v0...vN&lt;/img&gt;, 你好, 这张...] ← 统一序列 → Transformer 自注意力
+</code></pre>
+<h3>3. 三种融合路线对比</h3>
+<table>
+<thead>
+<tr>
+<th>路线</th>
+<th>代表</th>
+<th>做法</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>拼接式</td>
+<td>LLaVA</td>
+<td>视觉 token 直接插到文本序列前面</td>
+<td>实现简单、易训练</td>
+<td>视觉 token 多时序列很长</td>
+</tr>
+<tr>
+<td>交叉注意力</td>
+<td>Flamingo</td>
+<td>视觉 token 通过 cross-attention 注入语言层</td>
+<td>视觉 token 可压缩</td>
+<td>架构更复杂</td>
+</tr>
+<tr>
+<td>原生统一</td>
+<td>GPT-4V/Gemini</td>
+<td>从预训练起所有模态一起训、同一套参数</td>
+<td>融合最深、上限最高</td>
+<td>训练成本极高</td>
+</tr>
+</tbody>
+</table>
+<h3>4. Gemini 的「原生多模态」</h3>
+<p>GPT-4V 早期接近「先训好语言模型再接视觉」。而 Gemini 从<strong>预训练第一天</strong>就把图像、视频、音频和文本混在一起训练，所有模态共享同一套 Transformer 参数。这就是 Google 反复强调的 <strong>natively multimodal</strong>——融合程度最深，但训练工程难度也最高。</p>
+<h2>关键公式直觉</h2>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>公式/机制</th>
+<th>直觉解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>视觉 token 化</td>
+<td>图像 → ViT(patch) → 投影(MLP) → 视觉token</td>
+<td>把一张图切成小块，每块编码成一个向量，像「图块组成的句子」</td>
+</tr>
+<tr>
+<td>投影层</td>
+<td>$z_v = W_{proj} \cdot v_{vit}$</td>
+<td>把视觉特征「翻译」成语言模型能理解的维度，是跨模态的翻译器</td>
+</tr>
+<tr>
+<td>统一序列</td>
+<td>$X = [z_{v_1},...,z_{v_N}, t_1,...,t_M]$</td>
+<td>视觉 token 和文本 token 拼成一条序列，不分你我</td>
+</tr>
+<tr>
+<td>跨模态注意力</td>
+<td>$\text{Attn}(T_i, V_j)$</td>
+<td>文本 token 通过自注意力「看」视觉 token，自动学会跨模态关联</td>
+</tr>
+<tr>
+<td>LM 目标</td>
+<td>$L = -\sum \log P(t_{k} \mid X_{&lt;k})$</td>
+<td>在文本位置预测下一个 token，模型被迫从视觉 token 里提取信息来回答</td>
+</tr>
+</tbody>
+</table>
+<h2>动手实践要点</h2>
+<p>Notebook 中实现了一个最小化端到端多模态统一模型（LLaVA 风格）：</p>
+<ol>
+<li><strong>视觉编码器</strong>：模拟 ViT 把图像 patch 编码成特征（注意输出维度 ≠ 语言模型维度）</li>
+<li><strong>投影层（Projector）</strong>：两层 MLP，把视觉特征翻译成与文本同维度的 token——<strong>这是最关键的桥梁</strong></li>
+<li><strong>统一 Transformer</strong>：吃下 <code>[视觉token, 文本token]</code> 拼接序列，用自注意力融合</li>
+<li><strong>可视化跨模态注意力</strong>：提取最后一个文本 token 对整个序列的关注，证实它同时「看」了视觉和文本 token</li>
+</ol>
+<p>参数选择理由：
+- 视觉 token 数（NUM_VIS_TOKENS）= 16：教学用小尺寸，真实 ViT-L 用 256 个 patch
+- 投影层用 2 层 MLP 而非线性层：LLaVA-1.5 实验证实 MLP 比 Linear 融合效果更好
+- 嵌入维度 D=64：只为演示，真实模型 D≥2048</p>
+<h2>常见问题</h2>
+<p><strong>Q: CLIP 已经能对齐图文了，为什么不能直接用它「看图说话」？</strong>
+A: CLIP 的训练目标是对比学习（让配对的图文向量靠近、不配对的远离），它学到的是「整体相似度」，而不是「生成」。它没有语言建模头（LM Head），无法预测下一个 token。统一架构补上的正是：把视觉信息接入一个能「逐 token 生成」的语言模型。</p>
+<p><strong>Q: 原生多模态（Gemini）比拼接式（LLaVA）好在哪？</strong>
+A: 三个本质优势：(1) 视觉和语言从底层就共享表征，不存在「翻译损耗」；(2) 可以利用图文交错的预训练数据，学会更细粒度的图文对应；(3) 容易扩展到视频、音频（Any-to-Any）。代价是训练工程难度极高，需要解决不同模态的梯度尺度、数据配比等难题。</p>
+<p><strong>Q: 视觉 token 太多导致序列过长怎么办？</strong>
+A: 这是实际工程的大问题（ViT-L 的 256 个 patch 会让序列翻倍）。解决方案：(1) Flamingo 用 cross-attention 把视觉 token 压缩后注入；(2) Q-Former（BLIP-2）把任意数量视觉特征压成固定 32 个 query token；(3) Pixel shuffle / 池化直接降采样。工程上常在「信息保留」和「序列长度」间权衡。</p>
+<h2>本课总结</h2>
+<ol>
+<li><strong>统一架构的核心 = 一切皆 token</strong>：图像经 ViT+投影变成视觉 token，与文本 token 拼接，交给同一个 Transformer</li>
+<li><strong>自注意力天然实现跨模态融合</strong>：不需要专门的跨模态模块，文本 token 会自动「看」视觉 token</li>
+<li><strong>三种路线递进</strong>：LLaVA 拼接式 → GPT-4V 深度联合 → Gemini 原生统一，融合程度越来越深</li>
+<li><strong>投影层（Projector）是关键桥梁</strong>：把视觉特征翻译成语言模型能理解的维度</li>
+<li><strong>未来方向是 Any-to-Any</strong>：不仅能输入图文，还能输出图文（如 Meta 的 Chameleon）</li>
+</ol>
+<h2>下一步</h2>
+<p>下一课：<strong>AI 系统综合复盘与学习路线总结</strong>——把从线性回归到多模态统一架构的全部知识串成一张完整图谱，回顾 AI 演进的关键脉络，完成整个学习路线的收束。这是全路线的收官课。</p>
