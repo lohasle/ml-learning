@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> **Moved to [aiutil/ml-learning](https://github.com/aiutil/ml-learning). This repository is archived and no longer updated.**
+>
+> **本项目已迁移至 [aiutil/ml-learning](https://github.com/aiutil/ml-learning)。本仓库已归档，不再更新。**
+
 # ml-learning
 
 > AI / 机器学习系统学习 — 从经典 ML 到大模型的渐进式学习旅程
